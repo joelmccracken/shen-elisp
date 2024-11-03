@@ -75,6 +75,7 @@
 (shen/set '*release* emacs-version)
 (shen/set '*port* 1.7)
 (shen/set '*os* (symbol-name system-type))
+(shen/set '*version* "S39.0")
 ;; KLambda Constants:1 ends here
 
 ;; [[file:shen-elisp.org::*Boolean Operations][Boolean Operations:1]]

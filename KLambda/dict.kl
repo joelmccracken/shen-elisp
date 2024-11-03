@@ -1,60 +1,33 @@
-"Copyright (c) 2015, Mark Tarver
+(defun shen.dict (V4202) (cond ((< V4202 1) (simple-error (cn "invalid initial dict size: " (shen.app V4202 "" shen.s)))) (true (let W4203 (absvector (+ 3 V4202)) (let W4204 (address-> W4203 0 shen.dictionary) (let W4205 (address-> W4203 1 V4202) (let W4206 (address-> W4203 2 0) (let W4207 (shen.fillvector W4203 3 (+ 2 V4202) ()) W4203))))))))
 
-All rights reserved.
+(defun shen.dict? (V4208) (and (absvector? V4208) (= (trap-error (<-address V4208 0) (lambda Z4209 shen.not-dictionary)) shen.dictionary)))
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-3. The name of Mark Tarver may not be used to endorse or promote products
-   derived from this software without specific prior written permission.
+(defun shen.dict-capacity (V4210) (<-address V4210 1))
 
-THIS SOFTWARE IS PROVIDED BY Mark Tarver ''AS IS'' AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL Mark Tarver BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+(defun shen.dict-count (V4211) (<-address V4211 2))
 
-(defun shen.dict (V3255) (cond ((< V3255 1) (simple-error (cn "invalid initial dict size: " (shen.app V3255 "" shen.s)))) (true (let D (absvector (+ 3 V3255)) (let Tag (address-> D 0 shen.dictionary) (let Capacity (address-> D 1 V3255) (let Count (address-> D 2 0) (let Fill (shen.fillvector D 3 (+ 2 V3255) ()) D))))))))
+(defun shen.dict-count-> (V4212 V4213) (address-> V4212 2 V4213))
 
-(defun shen.dict? (V3257) (and (absvector? V3257) (= (trap-error (<-address V3257 0) (lambda E shen.not-dictionary)) shen.dictionary)))
+(defun shen.<-dict-bucket (V4214 V4215) (<-address V4214 (+ 3 V4215)))
 
-(defun shen.dict-capacity (V3259) (<-address V3259 1))
+(defun shen.dict-bucket-> (V4216 V4217 V4218) (address-> V4216 (+ 3 V4217) V4218))
 
-(defun shen.dict-count (V3261) (<-address V3261 2))
+(defun shen.dict-update-count (V4219 V4220 V4221) (let W4222 (- (length V4221) (length V4220)) (shen.dict-count-> V4219 (+ W4222 (shen.dict-count V4219)))))
 
-(defun shen.dict-count-> (V3264 V3265) (address-> V3264 2 V3265))
+(defun shen.dict-> (V4223 V4224 V4225) (let W4226 (hash V4224 (shen.dict-capacity V4223)) (let W4227 (shen.<-dict-bucket V4223 W4226) (let W4228 (shen.assoc-set V4224 V4225 W4227) (let W4229 (shen.dict-bucket-> V4223 W4226 W4228) (let W4230 (shen.dict-update-count V4223 W4227 W4228) V4225))))))
 
-(defun shen.<-dict-bucket (V3268 V3269) (<-address V3268 (+ 3 V3269)))
+(defun shen.<-dict (V4231 V4232) (let W4233 (hash V4232 (shen.dict-capacity V4231)) (let W4234 (shen.<-dict-bucket V4231 W4233) (let W4235 (assoc V4232 W4234) (if (empty? W4235) (simple-error (cn "value " (shen.app V4232 " not found in dict
+" shen.a))) (tl W4235))))))
 
-(defun shen.dict-bucket-> (V3273 V3274 V3275) (address-> V3273 (+ 3 V3274) V3275))
+(defun shen.dict-rm (V4236 V4237) (let W4238 (hash V4237 (shen.dict-capacity V4236)) (let W4239 (shen.<-dict-bucket V4236 W4238) (let W4240 (shen.assoc-rm V4237 W4239) (let W4241 (shen.dict-bucket-> V4236 W4238 W4240) (let W4242 (shen.dict-update-count V4236 W4239 W4240) V4237))))))
 
-(defun shen.dict-update-count (V3279 V3280 V3281) (let Diff (- (length V3281) (length V3280)) (shen.dict-count-> V3279 (+ Diff (shen.dict-count V3279)))))
+(defun shen.dict-fold (V4243 V4244 V4245) (let W4246 (shen.dict-capacity V4244) (shen.dict-fold-h V4243 V4244 V4245 0 W4246)))
 
-(defun shen.dict-> (V3285 V3286 V3287) (let N (hash V3286 (shen.dict-capacity V3285)) (let Bucket (shen.<-dict-bucket V3285 N) (let NewBucket (shen.assoc-set V3286 V3287 Bucket) (let Change (shen.dict-bucket-> V3285 N NewBucket) (let Count (shen.dict-update-count V3285 Bucket NewBucket) V3287))))))
+(defun shen.dict-fold-h (V4248 V4249 V4250 V4251 V4252) (cond ((= V4251 V4252) V4250) (true (let W4253 (shen.<-dict-bucket V4249 V4251) (let W4254 (shen.bucket-fold V4248 W4253 V4250) (shen.dict-fold-h V4248 V4249 W4254 (+ 1 V4251) V4252))))))
 
-(defun shen.<-dict (V3290 V3291) (let N (hash V3291 (shen.dict-capacity V3290)) (let Bucket (shen.<-dict-bucket V3290 N) (let Result (assoc V3291 Bucket) (if (empty? Result) (simple-error (cn "value " (shen.app V3291 " not found in dict
-" shen.a))) (tl Result))))))
+(defun shen.bucket-fold (V4255 V4256 V4257) (cond ((= () V4256) V4257) ((and (cons? V4256) (cons? (hd V4256))) (((V4255 (hd (hd V4256))) (tl (hd V4256))) (shen.bucket-fold V4255 (tl V4256) V4257))) (true (shen.f-error shen.bucket-fold))))
 
-(defun shen.dict-rm (V3294 V3295) (let N (hash V3295 (shen.dict-capacity V3294)) (let Bucket (shen.<-dict-bucket V3294 N) (let NewBucket (shen.assoc-rm V3295 Bucket) (let Change (shen.dict-bucket-> V3294 N NewBucket) (let Count (shen.dict-update-count V3294 Bucket NewBucket) V3295))))))
+(defun shen.dict-keys (V4258) (shen.dict-fold (lambda Z4259 (lambda Z4260 (lambda Z4261 (cons Z4259 Z4261)))) V4258 ()))
 
-(defun shen.dict-fold (V3299 V3300 V3301) (let Limit (shen.dict-capacity V3300) (shen.dict-fold-h V3299 V3300 V3301 0 Limit)))
-
-(defun shen.dict-fold-h (V3308 V3309 V3310 V3311 V3312) (cond ((= V3312 V3311) V3310) (true (let B (shen.<-dict-bucket V3309 V3311) (let Acc (shen.bucket-fold V3308 B V3310) (shen.dict-fold-h V3308 V3309 Acc (+ 1 V3311) V3312))))))
-
-(defun shen.bucket-fold (V3316 V3317 V3318) (cond ((= () V3317) V3318) ((and (cons? V3317) (cons? (hd V3317))) (V3316 (hd (hd V3317)) (tl (hd V3317)) (shen.bucket-fold V3316 (tl V3317) V3318))) (true (shen.f_error shen.bucket-fold))))
-
-(defun shen.dict-keys (V3320) (shen.dict-fold (lambda K (lambda _ (lambda Acc (cons K Acc)))) V3320 ()))
-
-(defun shen.dict-values (V3322) (shen.dict-fold (lambda _ (lambda V (lambda Acc (cons V Acc)))) V3322 ()))
-
-
+(defun shen.dict-values (V4262) (shen.dict-fold (lambda Z4263 (lambda Z4264 (lambda Z4265 (cons Z4264 Z4265)))) V4262 ()))
 
