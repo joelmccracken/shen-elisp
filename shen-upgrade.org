@@ -1,0 +1,94 @@
+#+title: Shen upgrade
+
+#+begin_src tcl
+#!/usr/bin/env expect -d
+
+spawn ./sbcl-shen.exe
+
+expect "(0-) "
+
+send "(do (cd \"Sources\") (load \"make.shen\") (make))\r"
+
+expect "(1-) "
+#+end_src
+
+* junk
+
+#+begin_src emacs-lisp
+(let ((shen-dir "~/Projects/shen-elisp"))
+  (add-to-list 'load-path shen-dir)
+  (require 'shen-elisp)
+  ;; (require 'shen-repl)
+  ;; (byte-recompile-directory shen-dir 0 t)
+  )
+
+(defun shen-eval-string (codestr)
+  (with-current-buffer "*shen-repl*"
+    (goto-char (point-max))
+    (let ((response
+           (let ((before (point-max)))
+             (insert codestr)
+             (shen/repl-send-input)
+             (buffer-substring before (point-max)))))
+        (message response))))
+
+(defun shen/shen.emacs-eval (code)
+  (eval code))
+#+end_src
+
+#+RESULTS:
+: shen/shen\.emacs-eval
+
+#+begin_src emacs-lisp
+(shen-eval-string "(tc -)")
+
+(shen-eval-string "
+(define emacs.point
+  -> (shen.emacs-eval [point]))
+")
+(shen-eval-string "(declare emacs.point [--> number])")
+(shen-eval-string "(tc +)")
+(shen-eval-string "(emacs.point)")
+#+end_src
+
+* stuff to do
+** try the new components e.g. shen/eval
+** get tests running
+** script to run shen tests from CLI
+** other stuff?
+* loading, beginnings
+
+
+#+begin_src emacs-lisp
+(let ((shen-dir "~/Projects/shen-elisp-upgrade"))
+  (add-to-list 'load-path shen-dir)
+  ;; (load "install.el")
+  (load "shen-elisp.el")
+  (load "shen-repl.el")
+
+  ;; (require 'shen-elisp)
+  ;; (require 'shen-repl)
+  ;; (byte-recompile-directory shen-dir 0 t)
+  )
+
+#+end_src
+
+#+RESULTS:
+: t
+
+
+#+begin_src emacs-lisp
+(org-babel-tangle-file "shen-elisp.org")
+(load-file "shen-primitives.el")
+(load-file "install.el")
+(runner)
+#+end_src
+
+#+RESULTS:
+* describing the problem
+started tweaking the code so that i would get errors
+current literal error from apply higher order function
+
+seems that the issue is that
+
+the existing
