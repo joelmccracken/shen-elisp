@@ -105,13 +105,14 @@
   (interactive)
   (progn
     (comint-send-input)
-    (condition-case ex
-        (progn
+    (progn
           (shen/shen.initialise_environment)
           (shen/repl-eval (string-to-list shen/repl-input)))
-      ('error
-       (comint-output-filter (shen/repl-process) (format "%s\n%s" ex  (shen/make-prompt)))
-       (signal (car ex) (cdr ex))))
+    ;; (condition-case ex
+
+    ;;   ('error
+    ;;    (comint-output-filter (shen/repl-process) (format "%s\n%s" ex  (shen/make-prompt)))
+    ;;    (signal (car ex) (cdr ex))))
     (with-current-buffer *shen-repl*
       (goto-char (point-max)))))
 ;; Sending Input:1 ends here
@@ -162,9 +163,17 @@
         (progn
           (shen/set '*stoutput* (shen/repl-standard-output-impl active-process))
           (set-buffer (get-buffer *shen-repl*))
-          (let* ((Lineread
-                  (shen/compile #'shen/shen.<st_input> input-string
-                                (lambda (Err) (signal (car Err) (cdr Err)))))
+          (let* ( (Package (shen/value 'shen.*package*))
+                  (Lineread (shen/shen.package-user-input Package ;; (lineread)
+                                                          input-string))
+
+
+
+
+                  ;; (Lineread
+                  ;; (shen/compile #'shen/shen.<st_input> input-string
+                  ;;               (lambda (Err) (signal (car Err) (cdr Err)))))
+
                  (It (shen/shen.record-it input-string))
                  (History (shen/value 'shen.*history*))
                  (NewLineread (shen/shen.retrieve-from-history-if-needed

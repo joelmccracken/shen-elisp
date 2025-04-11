@@ -26,497 +26,1138 @@
 (setq max-lisp-eval-depth 60000)
 (setq max-specpdl-size 13000)
 
-(defun shen/shen\.repl nil
-  (shen/do
-   (shen/shen\.credits)
-   (shen/shen\.loop)))
-(defun shen/shen\.loop nil
-  (cl-flet
-      ((tail-trampoline nil
-                        (shen/do
-                         (shen/shen\.initialise_environment)
-                         (shen/do
-                          (shen/shen\.prompt)
-                          (shen/do
-                           (shen/trap-error
-                            (shen/shen\.read-evaluate-print)
-                            (shen/lambda Z5707
-                                         (shen/shen\.toplevel-display-exception Z5707)))
-                           (vector
-                            (list)))))))
-    (let
-        ((result
-          (funcall #'tail-trampoline)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.toplevel-display-exception
-    (V5708)
-  (shen/do
-   (shen/pr
-    (shen/error-to-string V5708)
-    (shen/stoutput))
-   (shen/nl 0)))
-(defun shen/shen\.credits nil
-  (shen/do
-   (shen/pr "\nShen, www.shenlanguage.org, copyright (C) 2010-2024, Mark Tarver\n"
-            (shen/stoutput))
-   (shen/do
-    (shen/pr
-     (shen/cn "version: S"
-              (shen/shen\.app
-               (shen/value '*version*)
-               (shen/cn ", language: "
+(defun shen/compile
+    (V107 V108)
+  (shen/let W109
+            (shen/internal/apply-higher-order-function V107
+                                                       (list V108))
+            (shen/if
+             (shen/shen\.parse-failure\? W109)
+             (shen/simple-error "parse failure\n")
+             (shen/if
+              (shen/cons\?
+               (shen/shen\.in-> W109))
+              (shen/simple-error
+               (shen/cn "syntax error here: "
                         (shen/shen\.app
-                         (shen/value '*language*)
-                         (shen/cn ", platform: "
-                                  (shen/shen\.app
-                                   (shen/value '*implementation*)
-                                   (shen/cn " "
-                                            (shen/shen\.app
-                                             (shen/value '*release*)
-                                             "\n" 'shen\.a))
-                                   'shen\.a))
-                         'shen\.a))
-               'shen\.a))
-     (shen/stoutput))
-    (shen/pr
-     (shen/cn "port "
-              (shen/shen\.app
-               (shen/value '*port*)
-               (shen/cn ", ported by "
-                        (shen/shen\.app
-                         (shen/value '*porters*)
-                         "\n\n" 'shen\.a))
-               'shen\.a))
-     (shen/stoutput)))))
-(defun shen/shen\.initialise_environment nil
-  (shen/do
-   (shen/set 'shen\.*call* 0)
-   (shen/set 'shen\.*infs* 0)))
-(defun shen/shen\.prompt nil
-  (shen/if
-   (shen/value 'shen\.*tc*)
-   (shen/pr
-    (shen/cn "\n("
-             (shen/shen\.app
-              (shen/length
-               (shen/value 'shen\.*history*))
-              "+) " 'shen\.a))
-    (shen/stoutput))
-   (shen/pr
-    (shen/cn "\n("
-             (shen/shen\.app
-              (shen/length
-               (shen/value 'shen\.*history*))
-              "-) " 'shen\.a))
-    (shen/stoutput))))
-(defun shen/shen\.read-evaluate-print nil
-  (shen/let W5709
-            (shen/value 'shen\.*package*)
-            (shen/let W5710
-                      (shen/shen\.package-user-input W5709
-                                                     (shen/lineread
-                                                      (shen/stinput)))
-                      (shen/let W5711
-                                (shen/shen\.update-history)
-                                (shen/shen\.evaluate-lineread W5710 W5711
-                                                              (shen/value 'shen\.*tc*))))))
-(defun shen/shen\.package-user-input
-    (V5712 V5713)
-  (shen/cond
-   ((shen/= 'null V5712)
-    V5713)
-   (shen/true
-    (shen/let W5714
-              (shen/str V5712)
-              (shen/let W5715
-                        (shen/external V5712)
-                        (shen/map
-                         (shen/lambda Z5716
-                                      (shen/shen\.pui-h W5714 W5715 Z5716))
-                         V5713))))))
-(defun shen/shen\.pui-h
-    (V5721 V5722 V5723)
+                         (shen/hd
+                          (shen/shen\.in-> W109))
+                         " ..." 'shen\.s)))
+              (shen/shen\.<-out W109)))))
+(defun shen/shen\.parse-failure\?
+    (V110)
+  (shen/= V110
+          (shen/fail)))
+(defun shen/shen\.objectcode
+    (V113)
   (shen/cond
    ((shen/and
-     (shen/cons\? V5723)
+     (shen/cons\? V113)
      (shen/and
-      (shen/= 'fn
-              (shen/hd V5723))
+      (shen/cons\?
+       (nthcdr 1 V113))
+      (shen/internal/predicate->shen
+       (null
+        (nthcdr 2 V113)))))
+    (shen/hd
+     (nthcdr 1 V113)))
+   (shen/true
+    (shen/simple-error
+     (shen/shen\.app V113 " is not a YACC stream\n" 'shen\.s)))))
+(defun shen/shen\.yacc->shen
+    (V114)
+  (shen/compile
+   (shen/lambda Z115
+                (shen/shen\.<yacc> Z115))
+   V114))
+(defun shen/shen\.<yacc>
+    (V116)
+  (shen/let W117
+            (shen/if
+             (shen/cons\? V116)
+             (shen/let W118
+                       (shen/head V116)
+                       (shen/let W119
+                                 (shen/tail V116)
+                                 (shen/let W120
+                                           (shen/shen\.<yaccsig> W119)
+                                           (shen/if
+                                            (shen/shen\.parse-failure\? W120)
+                                            (shen/shen\.parse-failure)
+                                            (shen/let W121
+                                                      (shen/shen\.<-out W120)
+                                                      (shen/let W122
+                                                                (shen/shen\.in-> W120)
+                                                                (shen/let W123
+                                                                          (shen/shen\.<c-rules> W122)
+                                                                          (shen/if
+                                                                           (shen/shen\.parse-failure\? W123)
+                                                                           (shen/shen\.parse-failure)
+                                                                           (shen/let W124
+                                                                                     (shen/shen\.<-out W123)
+                                                                                     (shen/let W125
+                                                                                               (shen/shen\.in-> W123)
+                                                                                               (shen/shen\.comb W125
+                                                                                                                (shen/let W126
+                                                                                                                          (shen/gensym 'S)
+                                                                                                                          (shen/let W127
+                                                                                                                                    (shen/append
+                                                                                                                                     (list 'define W118)
+                                                                                                                                     (shen/append W121
+                                                                                                                                                  (list W126 '->
+                                                                                                                                                        (shen/shen\.c-rules->shen W121 W126 W124))))
+                                                                                                                                    W127)))))))))))))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W117)
+             (shen/shen\.parse-failure)
+             W117)))
+(defun shen/shen\.<yaccsig>
+    (V128)
+  (shen/let W129
+            (shen/if
+             (shen/cons\? V128)
+             (shen/let W130
+                       (shen/head V128)
+                       (shen/let W131
+                                 (shen/tail V128)
+                                 (shen/if
+                                  (shen/shen\.ccons\? W131)
+                                  (shen/let W132
+                                            (shen/head W131)
+                                            (shen/let W133
+                                                      (shen/tail W131)
+                                                      (shen/if
+                                                       (shen/shen\.hds=\? W132 'list)
+                                                       (shen/let W134
+                                                                 (shen/tail W132)
+                                                                 (shen/if
+                                                                  (shen/cons\? W134)
+                                                                  (shen/let W135
+                                                                            (shen/head W134)
+                                                                            (shen/let W136
+                                                                                      (shen/tail W134)
+                                                                                      (shen/let W137
+                                                                                                (shen/<end> W136)
+                                                                                                (shen/if
+                                                                                                 (shen/shen\.parse-failure\? W137)
+                                                                                                 (shen/shen\.parse-failure)
+                                                                                                 (shen/let W138
+                                                                                                           (shen/shen\.in-> W137)
+                                                                                                           (shen/if
+                                                                                                            (shen/shen\.hds=\? W133 '==>)
+                                                                                                            (shen/let W139
+                                                                                                                      (shen/tail W133)
+                                                                                                                      (shen/if
+                                                                                                                       (shen/cons\? W139)
+                                                                                                                       (shen/let W140
+                                                                                                                                 (shen/head W139)
+                                                                                                                                 (shen/let W141
+                                                                                                                                           (shen/tail W139)
+                                                                                                                                           (shen/if
+                                                                                                                                            (shen/cons\? W141)
+                                                                                                                                            (shen/let W142
+                                                                                                                                                      (shen/head W141)
+                                                                                                                                                      (shen/let W143
+                                                                                                                                                                (shen/tail W141)
+                                                                                                                                                                (shen/if
+                                                                                                                                                                 (shen/and
+                                                                                                                                                                  (shen/= '{ W130)
+                                                                                                                                                                  (shen/= '} W142))
+                                                                                                                                                                 (shen/shen\.comb W143
+                                                                                                                                                                                  (list '{
+                                                                                                                                                                                        (list 'list W135)
+                                                                                                                                                                                        '-->
+                                                                                                                                                                                        (list 'str
+                                                                                                                                                                                              (list 'list W135)
+                                                                                                                                                                                              W140)
+                                                                                                                                                                                        '}))
+                                                                                                                                                                 (shen/shen\.parse-failure))))
+                                                                                                                                            (shen/shen\.parse-failure))))
+                                                                                                                       (shen/shen\.parse-failure)))
+                                                                                                            (shen/shen\.parse-failure)))))))
+                                                                  (shen/shen\.parse-failure)))
+                                                       (shen/shen\.parse-failure))))
+                                  (shen/shen\.parse-failure))))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W129)
+             (shen/let W144
+                       (shen/let W145
+                                 (shen/<e> V128)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W145)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W146
+                                            (shen/shen\.in-> W145)
+                                            (shen/shen\.comb W146 nil))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W144)
+                        (shen/shen\.parse-failure)
+                        W144))
+             W129)))
+(defun shen/shen\.<c-rules>
+    (V147)
+  (shen/let W148
+            (shen/let W149
+                      (shen/shen\.<c-rule> V147)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W149)
+                       (shen/shen\.parse-failure)
+                       (shen/let W150
+                                 (shen/shen\.<-out W149)
+                                 (shen/let W151
+                                           (shen/shen\.in-> W149)
+                                           (shen/let W152
+                                                     (shen/shen\.<c-rules> W151)
+                                                     (shen/if
+                                                      (shen/shen\.parse-failure\? W152)
+                                                      (shen/shen\.parse-failure)
+                                                      (shen/let W153
+                                                                (shen/shen\.<-out W152)
+                                                                (shen/let W154
+                                                                          (shen/shen\.in-> W152)
+                                                                          (shen/shen\.comb W154
+                                                                                           (append
+                                                                                            (list W150)
+                                                                                            W153))))))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W148)
+             (shen/let W155
+                       (shen/let W156
+                                 (shen/<!> V147)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W156)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W157
+                                            (shen/shen\.<-out W156)
+                                            (shen/let W158
+                                                      (shen/shen\.in-> W156)
+                                                      (shen/shen\.comb W158
+                                                                       (shen/if
+                                                                        (shen/empty\? W157)
+                                                                        nil
+                                                                        (shen/simple-error
+                                                                         (shen/cn "YACC syntax error here:\n "
+                                                                                  (shen/shen\.app W157 "\n ..." 'shen\.r)))))))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W155)
+                        (shen/shen\.parse-failure)
+                        W155))
+             W148)))
+(defun shen/shen\.<c-rule>
+    (V159)
+  (shen/let W160
+            (shen/let W161
+                      (shen/shen\.<syntax> V159)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W161)
+                       (shen/shen\.parse-failure)
+                       (shen/let W162
+                                 (shen/shen\.<-out W161)
+                                 (shen/let W163
+                                           (shen/shen\.in-> W161)
+                                           (shen/let W164
+                                                     (shen/shen\.<semantics> W163)
+                                                     (shen/if
+                                                      (shen/shen\.parse-failure\? W164)
+                                                      (shen/shen\.parse-failure)
+                                                      (shen/let W165
+                                                                (shen/shen\.<-out W164)
+                                                                (shen/let W166
+                                                                          (shen/shen\.in-> W164)
+                                                                          (shen/let W167
+                                                                                    (shen/shen\.<sc> W166)
+                                                                                    (shen/if
+                                                                                     (shen/shen\.parse-failure\? W167)
+                                                                                     (shen/shen\.parse-failure)
+                                                                                     (shen/let W168
+                                                                                               (shen/shen\.in-> W167)
+                                                                                               (shen/shen\.comb W168
+                                                                                                                (list W162 W165)))))))))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W160)
+             (shen/let W169
+                       (shen/let W170
+                                 (shen/shen\.<syntax> V159)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W170)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W171
+                                            (shen/shen\.<-out W170)
+                                            (shen/let W172
+                                                      (shen/shen\.in-> W170)
+                                                      (shen/let W173
+                                                                (shen/shen\.<sc> W172)
+                                                                (shen/if
+                                                                 (shen/shen\.parse-failure\? W173)
+                                                                 (shen/shen\.parse-failure)
+                                                                 (shen/let W174
+                                                                           (shen/shen\.in-> W173)
+                                                                           (shen/shen\.comb W174
+                                                                                            (list W171
+                                                                                                  (shen/shen\.autocomplete W171))))))))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W169)
+                        (shen/shen\.parse-failure)
+                        W169))
+             W160)))
+(defun shen/shen\.autocomplete
+    (V175)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V175)
+     (shen/and
+      (shen/internal/predicate->shen
+       (null
+        (nthcdr 1 V175)))
+      (shen/shen\.non-terminal\?
+       (shen/hd V175))))
+    (shen/hd V175))
+   ((shen/and
+     (shen/cons\? V175)
+     (shen/shen\.non-terminal\?
+      (shen/hd V175)))
+    (list 'append
+          (shen/hd V175)
+          (shen/shen\.autocomplete
+           (nthcdr 1 V175))))
+   ((shen/cons\? V175)
+    (list 'cons
+          (shen/shen\.autocomplete
+           (shen/hd V175))
+          (shen/shen\.autocomplete
+           (nthcdr 1 V175))))
+   (shen/true V175)))
+(defun shen/shen\.non-terminal\?
+    (V176)
+  (shen/and
+   (shen/symbol\? V176)
+   (shen/let W177
+             (shen/explode V176)
+             (shen/compile
+              (shen/lambda Z178
+                           (shen/shen\.<non-terminal\?> Z178))
+              W177))))
+(defun shen/shen\.<non-terminal\?>
+    (V179)
+  (shen/let W180
+            (shen/let W181
+                      (shen/shen\.<packagenames> V179)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W181)
+                       (shen/shen\.parse-failure)
+                       (shen/let W182
+                                 (shen/shen\.in-> W181)
+                                 (shen/let W183
+                                           (shen/shen\.<non-terminal-name> W182)
+                                           (shen/if
+                                            (shen/shen\.parse-failure\? W183)
+                                            (shen/shen\.parse-failure)
+                                            (shen/let W184
+                                                      (shen/shen\.in-> W183)
+                                                      (shen/shen\.comb W184 'true)))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W180)
+             (shen/let W185
+                       (shen/let W186
+                                 (shen/shen\.<non-terminal-name> V179)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W186)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W187
+                                            (shen/shen\.in-> W186)
+                                            (shen/shen\.comb W187 'true))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W185)
+                        (shen/let W188
+                                  (shen/let W189
+                                            (shen/<!> V179)
+                                            (shen/if
+                                             (shen/shen\.parse-failure\? W189)
+                                             (shen/shen\.parse-failure)
+                                             (shen/let W190
+                                                       (shen/shen\.in-> W189)
+                                                       (shen/shen\.comb W190 'false))))
+                                  (shen/if
+                                   (shen/shen\.parse-failure\? W188)
+                                   (shen/shen\.parse-failure)
+                                   W188))
+                        W185))
+             W180)))
+(defun shen/shen\.<packagenames>
+    (V191)
+  (shen/let W192
+            (shen/let W193
+                      (shen/shen\.<packagename> V191)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W193)
+                       (shen/shen\.parse-failure)
+                       (shen/let W194
+                                 (shen/shen\.in-> W193)
+                                 (shen/if
+                                  (shen/shen\.hds=\? W194 ".")
+                                  (shen/let W195
+                                            (shen/tail W194)
+                                            (shen/let W196
+                                                      (shen/shen\.<packagenames> W195)
+                                                      (shen/if
+                                                       (shen/shen\.parse-failure\? W196)
+                                                       (shen/shen\.parse-failure)
+                                                       (shen/let W197
+                                                                 (shen/shen\.in-> W196)
+                                                                 (shen/shen\.comb W197 'shen\.skip)))))
+                                  (shen/shen\.parse-failure)))))
+            (shen/if
+             (shen/shen\.parse-failure\? W192)
+             (shen/let W198
+                       (shen/let W199
+                                 (shen/shen\.<packagename> V191)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W199)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W200
+                                            (shen/shen\.in-> W199)
+                                            (shen/if
+                                             (shen/shen\.hds=\? W200 ".")
+                                             (shen/let W201
+                                                       (shen/tail W200)
+                                                       (shen/shen\.comb W201 'shen\.skip))
+                                             (shen/shen\.parse-failure)))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W198)
+                        (shen/shen\.parse-failure)
+                        W198))
+             W192)))
+(defun shen/shen\.<packagename>
+    (V202)
+  (shen/let W203
+            (shen/let W204
+                      (shen/shen\.<packagechar> V202)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W204)
+                       (shen/shen\.parse-failure)
+                       (shen/let W205
+                                 (shen/shen\.in-> W204)
+                                 (shen/let W206
+                                           (shen/shen\.<packagename> W205)
+                                           (shen/if
+                                            (shen/shen\.parse-failure\? W206)
+                                            (shen/shen\.parse-failure)
+                                            (shen/let W207
+                                                      (shen/shen\.in-> W206)
+                                                      (shen/shen\.comb W207 'shen\.skip)))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W203)
+             (shen/let W208
+                       (shen/let W209
+                                 (shen/<e> V202)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W209)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W210
+                                            (shen/shen\.in-> W209)
+                                            (shen/shen\.comb W210 'shen\.skip))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W208)
+                        (shen/shen\.parse-failure)
+                        W208))
+             W203)))
+(defun shen/shen\.<packagechar>
+    (V211)
+  (shen/let W212
+            (shen/if
+             (shen/cons\? V211)
+             (shen/let W213
+                       (shen/head V211)
+                       (shen/let W214
+                                 (shen/tail V211)
+                                 (shen/if
+                                  (shen/not
+                                   (shen/= W213 "."))
+                                  (shen/shen\.comb W214 'shen\.skip)
+                                  (shen/shen\.parse-failure))))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W212)
+             (shen/shen\.parse-failure)
+             W212)))
+(defun shen/shen\.<non-terminal-name>
+    (V215)
+  (shen/let W216
+            (shen/if
+             (shen/shen\.hds=\? V215 "<")
+             (shen/let W217
+                       (shen/tail V215)
+                       (shen/let W218
+                                 (shen/<!> W217)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W218)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W219
+                                            (shen/shen\.<-out W218)
+                                            (shen/let W220
+                                                      (shen/shen\.in-> W218)
+                                                      (shen/if
+                                                       (shen/let W221
+                                                                 (shen/reverse W219)
+                                                                 (shen/and
+                                                                  (shen/cons\? W221)
+                                                                  (shen/=
+                                                                   (shen/hd W221)
+                                                                   ">")))
+                                                       (shen/shen\.comb W220 'shen\.skip)
+                                                       (shen/shen\.parse-failure)))))))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W216)
+             (shen/shen\.parse-failure)
+             W216)))
+(defun shen/shen\.semicolon\?
+    (V222)
+  (shen/= V222
+          (shen/intern ";")))
+(defun shen/shen\.<colon-equal>
+    (V223)
+  (shen/let W224
+            (shen/if
+             (shen/cons\? V223)
+             (shen/let W225
+                       (shen/head V223)
+                       (shen/let W226
+                                 (shen/tail V223)
+                                 (shen/if
+                                  (shen/shen\.colon-equal\? W225)
+                                  (shen/shen\.comb W226 'shen\.skip)
+                                  (shen/shen\.parse-failure))))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W224)
+             (shen/shen\.parse-failure)
+             W224)))
+(defun shen/shen\.colon-equal\?
+    (V227)
+  (shen/=
+   (shen/intern ":=")
+   V227))
+(defun shen/shen\.<syntax>
+    (V228)
+  (shen/let W229
+            (shen/let W230
+                      (shen/shen\.<syntax-item> V228)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W230)
+                       (shen/shen\.parse-failure)
+                       (shen/let W231
+                                 (shen/shen\.<-out W230)
+                                 (shen/let W232
+                                           (shen/shen\.in-> W230)
+                                           (shen/let W233
+                                                     (shen/shen\.<syntax> W232)
+                                                     (shen/if
+                                                      (shen/shen\.parse-failure\? W233)
+                                                      (shen/shen\.parse-failure)
+                                                      (shen/let W234
+                                                                (shen/shen\.<-out W233)
+                                                                (shen/let W235
+                                                                          (shen/shen\.in-> W233)
+                                                                          (shen/shen\.comb W235
+                                                                                           (append
+                                                                                            (list W231)
+                                                                                            W234))))))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W229)
+             (shen/let W236
+                       (shen/let W237
+                                 (shen/shen\.<syntax-item> V228)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W237)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W238
+                                            (shen/shen\.<-out W237)
+                                            (shen/let W239
+                                                      (shen/shen\.in-> W237)
+                                                      (shen/shen\.comb W239
+                                                                       (list W238))))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W236)
+                        (shen/shen\.parse-failure)
+                        W236))
+             W229)))
+(defun shen/shen\.<syntax-item>
+    (V240)
+  (shen/let W241
+            (shen/if
+             (shen/cons\? V240)
+             (shen/let W242
+                       (shen/head V240)
+                       (shen/let W243
+                                 (shen/tail V240)
+                                 (shen/if
+                                  (shen/shen\.syntax-item\? W242)
+                                  (shen/shen\.comb W243 W242)
+                                  (shen/shen\.parse-failure))))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W241)
+             (shen/shen\.parse-failure)
+             W241)))
+(defun shen/shen\.syntax-item\?
+    (V246)
+  (shen/cond
+   ((shen/shen\.colon-equal\? V246)
+    'false)
+   ((shen/shen\.semicolon\? V246)
+    'false)
+   ((shen/atom\? V246)
+    'true)
+   ((shen/and
+     (shen/cons\? V246)
+     (shen/and
+      (shen/= 'cons
+              (shen/hd V246))
       (shen/and
        (shen/cons\?
-        (nthcdr 1 V5723))
+        (nthcdr 1 V246))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 2 V246))
+        (shen/internal/predicate->shen
+         (null
+          (nthcdr 3 V246)))))))
+    (shen/and
+     (shen/shen\.syntax-item\?
+      (shen/hd
+       (nthcdr 1 V246)))
+     (shen/shen\.syntax-item\?
+      (shen/hd
+       (nthcdr 2 V246)))))
+   (shen/true 'false)))
+(defun shen/shen\.<semantics>
+    (V247)
+  (shen/let W248
+            (shen/let W249
+                      (shen/shen\.<colon-equal> V247)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W249)
+                       (shen/shen\.parse-failure)
+                       (shen/let W250
+                                 (shen/shen\.in-> W249)
+                                 (shen/if
+                                  (shen/cons\? W250)
+                                  (shen/let W251
+                                            (shen/head W250)
+                                            (shen/let W252
+                                                      (shen/tail W250)
+                                                      (shen/if
+                                                       (shen/shen\.hds=\? W252 'where)
+                                                       (shen/let W253
+                                                                 (shen/tail W252)
+                                                                 (shen/if
+                                                                  (shen/cons\? W253)
+                                                                  (shen/let W254
+                                                                            (shen/head W253)
+                                                                            (shen/let W255
+                                                                                      (shen/tail W253)
+                                                                                      (shen/if
+                                                                                       (shen/not
+                                                                                        (shen/shen\.semicolon\? W251))
+                                                                                       (shen/shen\.comb W255
+                                                                                                        (list 'where W254 W251))
+                                                                                       (shen/shen\.parse-failure))))
+                                                                  (shen/shen\.parse-failure)))
+                                                       (shen/shen\.parse-failure))))
+                                  (shen/shen\.parse-failure)))))
+            (shen/if
+             (shen/shen\.parse-failure\? W248)
+             (shen/let W256
+                       (shen/let W257
+                                 (shen/shen\.<colon-equal> V247)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W257)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W258
+                                            (shen/shen\.in-> W257)
+                                            (shen/if
+                                             (shen/cons\? W258)
+                                             (shen/let W259
+                                                       (shen/head W258)
+                                                       (shen/let W260
+                                                                 (shen/tail W258)
+                                                                 (shen/if
+                                                                  (shen/not
+                                                                   (shen/shen\.semicolon\? W259))
+                                                                  (shen/shen\.comb W260 W259)
+                                                                  (shen/shen\.parse-failure))))
+                                             (shen/shen\.parse-failure)))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W256)
+                        (shen/shen\.parse-failure)
+                        W256))
+             W248)))
+(defun shen/shen\.c-rules->shen
+    (V269 V270 V271)
+  (shen/cond
+   ((shen/internal/predicate->shen
+     (null V271))
+    (list 'shen\.parse-failure))
+   ((shen/cons\? V271)
+    (shen/shen\.combine-c-code
+     (shen/shen\.c-rule->shen V269
+                              (shen/hd V271)
+                              V270)
+     (shen/shen\.c-rules->shen V269 V270
+                               (nthcdr 1 V271))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.c-rules->shen\n"))))
+(defun shen/shen\.parse-failure nil
+  (shen/fail))
+(defun shen/shen\.combine-c-code
+    (V272 V273)
+  (list 'let 'Result V272
+        (list 'if
+              (list 'shen\.parse-failure\? 'Result)
+              V273 'Result)))
+(defun shen/shen\.c-rule->shen
+    (V280 V281 V282)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V281)
+     (shen/and
+      (shen/cons\?
+       (nthcdr 1 V281))
+      (shen/internal/predicate->shen
+       (null
+        (nthcdr 2 V281)))))
+    (shen/shen\.yacc-syntax V280 V282
+                            (shen/hd V281)
+                            (shen/hd
+                             (nthcdr 1 V281))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.c-rule->shen\n"))))
+(defun shen/shen\.yacc-syntax
+    (V291 V292 V293 V294)
+  (shen/cond
+   ((shen/and
+     (shen/internal/predicate->shen
+      (null V293))
+     (shen/and
+      (shen/cons\? V294)
+      (shen/and
+       (shen/= 'where
+               (shen/hd V294))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 1 V294))
+        (shen/and
+         (shen/cons\?
+          (nthcdr 2 V294))
+         (shen/internal/predicate->shen
+          (null
+           (nthcdr 3 V294))))))))
+    (list 'if
+          (shen/shen\.process-yacc-semantics
+           (shen/hd
+            (nthcdr 1 V294)))
+          (shen/shen\.yacc-syntax V291 V292 nil
+                                  (shen/hd
+                                   (nthcdr 2 V294)))
+          (list 'shen\.parse-failure)))
+   ((shen/internal/predicate->shen
+     (null V293))
+    (shen/shen\.yacc-semantics V291 V292 V294))
+   ((shen/cons\? V293)
+    (shen/if
+     (shen/shen\.non-terminal\?
+      (shen/hd V293))
+     (shen/shen\.non-terminalcode V291 V292
+                                  (shen/hd V293)
+                                  (nthcdr 1 V293)
+                                  V294)
+     (shen/if
+      (shen/variable\?
+       (shen/hd V293))
+      (shen/shen\.variablecode V291 V292
+                               (shen/hd V293)
+                               (nthcdr 1 V293)
+                               V294)
+      (shen/if
+       (shen/= '_
+               (shen/hd V293))
+       (shen/shen\.wildcardcode V291 V292
+                                (shen/hd V293)
+                                (nthcdr 1 V293)
+                                V294)
+       (shen/if
+        (shen/atom\?
+         (shen/hd V293))
+        (shen/shen\.terminalcode V291 V292
+                                 (shen/hd V293)
+                                 (nthcdr 1 V293)
+                                 V294)
+        (shen/if
+         (shen/cons\?
+          (shen/hd V293))
+         (shen/shen\.conscode V291 V292
+                              (shen/hd V293)
+                              (nthcdr 1 V293)
+                              V294)
+         (shen/simple-error "implementation error in shen.yacc-syntax\n")))))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.yacc-syntax\n"))))
+(defun shen/shen\.non-terminalcode
+    (V295 V296 V297 V298 V299)
+  (shen/let W300
+            (shen/concat 'Parse V297)
+            (shen/let W301
+                      (shen/concat 'Action V297)
+                      (shen/let W302
+                                (shen/concat 'Remainder V297)
+                                (list 'let W300
+                                      (list V297 V296)
+                                      (list 'if
+                                            (list 'shen\.parse-failure\? W300)
+                                            (list 'shen\.parse-failure)
+                                            (shen/let W303
+                                                      (list 'let W302
+                                                            (list 'shen\.in-> W300)
+                                                            (shen/shen\.yacc-syntax V295 W302 V298 V299))
+                                                      (shen/if
+                                                       (shen/or
+                                                        (shen/shen\.prolog-occurs\? V297 V299)
+                                                        (shen/shen\.prolog-occurs\? W301 V299))
+                                                       (list 'let W301
+                                                             (list 'shen\.<-out W300)
+                                                             W303)
+                                                       W303))))))))
+(defun shen/shen\.variablecode
+    (V304 V305 V306 V307 V308)
+  (shen/let W309
+            (shen/gensym 'Remainder)
+            (list 'if
+                  (list 'cons\? V305)
+                  (shen/let W310
+                            (list 'let W309
+                                  (list 'tail V305)
+                                  (shen/shen\.yacc-syntax V304 W309 V307 V308))
+                            (shen/if
+                             (shen/shen\.prolog-occurs\? V306 V308)
+                             (list 'let V306
+                                   (list 'head V305)
+                                   W310)
+                             W310))
+                  (list 'shen\.parse-failure))))
+(defun shen/shen\.wildcardcode
+    (V311 V312 V313 V314 V315)
+  (shen/let W316
+            (shen/gensym 'Remainder)
+            (list 'if
+                  (list 'cons\? V312)
+                  (list 'let W316
+                        (list 'tail V312)
+                        (shen/shen\.yacc-syntax V311 W316 V314 V315))
+                  (list 'shen\.parse-failure))))
+(defun shen/shen\.terminalcode
+    (V317 V318 V319 V320 V321)
+  (shen/let W322
+            (shen/gensym 'Remainder)
+            (list 'if
+                  (list 'shen\.hds=\? V318 V319)
+                  (list 'let W322
+                        (list 'tail V318)
+                        (shen/shen\.yacc-syntax V317 W322 V320 V321))
+                  (list 'shen\.parse-failure))))
+(defun shen/shen\.hds=\?
+    (V330 V331)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V330)
+     (shen/=
+      (shen/hd V330)
+      V331))
+    'true)
+   (shen/true 'false)))
+(defun shen/shen\.conscode
+    (V332 V333 V334 V335 V336)
+  (shen/let W337
+            (shen/gensym 'Remainder)
+            (shen/let W338
+                      (shen/gensym 'Hd)
+                      (shen/let W339
+                                (shen/gensym 'Tl)
+                                (list 'if
+                                      (list 'shen\.ccons\? V333)
+                                      (list 'let W338
+                                            (list 'head V333)
+                                            W339
+                                            (list 'tail V333)
+                                            (shen/shen\.yacc-syntax V332 W338
+                                                                    (shen/append
+                                                                     (shen/shen\.decons V334)
+                                                                     (list '<end>))
+                                                                    (list 'shen\.processed
+                                                                          (shen/shen\.yacc-syntax V332 W339 V335 V336))))
+                                      (list 'shen\.parse-failure))))))
+(defun shen/shen\.ccons\?
+    (V348)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V348)
+     (shen/cons\?
+      (shen/hd V348)))
+    'true)
+   (shen/true 'false)))
+(defun shen/shen\.decons
+    (V349)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V349)
+     (shen/and
+      (shen/= 'cons
+              (shen/hd V349))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V349))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 2 V349))
+        (shen/internal/predicate->shen
+         (null
+          (nthcdr 3 V349)))))))
+    (append
+     (list
+      (shen/hd
+       (nthcdr 1 V349)))
+     (shen/shen\.decons
+      (shen/hd
+       (nthcdr 2 V349)))))
+   (shen/true V349)))
+(defun shen/shen\.comb
+    (V350 V351)
+  (list V350 V351))
+(defun shen/shen\.yacc-semantics
+    (V356 V357 V358)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V358)
+     (shen/and
+      (shen/= 'shen\.processed
+              (shen/hd V358))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V358))
        (shen/internal/predicate->shen
         (null
-         (nthcdr 2 V5723))))))
-    (shen/if
-     (shen/shen\.internal\?
-      (shen/hd
-       (nthcdr 1 V5723))
-      V5721 V5722)
-     (list 'fn
-           (shen/shen\.intern-in-package V5721
-                                         (shen/hd
-                                          (nthcdr 1 V5723))))
-     V5723))
-   ((shen/cons\? V5723)
-    (shen/if
-     (shen/shen\.internal\?
-      (shen/hd V5723)
-      V5721 V5722)
-     (append
-      (list
-       (shen/shen\.intern-in-package V5721
-                                     (shen/hd V5723)))
-      (shen/map
-       (shen/lambda Z5724
-                    (shen/shen\.pui-h V5721 V5722 Z5724))
-       (nthcdr 1 V5723)))
-     (shen/if
-      (shen/cons\?
-       (shen/hd V5723))
-      (shen/map
-       (shen/lambda Z5725
-                    (shen/shen\.pui-h V5721 V5722 Z5725))
-       V5723)
-      (append
-       (list
-        (shen/hd V5723))
-       (shen/map
-        (shen/lambda Z5726
-                     (shen/shen\.pui-h V5721 V5722 Z5726))
-        (nthcdr 1 V5723))))))
-   (shen/true V5723)))
-(defun shen/shen\.update-history nil
-  (shen/set 'shen\.*history*
-            (append
-             (list
-              (shen/shen\.trim-it
-               (shen/it)))
-             (shen/value 'shen\.*history*))))
-(defun shen/shen\.trim-it
-    (V5727)
-  (cl-flet
-      ((tail-trampoline
-        (V5727)
-        (shen/cond
-         ((shen/and
-           (shen/shen\.+string\? V5727)
-           (shen/shen\.whitespace\?
-            (shen/string->n
-             (shen/hdstr V5727))))
-          (vector
-           (list
-            (shen/tlstr V5727))))
-         (shen/true V5727))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V5727)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.evaluate-lineread
-    (V5746 V5747 V5748)
-  (cl-flet
-      ((tail-trampoline
-        (V5746 V5747 V5748)
-        (shen/cond
-         ((shen/and
-           (shen/cons\? V5746)
+         (nthcdr 2 V358))))))
+    (shen/hd
+     (nthcdr 1 V358)))
+   (shen/true
+    (shen/let W359
+              (shen/shen\.process-yacc-semantics V358)
+              (shen/let W360
+                        (shen/shen\.use-type-info V356 W359)
+                        (list 'shen\.comb V357 W360))))))
+(defun shen/shen\.use-type-info
+    (V364 V365)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V364)
+     (shen/and
+      (shen/= '{
+              (shen/hd V364))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V364))
+       (shen/and
+        (shen/cons\?
+         (shen/hd
+          (nthcdr 1 V364)))
+        (shen/and
+         (shen/= 'list
+                 (shen/hd
+                  (shen/hd
+                   (nthcdr 1 V364))))
+         (shen/and
+          (shen/cons\?
+           (nthcdr 1
+                   (shen/hd
+                    (nthcdr 1 V364))))
+          (shen/and
+           (shen/internal/predicate->shen
+            (null
+             (nthcdr 2
+                     (shen/hd
+                      (nthcdr 1 V364)))))
            (shen/and
-            (shen/internal/predicate->shen
-             (null
-              (nthcdr 1 V5746)))
+            (shen/cons\?
+             (nthcdr 2 V364))
             (shen/and
-             (shen/cons\? V5747)
+             (shen/= '-->
+                     (shen/hd
+                      (nthcdr 2 V364)))
              (shen/and
-              (shen/shen\.+string\?
-               (shen/hd V5747))
+              (shen/cons\?
+               (nthcdr 3 V364))
               (shen/and
-               (shen/= "!"
-                       (shen/hdstr
-                        (shen/hd V5747)))
+               (shen/cons\?
+                (shen/hd
+                 (nthcdr 3 V364)))
                (shen/and
-                (shen/shen\.+string\?
-                 (shen/tlstr
-                  (shen/hd V5747)))
+                (shen/= 'str
+                        (shen/hd
+                         (shen/hd
+                          (nthcdr 3 V364))))
                 (shen/and
-                 (shen/= "!"
-                         (shen/hdstr
-                          (shen/tlstr
-                           (shen/hd V5747))))
                  (shen/cons\?
-                  (nthcdr 1 V5747)))))))))
-          (shen/let W5749
-                    (shen/read-from-string
-                     (shen/hd
-                      (nthcdr 1 V5747)))
-                    (shen/let W5750
-                              (shen/set 'shen\.*history*
-                                        (append
-                                         (list
-                                          (shen/hd
-                                           (nthcdr 1 V5747)))
-                                         (nthcdr 1 V5747)))
-                              (shen/let W5751
-                                        (shen/pr
-                                         (shen/shen\.app
-                                          (shen/hd
-                                           (nthcdr 1 V5747))
-                                          "\n" 'shen\.a)
-                                         (shen/stoutput))
-                                        (vector
-                                         (list W5749 W5750 V5748))))))
-         ((shen/and
-           (shen/cons\? V5746)
-           (shen/and
-            (shen/internal/predicate->shen
-             (null
-              (nthcdr 1 V5746)))
-            (shen/and
-             (shen/cons\? V5747)
-             (shen/and
-              (shen/shen\.+string\?
-               (shen/hd V5747))
-              (shen/= "!"
-                      (shen/hdstr
-                       (shen/hd V5747)))))))
-          (shen/let W5752
-                    (shen/if
-                     (shen/=
-                      (shen/tlstr
-                       (shen/hd V5747))
-                      "")
-                     nil
-                     (shen/hd
-                      (shen/read-from-string
-                       (shen/tlstr
-                        (shen/hd V5747)))))
-                    (shen/let W5753
-                              (shen/shen\.use-history W5752
-                                                      (shen/tlstr
-                                                       (shen/hd V5747))
-                                                      (nthcdr 1 V5747))
-                              (shen/let W5754
-                                        (shen/pr
-                                         (shen/shen\.app W5753 "\n" 'shen\.a)
-                                         (shen/stoutput))
-                                        (shen/let W5755
-                                                  (shen/read-from-string W5753)
-                                                  (shen/let W5756
-                                                            (shen/set 'shen\.*history*
-                                                                      (append
-                                                                       (list W5753)
-                                                                       (nthcdr 1 V5747)))
-                                                            (vector
-                                                             (list W5755 W5756 V5748))))))))
-         ((shen/and
-           (shen/cons\? V5746)
-           (shen/and
-            (shen/internal/predicate->shen
-             (null
-              (nthcdr 1 V5746)))
-            (shen/and
-             (shen/cons\? V5747)
-             (shen/and
-              (shen/shen\.+string\?
-               (shen/hd V5747))
-              (shen/= "%"
-                      (shen/hdstr
-                       (shen/hd V5747)))))))
-          (shen/let W5757
-                    (shen/if
-                     (shen/=
-                      (shen/tlstr
-                       (shen/hd V5747))
-                      "")
-                     nil
-                     (shen/hd
-                      (shen/read-from-string
-                       (shen/tlstr
-                        (shen/hd V5747)))))
-                    (shen/let W5758
-                              (shen/shen\.peek-history W5757
-                                                       (shen/tlstr
-                                                        (shen/hd V5747))
-                                                       (nthcdr 1 V5747))
-                              (shen/let W5759
-                                        (shen/set 'shen\.*history*
-                                                  (nthcdr 1 V5747))
-                                        (shen/abort)))))
-         ((shen/= 'true V5748)
-          (shen/shen\.check-eval-and-print V5746))
-         ((shen/= 'false V5748)
-          (shen/shen\.eval-and-print V5746))
-         (shen/true
-          (shen/simple-error "implementation error in shen.evaluate-lineread")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V5746 V5747 V5748)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.use-history
-    (V5760 V5761 V5762)
-  (shen/if
-   (shen/integer\? V5760)
-   (shen/nth
-    (1+ V5760)
-    (shen/reverse V5762))
-   (shen/if
-    (shen/symbol\? V5760)
-    (shen/shen\.string-match V5761 V5762)
-    (shen/simple-error "! expects a number or a symbol\n"))))
-(defun shen/shen\.peek-history
-    (V5763 V5764 V5765)
-  (shen/if
-   (shen/integer\? V5763)
-   (shen/pr
-    (shen/cn "\n"
-             (shen/shen\.app
-              (shen/nth
-               (1+ V5763)
-               (shen/reverse V5765))
-              "" 'shen\.a))
-    (shen/stoutput))
-   (shen/if
-    (shen/or
-     (shen/= V5764 "")
-     (shen/symbol\? V5763))
-    (shen/shen\.recursive-string-match 0 V5764
-                                       (shen/reverse V5765))
-    (shen/simple-error "% expects a number or a symbol\n"))))
-(defun shen/shen\.string-match
-    (V5775 V5776)
-  (cl-flet
-      ((tail-trampoline
-        (V5775 V5776)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V5776))
-          (shen/simple-error "\ninput not found"))
-         ((shen/and
-           (shen/cons\? V5776)
-           (shen/shen\.string-prefix\? V5775
-                                       (shen/hd V5776)))
-          (shen/hd V5776))
-         ((shen/cons\? V5776)
-          (vector
-           (list V5775
-                 (nthcdr 1 V5776))))
-         (shen/true
-          (shen/simple-error "implementation error in shen.string-match")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V5775 V5776)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.string-prefix\?
-    (V5784 V5785)
-  (cl-flet
-      ((tail-trampoline
-        (V5784 V5785)
-        (shen/cond
-         ((shen/= "" V5784)
-          'true)
-         ((shen/and
-           (shen/shen\.+string\? V5784)
-           (shen/shen\.whitespace\?
-            (shen/string->n
-             (shen/hdstr V5784))))
-          (vector
-           (list
-            (shen/tlstr V5784)
-            V5785)))
-         ((shen/and
-           (shen/shen\.+string\? V5785)
-           (shen/shen\.whitespace\?
-            (shen/string->n
-             (shen/hdstr V5785))))
-          (vector
-           (list V5784
-                 (shen/tlstr V5785))))
-         ((shen/and
-           (shen/shen\.+string\? V5785)
-           (shen/= "("
-                   (shen/hdstr V5785)))
-          (vector
-           (list V5784
-                 (shen/tlstr V5785))))
-         ((shen/and
-           (shen/shen\.+string\? V5784)
-           (shen/and
-            (shen/shen\.+string\? V5785)
-            (shen/=
-             (shen/hdstr V5784)
-             (shen/hdstr V5785))))
-          (vector
-           (list
-            (shen/tlstr V5784)
-            (shen/tlstr V5785))))
-         (shen/true 'false))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V5784 V5785)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.recursive-string-match
-    (V5796 V5797 V5798)
-  (cl-flet
-      ((tail-trampoline
-        (V5796 V5797 V5798)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V5798))
-          'shen\.skip)
-         ((shen/cons\? V5798)
-          (shen/do
-           (shen/if
-            (shen/shen\.string-prefix\? V5797
-                                        (shen/hd V5798))
-            (shen/pr
-             (shen/shen\.app V5796
-                             (shen/cn ". "
-                                      (shen/shen\.app
-                                       (shen/hd V5798)
-                                       "\n" 'shen\.a))
-                             'shen\.a)
-             (shen/stoutput))
-            'shen\.skip)
-           (vector
-            (list
-             (1+ V5796)
-             V5797
-             (nthcdr 1 V5798)))))
-         (shen/true
-          (shen/simple-error "implementation error in shen.recursive-string-match")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V5796 V5797 V5798)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
+                  (nthcdr 1
+                          (shen/hd
+                           (nthcdr 3 V364))))
+                 (shen/and
+                  (shen/cons\?
+                   (shen/hd
+                    (nthcdr 1
+                            (shen/hd
+                             (nthcdr 3 V364)))))
+                  (shen/and
+                   (shen/= 'list
+                           (shen/hd
+                            (shen/hd
+                             (nthcdr 1
+                                     (shen/hd
+                                      (nthcdr 3 V364))))))
+                   (shen/and
+                    (shen/cons\?
+                     (nthcdr 1
+                             (shen/hd
+                              (nthcdr 1
+                                      (shen/hd
+                                       (nthcdr 3 V364))))))
+                    (shen/and
+                     (shen/internal/predicate->shen
+                      (null
+                       (nthcdr 2
+                               (shen/hd
+                                (nthcdr 1
+                                        (shen/hd
+                                         (nthcdr 3 V364)))))))
+                     (shen/and
+                      (shen/cons\?
+                       (nthcdr 2
+                               (shen/hd
+                                (nthcdr 3 V364))))
+                      (shen/and
+                       (shen/internal/predicate->shen
+                        (null
+                         (nthcdr 3
+                                 (shen/hd
+                                  (nthcdr 3 V364)))))
+                       (shen/and
+                        (shen/cons\?
+                         (nthcdr 4 V364))
+                        (shen/and
+                         (shen/= '}
+                                 (shen/hd
+                                  (nthcdr 4 V364)))
+                         (shen/and
+                          (shen/internal/predicate->shen
+                           (null
+                            (nthcdr 5 V364)))
+                          (shen/and
+                           (shen/=
+                            (shen/hd
+                             (nthcdr 1
+                                     (shen/hd
+                                      (nthcdr 1 V364))))
+                            (shen/hd
+                             (nthcdr 1
+                                     (shen/hd
+                                      (nthcdr 1
+                                              (shen/hd
+                                               (nthcdr 3 V364)))))))
+                           (shen/shen\.monomorphic\?
+                            (shen/hd
+                             (nthcdr 2
+                                     (shen/hd
+                                      (nthcdr 3 V364))))))))))))))))))))))))))))
+    (append
+     (list 'type V365)
+     (nthcdr 2
+             (shen/hd
+              (nthcdr 3 V364)))))
+   (shen/true V365)))
+(defun shen/shen\.monomorphic\?
+    (V368)
+  (shen/cond
+   ((shen/variable\? V368)
+    'false)
+   ((shen/cons\? V368)
+    (shen/and
+     (shen/shen\.monomorphic\?
+      (shen/hd V368))
+     (shen/shen\.monomorphic\?
+      (nthcdr 1 V368))))
+   (shen/true 'true)))
+(defun shen/shen\.process-yacc-semantics
+    (V369)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V369)
+     (shen/and
+      (shen/= 'protect
+              (shen/hd V369))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V369))
+       (shen/and
+        (shen/internal/predicate->shen
+         (null
+          (nthcdr 2 V369)))
+        (shen/shen\.non-terminal\?
+         (shen/hd
+          (nthcdr 1 V369)))))))
+    (shen/hd
+     (nthcdr 1 V369)))
+   ((shen/cons\? V369)
+    (shen/map
+     (shen/lambda Z370
+                  (shen/shen\.process-yacc-semantics Z370))
+     V369))
+   ((shen/shen\.non-terminal\? V369)
+    (shen/concat 'Action V369))
+   (shen/true V369)))
+(defun shen/shen\.<-out
+    (V373)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V373)
+     (shen/and
+      (shen/cons\?
+       (nthcdr 1 V373))
+      (shen/internal/predicate->shen
+       (null
+        (nthcdr 2 V373)))))
+    (shen/hd
+     (nthcdr 1 V373)))
+   (shen/true
+    (shen/hd
+     (nthcdr 1 V373)))))
+(defun shen/shen\.in->
+    (V374)
+  (shen/hd V374))
+(defun shen/<!>
+    (V375)
+  (list nil V375))
+(defun shen/<e>
+    (V376)
+  (list V376 nil))
+(defun shen/<end>
+    (V379)
+  (shen/cond
+   ((shen/internal/predicate->shen
+     (null V379))
+    (list nil nil))
+   (shen/true
+    (shen/shen\.parse-failure))))
 (defun shen/shen\.shen->kl
     (V503)
   (shen/let W504
@@ -2694,4199 +3335,2929 @@
               (apply #'tail-trampoline
                      (aref result 0))))
       result)))
-(defun shen/thaw
-    (V3809)
-  (shen/internal/apply-higher-order-function V3809
-                                             (list)))
-(defun shen/eval
-    (V3810)
-  (shen/eval-kl
-   (shen/shen\.shen->kl
-    (shen/shen\.process-applications
-     (shen/macroexpand V3810)
-     (shen/shen\.find-types V3810)))))
-(defun shen/external
-    (V3811)
+(defun shen/load
+    (V1196)
+  (shen/let W1197
+            (shen/value 'shen\.*tc*)
+            (shen/let W1198
+                      (shen/let W1199
+                                (shen/get-time 'run)
+                                (shen/let W1200
+                                          (shen/shen\.load-help W1197
+                                                                (shen/read-file V1196))
+                                          (shen/let W1201
+                                                    (shen/get-time 'run)
+                                                    (shen/let W1202
+                                                              (shen/- W1201 W1199)
+                                                              (shen/let W1203
+                                                                        (shen/pr
+                                                                         (shen/cn "\nrun time: "
+                                                                                  (shen/cn
+                                                                                   (shen/str W1202)
+                                                                                   " secs\n"))
+                                                                         (shen/stoutput))
+                                                                        W1200)))))
+                      (shen/let W1204
+                                (shen/if W1197
+                                         (shen/pr
+                                          (shen/cn "\ntypechecked in "
+                                                   (shen/shen\.app
+                                                    (shen/inferences)
+                                                    " inferences\n" 'shen\.a))
+                                          (shen/stoutput))
+                                         'shen\.skip)
+                                'loaded))))
+(defun shen/shen\.load-help
+    (V1207 V1208)
   (shen/cond
-   ((shen/= 'null V3811)
-    nil)
+   ((shen/= 'false V1207)
+    (shen/shen\.eval-and-print V1208))
    (shen/true
-    (shen/trap-error
-     (shen/get V3811 'shen\.external-symbols
-               (shen/value '*property-vector*))
-     (shen/lambda Z3812
-                  (shen/simple-error
-                   (shen/cn "package "
-                            (shen/shen\.app V3811 " does not exist.\n;" 'shen\.a))))))))
-(defun shen/internal
-    (V3813)
-  (shen/cond
-   ((shen/= 'null V3813)
-    nil)
-   (shen/true
-    (shen/trap-error
-     (shen/get V3813 'shen\.internal-symbols
-               (shen/value '*property-vector*))
-     (shen/lambda Z3814
-                  (shen/simple-error
-                   (shen/cn "package "
-                            (shen/shen\.app V3813 " does not exist.\n;" 'shen\.a))))))))
-(defun shen/fail-if
-    (V3815 V3816)
-  (shen/if
-   (shen/internal/apply-higher-order-function V3815
-                                              (list V3816))
-   (shen/fail)
-   V3816))
-(defun shen/@s
-    (V3817 V3818)
-  (shen/cn V3817 V3818))
-(defun shen/tc\? nil
-  (shen/value 'shen\.*tc*))
-(defun shen/occurs\? nil
-  (shen/value 'shen\.*occurs*))
-(defun shen/factorise\? nil
-  (shen/value 'shen\.*factorise\?*))
-(defun shen/tracked nil
-  (shen/value 'shen\.*tracking*))
-(defun shen/ps
-    (V3819)
-  (shen/trap-error
-   (shen/get V3819 'shen\.source
-             (shen/value '*property-vector*))
-   (shen/lambda Z3820
-                (shen/simple-error
-                 (shen/shen\.app V3819 " not found.\n" 'shen\.a)))))
-(defun shen/stinput nil
-  (shen/value '*stinput*))
-(defun shen/vector
-    (V3821)
-  (shen/let W3822
-            (shen/absvector
-             (1+ V3821))
-            (shen/let W3823
-                      (shen/address-> W3822 0 V3821)
-                      (shen/let W3824
-                                (shen/if
-                                 (shen/= V3821 0)
-                                 W3823
-                                 (shen/shen\.fillvector W3823 1 V3821
-                                                        (shen/fail)))
-                                W3824))))
-(defun shen/shen\.fillvector
-    (V3826 V3827 V3828 V3829)
-  (cl-flet
-      ((tail-trampoline
-        (V3826 V3827 V3828 V3829)
-        (shen/cond
-         ((shen/= V3827 V3828)
-          (shen/address-> V3826 V3828 V3829))
-         (shen/true
-          (vector
-           (list
-            (shen/address-> V3826 V3827 V3829)
-            (1+ V3827)
-            V3828 V3829))))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V3826 V3827 V3828 V3829)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/vector\?
-    (V3830)
-  (shen/and
-   (shen/absvector\? V3830)
-   (shen/let W3831
-             (shen/trap-error
-              (shen/<-address V3830 0)
-              (shen/lambda Z3832 -1))
-             (shen/and
-              (shen/number\? W3831)
-              (shen/>= W3831 0)))))
-(defun shen/vector->
-    (V3833 V3834 V3835)
-  (shen/if
-   (shen/= V3834 0)
-   (shen/simple-error "cannot access 0th element of a vector\n")
-   (shen/address-> V3833 V3834 V3835)))
-(defun shen/<-vector
-    (V3836 V3837)
-  (shen/if
-   (shen/= V3837 0)
-   (shen/simple-error "cannot access 0th element of a vector\n")
-   (shen/let W3838
-             (shen/<-address V3836 V3837)
-             (shen/if
-              (shen/= W3838
-                      (shen/fail))
-              (shen/simple-error "vector element not found\n")
-              W3838))))
-(defun shen/shen\.posint\?
-    (V3839)
-  (shen/and
-   (shen/integer\? V3839)
-   (shen/>= V3839 0)))
-(defun shen/limit
-    (V3840)
-  (shen/<-address V3840 0))
-(defun shen/symbol\?
-    (V3841)
-  (shen/cond
-   ((shen/or
-     (shen/boolean\? V3841)
-     (shen/or
-      (shen/number\? V3841)
-      (shen/or
-       (shen/string\? V3841)
-       (shen/or
-        (shen/cons\? V3841)
-        (shen/or
-         (shen/empty\? V3841)
-         (shen/vector\? V3841))))))
-    'false)
-   ((shen/element\? V3841
-                    (list '{ '}
-                          (shen/intern ":")
-                          (shen/intern ";")
-                          (shen/intern ",")))
-    'true)
-   (shen/true
-    (shen/trap-error
-     (shen/let W3842
-               (shen/str V3841)
-               (shen/shen\.analyse-symbol\? W3842))
-     (shen/lambda Z3843 'false)))))
-(defun shen/shen\.analyse-symbol\?
-    (V3846)
-  (shen/cond
-   ((shen/shen\.+string\? V3846)
-    (shen/and
-     (shen/shen\.alpha\?
-      (shen/string->n
-       (shen/hdstr V3846)))
-     (shen/shen\.alphanums\?
-      (shen/tlstr V3846))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.analyse-symbol?"))))
-(defun shen/shen\.alphanums\?
-    (V3849)
-  (shen/cond
-   ((shen/= "" V3849)
-    'true)
-   ((shen/shen\.+string\? V3849)
-    (shen/let W3850
-              (shen/string->n
-               (shen/hdstr V3849))
-              (shen/and
-               (shen/or
-                (shen/shen\.alpha\? W3850)
-                (shen/shen\.digit\? W3850))
-               (shen/shen\.alphanums\?
-                (shen/tlstr V3849)))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.alphanums?"))))
-(defun shen/variable\?
-    (V3851)
-  (shen/cond
-   ((shen/or
-     (shen/boolean\? V3851)
-     (shen/or
-      (shen/number\? V3851)
-      (shen/string\? V3851)))
-    'false)
-   (shen/true
-    (shen/trap-error
-     (shen/let W3852
-               (shen/str V3851)
-               (shen/shen\.analyse-variable\? W3852))
-     (shen/lambda Z3853 'false)))))
-(defun shen/shen\.analyse-variable\?
-    (V3856)
-  (shen/cond
-   ((shen/shen\.+string\? V3856)
-    (shen/and
-     (shen/shen\.uppercase\?
-      (shen/string->n
-       (shen/hdstr V3856)))
-     (shen/shen\.alphanums\?
-      (shen/tlstr V3856))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.analyse-variable?"))))
-(defun shen/gensym
-    (V3857)
-  (shen/concat V3857
-               (shen/set 'shen\.*gensym*
-                         (1+
-                          (shen/value 'shen\.*gensym*)))))
-(defun shen/concat
-    (V3858 V3859)
-  (shen/intern
-   (shen/cn
-    (shen/str V3858)
-    (shen/str V3859))))
-(defun shen/@p
-    (V3860 V3861)
-  (shen/let W3862
-            (shen/absvector 3)
-            (shen/let W3863
-                      (shen/address-> W3862 0 'shen\.tuple)
-                      (shen/let W3864
-                                (shen/address-> W3862 1 V3860)
-                                (shen/let W3865
-                                          (shen/address-> W3862 2 V3861)
-                                          W3862)))))
-(defun shen/fst
-    (V3866)
-  (shen/<-address V3866 1))
-(defun shen/snd
-    (V3867)
-  (shen/<-address V3867 2))
-(defun shen/tuple\?
-    (V3868)
-  (shen/and
-   (shen/absvector\? V3868)
-   (shen/= 'shen\.tuple
-           (shen/trap-error
-            (shen/<-address V3868 0)
-            (shen/lambda Z3869 'shen\.not-tuple)))))
-(defun shen/append
-    (Xs Ys)
-  (append Xs Ys))
-(defun shen/@v
-    (V3876 V3877)
-  (shen/let W3878
-            (shen/limit V3877)
-            (shen/let W3879
-                      (shen/vector
-                       (1+ W3878))
-                      (shen/let W3880
-                                (shen/vector-> W3879 1 V3876)
-                                (shen/if
-                                 (shen/= W3878 0)
-                                 W3880
-                                 (shen/shen\.@v-help V3877 1 W3878 W3880))))))
-(defun shen/shen\.@v-help
-    (V3882 V3883 V3884 V3885)
-  (cl-flet
-      ((tail-trampoline
-        (V3882 V3883 V3884 V3885)
-        (shen/cond
-         ((shen/= V3883 V3884)
-          (shen/shen\.copyfromvector V3882 V3885 V3884
-                                     (1+ V3884)))
-         (shen/true
-          (vector
-           (list V3882
-                 (1+ V3883)
-                 V3884
-                 (shen/shen\.copyfromvector V3882 V3885 V3883
-                                            (1+ V3883))))))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V3882 V3883 V3884 V3885)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.copyfromvector
-    (V3886 V3887 V3888 V3889)
-  (shen/trap-error
-   (shen/vector-> V3887 V3889
-                  (shen/<-vector V3886 V3888))
-   (shen/lambda Z3890 V3887)))
-(defun shen/hdv
-    (V3891)
-  (shen/trap-error
-   (shen/<-vector V3891 1)
-   (shen/lambda Z3892
-                (shen/simple-error "hdv needs a non-empty vector as an argument\n"))))
-(defun shen/tlv
-    (V3893)
-  (shen/let W3894
-            (shen/limit V3893)
-            (shen/if
-             (shen/= W3894 0)
-             (shen/simple-error "cannot take the tail of the empty vector\n")
-             (shen/if
-              (shen/= W3894 1)
-              (shen/vector 0)
-              (shen/let W3895
-                        (shen/vector
-                         (shen/- W3894 1))
-                        (shen/shen\.tlv-help V3893 2 W3894
-                                             (shen/vector
-                                              (shen/- W3894 1))))))))
-(defun shen/shen\.tlv-help
-    (V3897 V3898 V3899 V3900)
-  (cl-flet
-      ((tail-trampoline
-        (V3897 V3898 V3899 V3900)
-        (shen/cond
-         ((shen/= V3898 V3899)
-          (shen/shen\.copyfromvector V3897 V3900 V3899
-                                     (shen/- V3899 1)))
-         (shen/true
-          (vector
-           (list V3897
-                 (1+ V3898)
-                 V3899
-                 (shen/shen\.copyfromvector V3897 V3900 V3898
-                                            (shen/- V3898 1))))))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V3897 V3898 V3899 V3900)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/assoc
-    (V3912 V3913)
-  (cl-flet
-      ((tail-trampoline
-        (V3912 V3913)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V3913))
-          nil)
-         ((shen/and
-           (shen/cons\? V3913)
-           (shen/and
-            (shen/cons\?
-             (shen/hd V3913))
-            (shen/= V3912
-                    (shen/hd
-                     (shen/hd V3913)))))
-          (shen/hd V3913))
-         ((shen/cons\? V3913)
-          (vector
-           (list V3912
-                 (nthcdr 1 V3913))))
-         (shen/true
-          (shen/simple-error "attempt to search a non-list with assoc\n")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V3912 V3913)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.assoc-set
-    (V3917 V3918 V3919)
-  (shen/cond
-   ((shen/internal/predicate->shen
-     (null V3919))
-    (list
-     (append
-      (list V3917)
-      V3918)))
-   ((shen/and
-     (shen/cons\? V3919)
-     (shen/and
-      (shen/cons\?
-       (shen/hd V3919))
-      (shen/= V3917
-              (shen/hd
-               (shen/hd V3919)))))
-    (append
-     (list
-      (append
-       (list
-        (shen/hd
-         (shen/hd V3919)))
-       V3918))
-     (nthcdr 1 V3919)))
-   ((shen/cons\? V3919)
-    (append
-     (list
-      (shen/hd V3919))
-     (shen/shen\.assoc-set V3917 V3918
-                           (nthcdr 1 V3919))))
-   (shen/true
-    (shen/shen\.f-error 'shen\.assoc-set))))
-(defun shen/shen\.assoc-rm
-    (V3923 V3924)
-  (shen/cond
-   ((shen/internal/predicate->shen
-     (null V3924))
-    nil)
-   ((shen/and
-     (shen/cons\? V3924)
-     (shen/and
-      (shen/cons\?
-       (shen/hd V3924))
-      (shen/= V3923
-              (shen/hd
-               (shen/hd V3924)))))
-    (nthcdr 1 V3924))
-   ((shen/cons\? V3924)
-    (append
-     (list
-      (shen/hd V3924))
-     (shen/shen\.assoc-rm V3923
-                          (nthcdr 1 V3924))))
-   (shen/true
-    (shen/shen\.f-error 'shen\.assoc-rm))))
-(defun shen/boolean\?
-    (V3927)
-  (shen/cond
-   ((shen/= 'true V3927)
-    'true)
-   ((shen/= 'false V3927)
-    'true)
-   (shen/true 'false)))
-(defun shen/nl
-    (V3928)
-  (cl-flet
-      ((tail-trampoline
-        (V3928)
-        (shen/cond
-         ((shen/= 0 V3928)
-          0)
-         (shen/true
-          (shen/do
-           (shen/pr "\n"
-                    (shen/stoutput))
-           (vector
-            (list
-             (shen/- V3928 1))))))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V3928)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/difference
-    (V3935 V3936)
-  (cl-flet
-      ((tail-trampoline
-        (V3935 V3936)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V3935))
-          nil)
-         ((shen/cons\? V3935)
-          (shen/if
-           (shen/element\?
-            (shen/hd V3935)
-            V3936)
-           (vector
-            (list
-             (nthcdr 1 V3935)
-             V3936))
-           (append
-            (list
-             (shen/hd V3935))
-            (shen/difference
-             (nthcdr 1 V3935)
-             V3936))))
-         (shen/true
-          (shen/simple-error "attempt to find the difference with a non-list\n")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V3935 V3936)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/do
-    (V3937 V3938)
-  V3938)
-(defun shen/element\?
-    (Element Xs)
-  (let
-      ((SearchList Xs)
-       (Found nil)
-       (Length
-        (length Xs))
-       (Current 0))
-    (while
-        (and
-         (not Found)
-         SearchList)
-      (setq Found
-            (shen/internal/= Element
-                             (pop SearchList))))
-    (shen/internal/predicate->shen Found)))
-(defun shen/empty\?
-    (V3954)
-  (shen/cond
-   ((shen/internal/predicate->shen
-     (null V3954))
-    'true)
-   (shen/true 'false)))
-(defun shen/fix
-    (V3955 V3956)
-  (shen/shen\.fix-help V3955 V3956
-                       (shen/internal/apply-higher-order-function V3955
-                                                                  (list V3956))))
-(defun shen/shen\.fix-help
-    (V3962 V3963 V3964)
-  (cl-flet
-      ((tail-trampoline
-        (V3962 V3963 V3964)
-        (shen/cond
-         ((shen/= V3963 V3964)
-          V3964)
-         (shen/true
-          (vector
-           (list V3962 V3964
-                 (shen/internal/apply-higher-order-function V3962
-                                                            (list V3964))))))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V3962 V3963 V3964)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/put
-    (X Pointer Y Dict)
-  (let*
-      ((Contents
-        (shen/<-address Dict 3))
-       (X-Contents
-        (shen/<-address Contents X)))
-    (if X-Contents
-        (progn
-          (puthash Pointer Y X-Contents)
-          Y)
-      (progn
-        (setq X-Contents
-              (shen/absvector 100))
-        (puthash X X-Contents Contents)
-        (puthash Pointer Y X-Contents)
-        Y))))
-(defun shen/unput
-    (X Pointer Dict)
-  (let*
-      ((Contents
-        (shen/<-address Dict 3))
-       (X-Contents
-        (shen/<-address Contents X)))
-    (progn
-      (if X-Contents
-          (remhash Pointer X-Contents))
-      X)))
-(defun shen/get
-    (X Pointer Dict)
-  (let*
-      ((Contents
-        (shen/<-address Dict 3))
-       (X-Contents
-        (shen/<-address Contents X))
-       (Pointer-Contents
-        (if X-Contents
-            (shen/<-address X-Contents Pointer))))
-    (if
-        (not Pointer-Contents)
-        (shen/simple-error "value not found")
-      Pointer-Contents)))
-(defun shen/hash
-    (N Div)
-  (sxhash N))
-(defun shen/shen\.hashkey
-    (V3989)
-  (shen/let W3990
-            (shen/map
-             (shen/lambda Z3991
-                          (shen/string->n Z3991))
-             (shen/explode V3989))
-            (shen/shen\.prodbutzero W3990 1)))
-(defun shen/shen\.prodbutzero
-    (V3992 V3993)
-  (cl-flet
-      ((tail-trampoline
-        (V3992 V3993)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V3992))
-          V3993)
-         ((shen/and
-           (shen/cons\? V3992)
-           (shen/= 0
-                   (shen/hd V3992)))
-          (vector
-           (list
-            (nthcdr 1 V3992)
-            V3993)))
-         ((shen/cons\? V3992)
-          (shen/if
-           (shen/> V3993 10000000000)
-           (vector
-            (list
-             (nthcdr 1 V3992)
-             (shen/+ V3993
-                     (shen/hd V3992))))
-           (vector
-            (list
-             (nthcdr 1 V3992)
-             (shen/* V3993
-                     (shen/hd V3992))))))
-         (shen/true
-          (shen/shen\.f-error 'shen\.prodbutzero)))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V3992 V3993)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.mod
-    (N Div)
-  (mod N Div))
-(defun shen/shen\.multiples
-    (V4000 V4001)
-  (cl-flet
-      ((tail-trampoline
-        (V4000 V4001)
-        (shen/cond
-         ((shen/and
-           (shen/cons\? V4001)
-           (shen/>
-            (shen/hd V4001)
-            V4000))
-          (nthcdr 1 V4001))
-         ((shen/cons\? V4001)
-          (vector
-           (list V4000
-                 (append
-                  (list
-                   (shen/* 2
-                           (shen/hd V4001)))
-                  V4001))))
-         (shen/true
-          (shen/simple-error "implementation error in shen.multiples")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V4000 V4001)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.modh
-    (V4008 V4009)
-  (cl-flet
-      ((tail-trampoline
-        (V4008 V4009)
-        (shen/cond
-         ((shen/= 0 V4008)
-          0)
-         ((shen/internal/predicate->shen
-           (null V4009))
-          V4008)
-         ((shen/and
-           (shen/cons\? V4009)
-           (shen/>
-            (shen/hd V4009)
-            V4008))
-          (shen/if
-           (shen/empty\?
-            (nthcdr 1 V4009))
-           V4008
-           (vector
-            (list V4008
-                  (nthcdr 1 V4009)))))
-         ((shen/cons\? V4009)
-          (vector
-           (list
-            (shen/- V4008
-                    (shen/hd V4009))
-            V4009)))
-         (shen/true
-          (shen/simple-error "implementation error in shen.modh")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V4008 V4009)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/sum
-    (Xs)
-  (apply #'+ Xs))
-(defun shen/head
-    (V4017)
-  (shen/cond
-   ((shen/cons\? V4017)
-    (shen/hd V4017))
-   (shen/true
-    (shen/simple-error "head expects a non-empty list\n"))))
-(defun shen/tail
-    (V4022)
-  (shen/cond
-   ((shen/cons\? V4022)
-    (nthcdr 1 V4022))
-   (shen/true
-    (shen/simple-error "tail expects a non-empty list\n"))))
-(defun shen/hdstr
-    (V4023)
-  (shen/pos V4023 0))
-(defun shen/intersection
-    (V4030 V4031)
-  (cl-flet
-      ((tail-trampoline
-        (V4030 V4031)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V4030))
-          nil)
-         ((shen/cons\? V4030)
-          (shen/if
-           (shen/element\?
-            (shen/hd V4030)
-            V4031)
-           (append
-            (list
-             (shen/hd V4030))
-            (shen/intersection
-             (nthcdr 1 V4030)
-             V4031))
-           (vector
-            (list
-             (nthcdr 1 V4030)
-             V4031))))
-         (shen/true
-          (shen/simple-error "attempt to find the intersection with a non-list\n")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V4030 V4031)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/reverse
-    (V4032)
-  (shen/shen\.reverse-help V4032 nil))
-(defun shen/shen\.reverse-help
-    (V4037 V4038)
-  (cl-flet
-      ((tail-trampoline
-        (V4037 V4038)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V4037))
-          V4038)
-         ((shen/cons\? V4037)
-          (vector
-           (list
-            (nthcdr 1 V4037)
-            (append
-             (list
-              (shen/hd V4037))
-             V4038))))
-         (shen/true
-          (shen/simple-error "attempt to reverse a non-list\n")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V4037 V4038)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/union
-    (V4043 V4044)
-  (cl-flet
-      ((tail-trampoline
-        (V4043 V4044)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V4043))
-          V4044)
-         ((shen/cons\? V4043)
-          (shen/if
-           (shen/element\?
-            (shen/hd V4043)
-            V4044)
-           (vector
-            (list
-             (nthcdr 1 V4043)
-             V4044))
-           (append
-            (list
-             (shen/hd V4043))
-            (shen/union
-             (nthcdr 1 V4043)
-             V4044))))
-         (shen/true
-          (shen/simple-error "attempt to find the union with a non-list\n")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V4043 V4044)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/y-or-n\?
-    (V4045)
-  (cl-flet
-      ((tail-trampoline
-        (V4045)
-        (shen/let W4046
-                  (shen/pr
-                   (shen/shen\.proc-nl V4045)
-                   (shen/stoutput))
-                  (shen/let W4047
-                            (shen/pr " (y/n) "
-                                     (shen/stoutput))
-                            (shen/let W4048
-                                      (shen/shen\.app
-                                       (shen/read
-                                        (shen/stinput))
-                                       "" 'shen\.s)
-                                      (shen/if
-                                       (shen/= "y" W4048)
-                                       'true
-                                       (shen/if
-                                        (shen/= "n" W4048)
-                                        'false
-                                        (shen/do
-                                         (shen/pr "please answer y or n\n"
-                                                  (shen/stoutput))
-                                         (vector
-                                          (list V4045))))))))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V4045)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/not
-    (V4049)
-  (shen/if V4049 'false 'true))
-(defun shen/abort nil
-  (shen/simple-error ""))
-(defun shen/subst
-    (V4055 V4056 V4057)
-  (shen/cond
-   ((shen/= V4056 V4057)
-    V4055)
-   ((shen/cons\? V4057)
-    (append
-     (list
-      (shen/subst V4055 V4056
-                  (shen/hd V4057)))
-     (shen/subst V4055 V4056
-                 (nthcdr 1 V4057))))
-   (shen/true V4057)))
-(defun shen/explode
-    (V4058)
-  (shen/shen\.explode-h
-   (shen/shen\.app V4058 "" 'shen\.a)))
-(defun shen/shen\.explode-h
-    (V4061)
-  (shen/cond
-   ((shen/= "" V4061)
-    nil)
-   ((shen/shen\.+string\? V4061)
-    (append
-     (list
-      (shen/hdstr V4061))
-     (shen/shen\.explode-h
-      (shen/tlstr V4061))))
-   (shen/true
-    (shen/simple-error "implementation error in explode-h"))))
-(defun shen/cd
-    (V4062)
-  (shen/set '*home-directory*
-            (shen/if
-             (shen/= V4062 "")
-             ""
-             (shen/shen\.app V4062 "/" 'shen\.a))))
-(defun shen/shen\.for-each
-    (V4063 V4064)
-  (cl-flet
-      ((tail-trampoline
-        (V4063 V4064)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V4064))
-          'true)
-         ((shen/cons\? V4064)
-          (shen/let W4065
-                    (shen/internal/apply-higher-order-function V4063
-                                                               (list
-                                                                (shen/hd V4064)))
-                    (vector
-                     (list V4063
-                           (nthcdr 1 V4064)))))
-         (shen/true
-          (shen/shen\.f-error 'shen\.for-each)))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V4063 V4064)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/map
-    (F Xs)
-  (mapcar
-   (lambda
-     (X)
-     (shen/internal/apply-higher-order-function F
-                                                (list X)))
-   Xs))
-(defun shen/shen\.map-h
-    (V4068 V4069 V4070)
-  (cl-flet
-      ((tail-trampoline
-        (V4068 V4069 V4070)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V4069))
-          (shen/reverse V4070))
-         ((shen/cons\? V4069)
-          (vector
-           (list V4068
-                 (nthcdr 1 V4069)
-                 (append
-                  (list
-                   (shen/internal/apply-higher-order-function V4068
-                                                              (list
-                                                               (shen/hd V4069))))
-                  V4070))))
-         (shen/true
-          (shen/shen\.f-error 'shen\.map-h)))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V4068 V4069 V4070)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/length
-    (V4071)
-  (shen/shen\.length-h V4071 0))
-(defun shen/shen\.length-h
-    (V4076 V4077)
-  (cl-flet
-      ((tail-trampoline
-        (V4076 V4077)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V4076))
-          V4077)
-         (shen/true
-          (vector
-           (list
-            (nthcdr 1 V4076)
-            (1+ V4077)))))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V4076 V4077)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/occurrences
-    (V4083 V4084)
-  (shen/cond
-   ((shen/= V4083 V4084)
-    1)
-   ((shen/cons\? V4084)
-    (shen/+
-     (shen/occurrences V4083
-                       (shen/hd V4084))
-     (shen/occurrences V4083
-                       (nthcdr 1 V4084))))
-   (shen/true 0)))
-(defun shen/nth
-    (I Xs)
-  (nth I Xs))
-(defun shen/integer\?
-    (N)
-  (shen/internal/predicate->shen
-   (integerp N)))
-(defun shen/shen\.abs
-    (V4093)
-  (shen/if
-   (shen/> V4093 0)
-   V4093
-   (shen/- 0 V4093)))
-(defun shen/shen\.magless
-    (V4094 V4095)
-  (cl-flet
-      ((tail-trampoline
-        (V4094 V4095)
-        (shen/let W4096
-                  (shen/* V4095 2)
-                  (shen/if
-                   (shen/> W4096 V4094)
-                   V4095
-                   (vector
-                    (list V4094 W4096))))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V4094 V4095)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.integer-test\?
-    (V4100 V4101)
-  (cl-flet
-      ((tail-trampoline
-        (V4100 V4101)
-        (shen/cond
-         ((shen/= 0 V4100)
-          'true)
-         ((shen/> 1 V4100)
-          'false)
-         (shen/true
-          (shen/let W4102
-                    (shen/- V4100 V4101)
-                    (shen/if
-                     (shen/> 0 W4102)
-                     (shen/integer\? V4100)
-                     (vector
-                      (list W4102 V4101))))))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V4100 V4101)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/mapcan
-    (V4109 V4110)
-  (shen/cond
-   ((shen/internal/predicate->shen
-     (null V4110))
-    nil)
-   ((shen/cons\? V4110)
-    (shen/append
-     (shen/internal/apply-higher-order-function V4109
-                                                (list
-                                                 (shen/hd V4110)))
-     (shen/mapcan V4109
-                  (nthcdr 1 V4110))))
-   (shen/true
-    (shen/simple-error "attempt to mapcan over a non-list\n"))))
-(defun shen/==
-    (V4116 V4117)
-  (shen/cond
-   ((shen/= V4116 V4117)
-    'true)
-   (shen/true 'false)))
-(defun shen/bound\?
-    (V4118)
-  (shen/and
-   (shen/symbol\? V4118)
-   (shen/let W4119
-             (shen/trap-error
-              (shen/value V4118)
-              (shen/lambda Z4120 'shen\.this-symbol-is-unbound))
-             (shen/if
-              (shen/= W4119 'shen\.this-symbol-is-unbound)
-              'false 'true))))
-(defun shen/shen\.string->bytes
-    (S)
-  (string-to-list S))
-(defun shen/maxinferences
-    (V4122)
-  (shen/if
-   (shen/< V4122 0)
-   (shen/value 'shen\.*maxinferences*)
-   (shen/if
-    (shen/integer\? V4122)
-    (shen/set 'shen\.*maxinferences* V4122)
-    (shen/simple-error "maxinferences expects an integer value\n"))))
-(defun shen/inferences nil
-  (shen/value 'shen\.*infs*))
-(defun shen/protect
-    (V4123)
-  V4123)
-(defun shen/sterror nil
-  (shen/value '*sterror*))
-(defun shen/stoutput nil
-  (shen/value '*stoutput*))
-(defun shen/string->symbol
-    (V4124)
-  (shen/let W4125
-            (shen/intern V4124)
-            (shen/if
-             (shen/symbol\? W4125)
-             W4125
-             (shen/simple-error
-              (shen/cn "cannot intern "
-                       (shen/shen\.app V4124 " to a symbol" 'shen\.s))))))
-(defun shen/optimise
-    (V4128)
-  (shen/cond
-   ((shen/= '+ V4128)
-    (shen/set 'shen\.*optimise* 'true))
-   ((shen/= '- V4128)
-    (shen/set 'shen\.*optimise* 'false))
-   (shen/true
-    (shen/simple-error "optimise expects a + or a -.\n"))))
-(defun shen/os nil
-  (shen/value '*os*))
-(defun shen/language nil
-  (shen/value '*language*))
-(defun shen/version nil
-  (shen/value '*version*))
-(defun shen/port nil
-  (shen/value '*port*))
-(defun shen/porters nil
-  (shen/value '*porters*))
-(defun shen/implementation nil
-  (shen/value '*implementation*))
-(defun shen/release nil
-  (shen/value '*release*))
-(defun shen/package\?
-    (V4129)
-  (shen/cond
-   ((shen/= 'null V4129)
-    'true)
-   (shen/true
-    (shen/trap-error
-     (shen/do
-      (shen/external V4129)
-      'true)
-     (shen/lambda Z4130 'false)))))
-(defun shen/fail nil 'shen\.fail!)
-(defun shen/userdefs nil
-  (shen/value 'shen\.*userdefs*))
-(defun shen/optimise\? nil
-  (shen/value 'shen\.*optimise*))
-(defun shen/hush\? nil
-  (shen/value '*hush*))
-(defun shen/system-S\? nil
-  (shen/value 'shen\.*shen-type-theory-enabled\?*))
-(defun shen/enable-type-theory
-    (V4133)
-  (shen/cond
-   ((shen/= '+ V4133)
-    (shen/set 'shen\.*shen-type-theory-enabled\?* 'true))
-   ((shen/= '- V4133)
-    (shen/set 'shen\.*shen-type-theory-enabled\?* 'false))
-   (shen/true
-    (shen/simple-error "enable-type-theory expects a + or a -\n"))))
-(defun shen/hush
-    (V4136)
-  (shen/cond
-   ((shen/= '+ V4136)
-    (shen/set '*hush* 'true))
-   ((shen/= '- V4136)
-    (shen/set '*hush* 'false))
-   (shen/true
-    (shen/simple-error "hush expects a + or a -\n"))))
-(defun shen/tc
-    (V4139)
-  (shen/cond
-   ((shen/= '+ V4139)
-    (shen/set 'shen\.*tc* 'true))
-   ((shen/= '- V4139)
-    (shen/set 'shen\.*tc* 'false))
-   (shen/true
-    (shen/simple-error "tc expects a + or -"))))
-(defun shen/destroy
-    (V4140)
-  (shen/do
-   (shen/set 'shen\.*sigf*
-             (shen/shen\.unassoc V4140
-                                 (shen/value 'shen\.*sigf*)))
-   V4140))
-(defun shen/shen\.unassoc
-    (V4150 V4151)
-  (shen/cond
-   ((shen/internal/predicate->shen
-     (null V4151))
-    nil)
-   ((shen/and
-     (shen/cons\? V4151)
-     (shen/and
-      (shen/cons\?
-       (shen/hd V4151))
-      (shen/= V4150
-              (shen/hd
-               (shen/hd V4151)))))
-    (nthcdr 1 V4151))
-   ((shen/cons\? V4151)
-    (append
-     (list
-      (shen/hd V4151))
-     (shen/shen\.unassoc V4150
-                         (nthcdr 1 V4151))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.unassoc"))))
-(defun shen/in-package
-    (V4152)
-  (shen/if
-   (shen/package\? V4152)
-   (shen/set 'shen\.*package* V4152)
-   (shen/simple-error
-    (shen/cn "package "
-             (shen/shen\.app V4152 " does not exist\n" 'shen\.a)))))
-(defun shen/write-to-file
-    (V4153 V4154)
-  (shen/let W4155
-            (shen/open V4153 'out)
-            (shen/let W4156
-                      (shen/if
-                       (shen/string\? V4154)
-                       V4154
-                       (shen/shen\.app V4154 "" 'shen\.s))
-                      (shen/let W4157
-                                (shen/pr W4156 W4155)
-                                (shen/let W4158
-                                          (shen/close W4155)
-                                          V4154)))))
-(defun shen/fresh nil
-  (shen/shen\.freshterm
-   (shen/gensym 'shen\.t)))
-(defun shen/update-lambda-table
-    (V4159 V4160)
-  (shen/let W4161
-            (shen/put V4159 'arity V4160
-                      (shen/value '*property-vector*))
-            (shen/let W4162
-                      (shen/shen\.lambda-entry V4159)
-                      (shen/let W4163
-                                (shen/shen\.set-lambda-form-entry
-                                 (append
-                                  (list V4159)
-                                  W4162))
-                                V4159))))
-(defun shen/specialise
-    (V4166 V4167)
-  (shen/cond
-   ((shen/= 0 V4167)
-    (shen/do
-     (shen/set 'shen\.*special*
-               (shen/remove V4166
-                            (shen/value 'shen\.*special*)))
-     (shen/do
-      (shen/set 'shen\.*extraspecial*
-                (shen/remove V4166
-                             (shen/value 'shen\.*extraspecial*)))
-      V4166)))
-   ((shen/= 1 V4167)
-    (shen/do
-     (shen/set 'shen\.*special*
-               (shen/adjoin V4166
-                            (shen/value 'shen\.*special*)))
-     (shen/do
-      (shen/set 'shen\.*extraspecial*
-                (shen/remove V4166
-                             (shen/value 'shen\.*extraspecial*)))
-      V4166)))
-   ((shen/= 2 V4167)
-    (shen/do
-     (shen/set 'shen\.*special*
-               (shen/remove V4166
-                            (shen/value 'shen\.*special*)))
-     (shen/do
-      (shen/set 'shen\.*extraspecial*
-                (shen/adjoin V4166
-                             (shen/value 'shen\.*extraspecial*)))
-      V4166)))
-   (shen/true
-    (shen/simple-error "specialise requires values of 0, 1 or 2\n"))))
-(defun shen/shen\.dict
-    (Size)
-  (let
-      ((Dict
-        (shen/absvector 4))
-       (Contents
-        (shen/absvector Size)))
-    (progn
-      (shen/address-> Dict 0 'dictionary)
-      (shen/address-> Dict 1 Size)
-      (shen/address-> Dict 2 0)
-      (shen/address-> Dict 3 Contents)
-      Dict)))
-(defun shen/shen\.dict\?
-    (V4208)
-  (shen/and
-   (shen/absvector\? V4208)
-   (shen/=
-    (shen/trap-error
-     (shen/<-address V4208 0)
-     (shen/lambda Z4209 'shen\.not-dictionary))
-    'shen\.dictionary)))
-(defun shen/shen\.dict-capacity
-    (V4210)
-  (shen/<-address V4210 1))
-(defun shen/shen\.dict-count
-    (V4211)
-  (shen/<-address V4211 2))
-(defun shen/shen\.dict-count->
-    (V4212 V4213)
-  (shen/address-> V4212 2 V4213))
-(defun shen/shen\.<-dict-bucket
-    (V4214 V4215)
-  (shen/<-address V4214
-                  (shen/+ 3 V4215)))
-(defun shen/shen\.dict-bucket->
-    (V4216 V4217 V4218)
-  (shen/address-> V4216
-                  (shen/+ 3 V4217)
-                  V4218))
-(defun shen/shen\.dict-update-count
-    (V4219 V4220 V4221)
-  (shen/let W4222
-            (shen/-
-             (shen/length V4221)
-             (shen/length V4220))
-            (shen/shen\.dict-count-> V4219
-                                     (shen/+ W4222
-                                             (shen/shen\.dict-count V4219)))))
-(defun shen/shen\.dict->
-    (Dict Key Value)
-  (let*
-      ((Count
-        (shen/shen\.dict-count Dict))
-       (Contents
-        (shen/<-address Dict 3))
-       (Exists
-        (shen/<-address Contents Key)))
-    (progn
-      (if
-          (not Exists)
-          (shen/address-> Dict 2
-                          (1+ Count)))
-      (shen/address-> Contents Key Value))))
-(defun shen/shen\.<-dict
-    (Dict Key)
-  (let*
-      ((Contents
-        (shen/<-address Dict 3))
-       (Existing
-        (shen/<-address Contents Key)))
-    (if
-        (not Existing)
-        (shen/freeze
-         (shen/simple-error "value not found"))
-      Existing)))
-(defun shen/shen\.dict-rm
-    (Dict Key)
-  (let*
-      ((Count
-        (shen/shen\.dict-count Dict))
-       (Contents
-        (shen/<-address Dict 3))
-       (Exists
-        (shen/<-address Contents Key)))
-    (if
-        (not Exists)
-        Key
-      (progn
-        (remhash Key Contents)
-        (shen/address-> Dict 2
-                        (1- Count))
-        Key))))
-(defun shen/shen\.dict-fold
-    (F Dict Acc)
-  (let
-      ((Contents
-        (shen/<-address Dict 3)))
-    (progn
-      (setq NewAcc Acc)
-      (maphash
-       (lambda
-         (Key Value)
-         (setq NewAcc
-               (shen/internal/apply-higher-order-function F
-                                                          (list Key Value NewAcc))))
-       Contents)
-      NewAcc)))
-(defun shen/shen\.dict-fold-h
-    (V4248 V4249 V4250 V4251 V4252)
-  (cl-flet
-      ((tail-trampoline
-        (V4248 V4249 V4250 V4251 V4252)
-        (shen/cond
-         ((shen/= V4251 V4252)
-          V4250)
-         (shen/true
-          (shen/let W4253
-                    (shen/shen\.<-dict-bucket V4249 V4251)
-                    (shen/let W4254
-                              (shen/shen\.bucket-fold V4248 W4253 V4250)
-                              (vector
-                               (list V4248 V4249 W4254
-                                     (1+ V4251)
-                                     V4252))))))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V4248 V4249 V4250 V4251 V4252)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.bucket-fold
-    (V4255 V4256 V4257)
-  (cl-flet
-      ((tail-trampoline
-        (V4255 V4256 V4257)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V4256))
-          V4257)
-         ((shen/and
-           (shen/cons\? V4256)
-           (shen/cons\?
-            (shen/hd V4256)))
-          (shen/internal/apply-function-expression
-           (shen/internal/apply-function-expression
-            (shen/internal/apply-higher-order-function V4255
-                                                       (list
-                                                        (shen/hd
-                                                         (shen/hd V4256))))
-            (list
-             (nthcdr 1
-                     (shen/hd V4256))))
-           (list
-            (vector
-             (list V4255
-                   (nthcdr 1 V4256)
-                   V4257)))))
-         (shen/true
-          (shen/shen\.f-error 'shen\.bucket-fold)))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V4255 V4256 V4257)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.dict-keys
-    (Dict)
-  (let*
-      ((Contents
-        (shen/<-address Dict 3)))
-    (hash-table-keys Contents)))
-(defun shen/shen\.dict-values
-    (Dict)
-  (let*
-      ((Contents
-        (shen/<-address Dict 3)))
-    (hash-table-values Contents)))
-(defun shen/shen\.<datatype>
-    (V3342)
-  (shen/let W3343
-            (shen/if
-             (shen/cons\? V3342)
-             (shen/let W3344
-                       (shen/head V3342)
-                       (shen/let W3345
-                                 (shen/tail V3342)
-                                 (shen/let W3346
-                                           (shen/shen\.<datatype-rules> W3345)
-                                           (shen/if
-                                            (shen/shen\.parse-failure\? W3346)
-                                            (shen/shen\.parse-failure)
-                                            (shen/let W3347
-                                                      (shen/shen\.<-out W3346)
-                                                      (shen/let W3348
-                                                                (shen/shen\.in-> W3346)
-                                                                (shen/shen\.comb W3348
-                                                                                 (shen/let W3349
-                                                                                           (shen/shen\.rules->prolog W3344 W3347)
-                                                                                           (shen/shen\.remember-datatype W3344
-                                                                                                                         (shen/fn W3344))))))))))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W3343)
-             (shen/shen\.parse-failure)
-             W3343)))
-(defun shen/shen\.<datatype-rules>
-    (V3350)
-  (shen/let W3351
-            (shen/let W3352
-                      (shen/shen\.<datatype-rule> V3350)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W3352)
-                       (shen/shen\.parse-failure)
-                       (shen/let W3353
-                                 (shen/shen\.<-out W3352)
-                                 (shen/let W3354
-                                           (shen/shen\.in-> W3352)
-                                           (shen/let W3355
-                                                     (shen/shen\.<datatype-rules> W3354)
-                                                     (shen/if
-                                                      (shen/shen\.parse-failure\? W3355)
-                                                      (shen/shen\.parse-failure)
-                                                      (shen/let W3356
-                                                                (shen/shen\.<-out W3355)
-                                                                (shen/let W3357
-                                                                          (shen/shen\.in-> W3355)
-                                                                          (shen/shen\.comb W3357
-                                                                                           (shen/append W3353 W3356))))))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W3351)
-             (shen/let W3358
-                       (shen/let W3359
-                                 (shen/<!> V3350)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W3359)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W3360
-                                            (shen/shen\.<-out W3359)
-                                            (shen/let W3361
-                                                      (shen/shen\.in-> W3359)
-                                                      (shen/shen\.comb W3361
-                                                                       (shen/if
-                                                                        (shen/empty\? W3360)
-                                                                        nil
-                                                                        (shen/simple-error
-                                                                         (shen/cn "datatype syntax error here:\n "
-                                                                                  (shen/shen\.app W3360 "\n ..." 'shen\.r)))))))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W3358)
-                        (shen/shen\.parse-failure)
-                        W3358))
-             W3351)))
-(defun shen/shen\.<datatype-rule>
-    (V3362)
-  (shen/let W3363
-            (shen/let W3364
-                      (shen/shen\.<single> V3362)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W3364)
-                       (shen/shen\.parse-failure)
-                       (shen/let W3365
-                                 (shen/shen\.<-out W3364)
-                                 (shen/let W3366
-                                           (shen/shen\.in-> W3364)
-                                           (shen/shen\.comb W3366 W3365)))))
-            (shen/if
-             (shen/shen\.parse-failure\? W3363)
-             (shen/let W3367
-                       (shen/let W3368
-                                 (shen/shen\.<double> V3362)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W3368)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W3369
-                                            (shen/shen\.<-out W3368)
-                                            (shen/let W3370
-                                                      (shen/shen\.in-> W3368)
-                                                      (shen/shen\.comb W3370 W3369)))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W3367)
-                        (shen/shen\.parse-failure)
-                        W3367))
-             W3363)))
-(defun shen/shen\.<single>
-    (V3371)
-  (shen/let W3372
-            (shen/let W3373
-                      (shen/shen\.<sides> V3371)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W3373)
-                       (shen/shen\.parse-failure)
-                       (shen/let W3374
-                                 (shen/shen\.<-out W3373)
-                                 (shen/let W3375
-                                           (shen/shen\.in-> W3373)
-                                           (shen/let W3376
-                                                     (shen/shen\.<prems> W3375)
-                                                     (shen/if
-                                                      (shen/shen\.parse-failure\? W3376)
-                                                      (shen/shen\.parse-failure)
-                                                      (shen/let W3377
-                                                                (shen/shen\.<-out W3376)
-                                                                (shen/let W3378
-                                                                          (shen/shen\.in-> W3376)
-                                                                          (shen/let W3379
-                                                                                    (shen/shen\.<sng> W3378)
-                                                                                    (shen/if
-                                                                                     (shen/shen\.parse-failure\? W3379)
-                                                                                     (shen/shen\.parse-failure)
-                                                                                     (shen/let W3380
-                                                                                               (shen/shen\.in-> W3379)
-                                                                                               (shen/let W3381
-                                                                                                         (shen/shen\.<conc> W3380)
-                                                                                                         (shen/if
-                                                                                                          (shen/shen\.parse-failure\? W3381)
-                                                                                                          (shen/shen\.parse-failure)
-                                                                                                          (shen/let W3382
-                                                                                                                    (shen/shen\.<-out W3381)
-                                                                                                                    (shen/let W3383
-                                                                                                                              (shen/shen\.in-> W3381)
-                                                                                                                              (shen/let W3384
-                                                                                                                                        (shen/shen\.<sc> W3383)
-                                                                                                                                        (shen/if
-                                                                                                                                         (shen/shen\.parse-failure\? W3384)
-                                                                                                                                         (shen/shen\.parse-failure)
-                                                                                                                                         (shen/let W3385
-                                                                                                                                                   (shen/shen\.in-> W3384)
-                                                                                                                                                   (shen/shen\.comb W3385
-                                                                                                                                                                    (list
-                                                                                                                                                                     (list W3374 W3377 W3382)))))))))))))))))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W3372)
-             (shen/shen\.parse-failure)
-             W3372)))
-(defun shen/shen\.<double>
-    (V3386)
-  (shen/let W3387
-            (shen/let W3388
-                      (shen/shen\.<sides> V3386)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W3388)
-                       (shen/shen\.parse-failure)
-                       (shen/let W3389
-                                 (shen/shen\.<-out W3388)
-                                 (shen/let W3390
-                                           (shen/shen\.in-> W3388)
-                                           (shen/let W3391
-                                                     (shen/shen\.<formulae> W3390)
-                                                     (shen/if
-                                                      (shen/shen\.parse-failure\? W3391)
-                                                      (shen/shen\.parse-failure)
-                                                      (shen/let W3392
-                                                                (shen/shen\.<-out W3391)
-                                                                (shen/let W3393
-                                                                          (shen/shen\.in-> W3391)
-                                                                          (shen/let W3394
-                                                                                    (shen/shen\.<dbl> W3393)
-                                                                                    (shen/if
-                                                                                     (shen/shen\.parse-failure\? W3394)
-                                                                                     (shen/shen\.parse-failure)
-                                                                                     (shen/let W3395
-                                                                                               (shen/shen\.in-> W3394)
-                                                                                               (shen/let W3396
-                                                                                                         (shen/shen\.<formula> W3395)
-                                                                                                         (shen/if
-                                                                                                          (shen/shen\.parse-failure\? W3396)
-                                                                                                          (shen/shen\.parse-failure)
-                                                                                                          (shen/let W3397
-                                                                                                                    (shen/shen\.<-out W3396)
-                                                                                                                    (shen/let W3398
-                                                                                                                              (shen/shen\.in-> W3396)
-                                                                                                                              (shen/let W3399
-                                                                                                                                        (shen/shen\.<sc> W3398)
-                                                                                                                                        (shen/if
-                                                                                                                                         (shen/shen\.parse-failure\? W3399)
-                                                                                                                                         (shen/shen\.parse-failure)
-                                                                                                                                         (shen/let W3400
-                                                                                                                                                   (shen/shen\.in-> W3399)
-                                                                                                                                                   (shen/shen\.comb W3400
-                                                                                                                                                                    (shen/shen\.lr-rule W3389 W3392
-                                                                                                                                                                                        (list nil W3397)))))))))))))))))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W3387)
-             (shen/shen\.parse-failure)
-             W3387)))
-(defun shen/shen\.<formulae>
-    (V3401)
-  (shen/let W3402
-            (shen/let W3403
-                      (shen/shen\.<formula> V3401)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W3403)
-                       (shen/shen\.parse-failure)
-                       (shen/let W3404
-                                 (shen/shen\.<-out W3403)
-                                 (shen/let W3405
-                                           (shen/shen\.in-> W3403)
-                                           (shen/let W3406
-                                                     (shen/shen\.<sc> W3405)
-                                                     (shen/if
-                                                      (shen/shen\.parse-failure\? W3406)
-                                                      (shen/shen\.parse-failure)
-                                                      (shen/let W3407
-                                                                (shen/shen\.in-> W3406)
-                                                                (shen/let W3408
-                                                                          (shen/shen\.<formulae> W3407)
-                                                                          (shen/if
-                                                                           (shen/shen\.parse-failure\? W3408)
-                                                                           (shen/shen\.parse-failure)
-                                                                           (shen/let W3409
-                                                                                     (shen/shen\.<-out W3408)
-                                                                                     (shen/let W3410
-                                                                                               (shen/shen\.in-> W3408)
-                                                                                               (shen/shen\.comb W3410
-                                                                                                                (append
-                                                                                                                 (list
-                                                                                                                  (list nil W3404))
-                                                                                                                 W3409)))))))))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W3402)
-             (shen/let W3411
-                       (shen/let W3412
-                                 (shen/shen\.<formula> V3401)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W3412)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W3413
-                                            (shen/shen\.<-out W3412)
-                                            (shen/let W3414
-                                                      (shen/shen\.in-> W3412)
-                                                      (shen/let W3415
-                                                                (shen/shen\.<sc> W3414)
-                                                                (shen/if
-                                                                 (shen/shen\.parse-failure\? W3415)
-                                                                 (shen/shen\.parse-failure)
-                                                                 (shen/let W3416
-                                                                           (shen/shen\.in-> W3415)
-                                                                           (shen/shen\.comb W3416
-                                                                                            (list
-                                                                                             (list nil W3413))))))))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W3411)
-                        (shen/shen\.parse-failure)
-                        W3411))
-             W3402)))
-(defun shen/shen\.<conc>
-    (V3417)
-  (shen/let W3418
-            (shen/let W3419
-                      (shen/shen\.<ass> V3417)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W3419)
-                       (shen/shen\.parse-failure)
-                       (shen/let W3420
-                                 (shen/shen\.<-out W3419)
-                                 (shen/let W3421
-                                           (shen/shen\.in-> W3419)
-                                           (shen/if
-                                            (shen/shen\.hds=\? W3421 '>>)
-                                            (shen/let W3422
-                                                      (shen/tail W3421)
-                                                      (shen/let W3423
-                                                                (shen/shen\.<formula> W3422)
-                                                                (shen/if
-                                                                 (shen/shen\.parse-failure\? W3423)
-                                                                 (shen/shen\.parse-failure)
-                                                                 (shen/let W3424
-                                                                           (shen/shen\.<-out W3423)
-                                                                           (shen/let W3425
-                                                                                     (shen/shen\.in-> W3423)
-                                                                                     (shen/shen\.comb W3425
-                                                                                                      (list W3420 W3424)))))))
-                                            (shen/shen\.parse-failure))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W3418)
-             (shen/let W3426
-                       (shen/let W3427
-                                 (shen/shen\.<formula> V3417)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W3427)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W3428
-                                            (shen/shen\.<-out W3427)
-                                            (shen/let W3429
-                                                      (shen/shen\.in-> W3427)
-                                                      (shen/shen\.comb W3429
-                                                                       (list nil W3428))))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W3426)
-                        (shen/shen\.parse-failure)
-                        W3426))
-             W3418)))
-(defun shen/shen\.<prems>
-    (V3430)
-  (shen/let W3431
-            (shen/let W3432
-                      (shen/shen\.<prem> V3430)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W3432)
-                       (shen/shen\.parse-failure)
-                       (shen/let W3433
-                                 (shen/shen\.<-out W3432)
-                                 (shen/let W3434
-                                           (shen/shen\.in-> W3432)
-                                           (shen/let W3435
-                                                     (shen/shen\.<sc> W3434)
-                                                     (shen/if
-                                                      (shen/shen\.parse-failure\? W3435)
-                                                      (shen/shen\.parse-failure)
-                                                      (shen/let W3436
-                                                                (shen/shen\.in-> W3435)
-                                                                (shen/let W3437
-                                                                          (shen/shen\.<prems> W3436)
-                                                                          (shen/if
-                                                                           (shen/shen\.parse-failure\? W3437)
-                                                                           (shen/shen\.parse-failure)
-                                                                           (shen/let W3438
-                                                                                     (shen/shen\.<-out W3437)
-                                                                                     (shen/let W3439
-                                                                                               (shen/shen\.in-> W3437)
-                                                                                               (shen/shen\.comb W3439
-                                                                                                                (append
-                                                                                                                 (list W3433)
-                                                                                                                 W3438)))))))))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W3431)
-             (shen/let W3440
-                       (shen/let W3441
-                                 (shen/<e> V3430)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W3441)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W3442
-                                            (shen/shen\.in-> W3441)
-                                            (shen/shen\.comb W3442 nil))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W3440)
-                        (shen/shen\.parse-failure)
-                        W3440))
-             W3431)))
-(defun shen/shen\.<prem>
-    (V3443)
-  (shen/let W3444
-            (shen/if
-             (shen/shen\.hds=\? V3443 '!)
-             (shen/let W3445
-                       (shen/tail V3443)
-                       (shen/shen\.comb W3445 '!))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W3444)
-             (shen/let W3446
-                       (shen/let W3447
-                                 (shen/shen\.<ass> V3443)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W3447)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W3448
-                                            (shen/shen\.<-out W3447)
-                                            (shen/let W3449
-                                                      (shen/shen\.in-> W3447)
-                                                      (shen/if
-                                                       (shen/shen\.hds=\? W3449 '>>)
-                                                       (shen/let W3450
-                                                                 (shen/tail W3449)
-                                                                 (shen/let W3451
-                                                                           (shen/shen\.<formula> W3450)
-                                                                           (shen/if
-                                                                            (shen/shen\.parse-failure\? W3451)
-                                                                            (shen/shen\.parse-failure)
-                                                                            (shen/let W3452
-                                                                                      (shen/shen\.<-out W3451)
-                                                                                      (shen/let W3453
-                                                                                                (shen/shen\.in-> W3451)
-                                                                                                (shen/shen\.comb W3453
-                                                                                                                 (list W3448 W3452)))))))
-                                                       (shen/shen\.parse-failure))))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W3446)
-                        (shen/let W3454
-                                  (shen/let W3455
-                                            (shen/shen\.<formula> V3443)
-                                            (shen/if
-                                             (shen/shen\.parse-failure\? W3455)
-                                             (shen/shen\.parse-failure)
-                                             (shen/let W3456
-                                                       (shen/shen\.<-out W3455)
-                                                       (shen/let W3457
-                                                                 (shen/shen\.in-> W3455)
-                                                                 (shen/shen\.comb W3457
-                                                                                  (list nil W3456))))))
-                                  (shen/if
-                                   (shen/shen\.parse-failure\? W3454)
-                                   (shen/shen\.parse-failure)
-                                   W3454))
-                        W3446))
-             W3444)))
-(defun shen/shen\.<ass>
-    (V3458)
-  (shen/let W3459
-            (shen/let W3460
-                      (shen/shen\.<formula> V3458)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W3460)
-                       (shen/shen\.parse-failure)
-                       (shen/let W3461
-                                 (shen/shen\.<-out W3460)
-                                 (shen/let W3462
-                                           (shen/shen\.in-> W3460)
-                                           (shen/let W3463
-                                                     (shen/shen\.<iscomma> W3462)
-                                                     (shen/if
-                                                      (shen/shen\.parse-failure\? W3463)
-                                                      (shen/shen\.parse-failure)
-                                                      (shen/let W3464
-                                                                (shen/shen\.in-> W3463)
-                                                                (shen/let W3465
-                                                                          (shen/shen\.<ass> W3464)
-                                                                          (shen/if
-                                                                           (shen/shen\.parse-failure\? W3465)
-                                                                           (shen/shen\.parse-failure)
-                                                                           (shen/let W3466
-                                                                                     (shen/shen\.<-out W3465)
-                                                                                     (shen/let W3467
-                                                                                               (shen/shen\.in-> W3465)
-                                                                                               (shen/shen\.comb W3467
-                                                                                                                (append
-                                                                                                                 (list W3461)
-                                                                                                                 W3466)))))))))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W3459)
-             (shen/let W3468
-                       (shen/let W3469
-                                 (shen/shen\.<formula> V3458)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W3469)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W3470
-                                            (shen/shen\.<-out W3469)
-                                            (shen/let W3471
-                                                      (shen/shen\.in-> W3469)
-                                                      (shen/shen\.comb W3471
-                                                                       (list W3470))))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W3468)
-                        (shen/let W3472
-                                  (shen/let W3473
-                                            (shen/<e> V3458)
-                                            (shen/if
-                                             (shen/shen\.parse-failure\? W3473)
-                                             (shen/shen\.parse-failure)
-                                             (shen/let W3474
-                                                       (shen/shen\.in-> W3473)
-                                                       (shen/shen\.comb W3474 nil))))
-                                  (shen/if
-                                   (shen/shen\.parse-failure\? W3472)
-                                   (shen/shen\.parse-failure)
-                                   W3472))
-                        W3468))
-             W3459)))
-(defun shen/shen\.<iscomma>
-    (V3475)
-  (shen/let W3476
-            (shen/if
-             (shen/cons\? V3475)
-             (shen/let W3477
-                       (shen/head V3475)
-                       (shen/let W3478
-                                 (shen/tail V3475)
-                                 (shen/if
-                                  (shen/= W3477
-                                          (shen/intern ","))
-                                  (shen/shen\.comb W3478 'shen\.skip)
-                                  (shen/shen\.parse-failure))))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W3476)
-             (shen/shen\.parse-failure)
-             W3476)))
-(defun shen/shen\.<formula>
-    (V3479)
-  (shen/let W3480
-            (shen/let W3481
-                      (shen/shen\.<expr> V3479)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W3481)
-                       (shen/shen\.parse-failure)
-                       (shen/let W3482
-                                 (shen/shen\.<-out W3481)
-                                 (shen/let W3483
-                                           (shen/shen\.in-> W3481)
-                                           (shen/let W3484
-                                                     (shen/shen\.<iscolon> W3483)
-                                                     (shen/if
-                                                      (shen/shen\.parse-failure\? W3484)
-                                                      (shen/shen\.parse-failure)
-                                                      (shen/let W3485
-                                                                (shen/shen\.in-> W3484)
-                                                                (shen/let W3486
-                                                                          (shen/shen\.<type> W3485)
-                                                                          (shen/if
-                                                                           (shen/shen\.parse-failure\? W3486)
-                                                                           (shen/shen\.parse-failure)
-                                                                           (shen/let W3487
-                                                                                     (shen/shen\.<-out W3486)
-                                                                                     (shen/let W3488
-                                                                                               (shen/shen\.in-> W3486)
-                                                                                               (shen/shen\.comb W3488
-                                                                                                                (list
-                                                                                                                 (shen/shen\.curry W3482)
-                                                                                                                 (shen/intern ":")
-                                                                                                                 (shen/shen\.rectify-type W3487))))))))))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W3480)
-             (shen/let W3489
-                       (shen/let W3490
-                                 (shen/shen\.<expr> V3479)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W3490)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W3491
-                                            (shen/shen\.<-out W3490)
-                                            (shen/let W3492
-                                                      (shen/shen\.in-> W3490)
-                                                      (shen/shen\.comb W3492 W3491)))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W3489)
-                        (shen/shen\.parse-failure)
-                        W3489))
-             W3480)))
-(defun shen/shen\.<iscolon>
-    (V3493)
-  (shen/let W3494
-            (shen/if
-             (shen/cons\? V3493)
-             (shen/let W3495
-                       (shen/head V3493)
-                       (shen/let W3496
-                                 (shen/tail V3493)
-                                 (shen/if
-                                  (shen/= W3495
-                                          (shen/intern ":"))
-                                  (shen/shen\.comb W3496 'shen\.skip)
-                                  (shen/shen\.parse-failure))))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W3494)
-             (shen/shen\.parse-failure)
-             W3494)))
-(defun shen/shen\.<sides>
-    (V3497)
-  (shen/let W3498
-            (shen/let W3499
-                      (shen/shen\.<side> V3497)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W3499)
-                       (shen/shen\.parse-failure)
-                       (shen/let W3500
-                                 (shen/shen\.<-out W3499)
-                                 (shen/let W3501
-                                           (shen/shen\.in-> W3499)
-                                           (shen/let W3502
-                                                     (shen/shen\.<sides> W3501)
-                                                     (shen/if
-                                                      (shen/shen\.parse-failure\? W3502)
-                                                      (shen/shen\.parse-failure)
-                                                      (shen/let W3503
-                                                                (shen/shen\.<-out W3502)
-                                                                (shen/let W3504
-                                                                          (shen/shen\.in-> W3502)
-                                                                          (shen/shen\.comb W3504
-                                                                                           (append
-                                                                                            (list W3500)
-                                                                                            W3503))))))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W3498)
-             (shen/let W3505
-                       (shen/let W3506
-                                 (shen/<e> V3497)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W3506)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W3507
-                                            (shen/shen\.in-> W3506)
-                                            (shen/shen\.comb W3507 nil))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W3505)
-                        (shen/shen\.parse-failure)
-                        W3505))
-             W3498)))
-(defun shen/shen\.<side>
-    (V3508)
-  (shen/let W3509
-            (shen/if
-             (shen/shen\.hds=\? V3508 'if)
-             (shen/let W3510
-                       (shen/tail V3508)
-                       (shen/if
-                        (shen/cons\? W3510)
-                        (shen/let W3511
-                                  (shen/head W3510)
-                                  (shen/let W3512
-                                            (shen/tail W3510)
-                                            (shen/shen\.comb W3512
-                                                             (list 'if W3511))))
-                        (shen/shen\.parse-failure)))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W3509)
-             (shen/let W3513
-                       (shen/if
-                        (shen/shen\.hds=\? V3508 'let)
-                        (shen/let W3514
-                                  (shen/tail V3508)
-                                  (shen/if
-                                   (shen/cons\? W3514)
-                                   (shen/let W3515
-                                             (shen/head W3514)
-                                             (shen/let W3516
-                                                       (shen/tail W3514)
-                                                       (shen/if
-                                                        (shen/cons\? W3516)
-                                                        (shen/let W3517
-                                                                  (shen/head W3516)
-                                                                  (shen/let W3518
-                                                                            (shen/tail W3516)
-                                                                            (shen/shen\.comb W3518
-                                                                                             (list 'let W3515 W3517))))
-                                                        (shen/shen\.parse-failure))))
-                                   (shen/shen\.parse-failure)))
-                        (shen/shen\.parse-failure))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W3513)
-                        (shen/let W3519
-                                  (shen/if
-                                   (shen/shen\.hds=\? V3508 'shen\.let!)
-                                   (shen/let W3520
-                                             (shen/tail V3508)
-                                             (shen/if
-                                              (shen/cons\? W3520)
-                                              (shen/let W3521
-                                                        (shen/head W3520)
-                                                        (shen/let W3522
-                                                                  (shen/tail W3520)
-                                                                  (shen/if
-                                                                   (shen/cons\? W3522)
-                                                                   (shen/let W3523
-                                                                             (shen/head W3522)
-                                                                             (shen/let W3524
-                                                                                       (shen/tail W3522)
-                                                                                       (shen/shen\.comb W3524
-                                                                                                        (list 'shen\.let! W3521 W3523))))
-                                                                   (shen/shen\.parse-failure))))
-                                              (shen/shen\.parse-failure)))
-                                   (shen/shen\.parse-failure))
-                                  (shen/if
-                                   (shen/shen\.parse-failure\? W3519)
-                                   (shen/shen\.parse-failure)
-                                   W3519))
-                        W3513))
-             W3509)))
-(defun shen/shen\.lr-rule
-    (V3531 V3532 V3533)
+    (shen/shen\.check-eval-and-print V1208))))
+(defun shen/shen\.eval-and-print
+    (V1209)
+  (shen/shen\.for-each
+   (shen/lambda Z1210
+                (shen/pr
+                 (shen/shen\.app
+                  (shen/eval-kl
+                   (shen/shen\.shen->kl Z1210))
+                  "\n" 'shen\.s)
+                 (shen/stoutput)))
+   V1209))
+(defun shen/shen\.check-eval-and-print
+    (V1211)
+  (shen/let W1212
+            (shen/mapcan
+             (shen/lambda Z1213
+                          (shen/shen\.typetable Z1213))
+             V1211)
+            (shen/let W1214
+                      (shen/trap-error
+                       (shen/shen\.assumetypes W1212)
+                       (shen/lambda Z1215
+                                    (shen/shen\.unwind-types Z1215 W1212)))
+                      (shen/trap-error
+                       (shen/shen\.work-through V1211)
+                       (shen/lambda Z1216
+                                    (shen/shen\.unwind-types Z1216 W1212))))))
+(defun shen/shen\.typetable
+    (V1221)
   (shen/cond
    ((shen/and
-     (shen/cons\? V3533)
+     (shen/cons\? V1221)
      (shen/and
-      (shen/internal/predicate->shen
-       (null
-        (shen/hd V3533)))
+      (shen/= 'define
+              (shen/hd V1221))
       (shen/and
        (shen/cons\?
-        (nthcdr 1 V3533))
-       (shen/internal/predicate->shen
-        (null
-         (nthcdr 2 V3533))))))
-    (shen/let W3534
-              (shen/gensym 'P)
-              (shen/let W3535
-                        (list
-                         (nthcdr 1 V3533)
-                         W3534)
-                        (shen/let W3536
-                                  (list
-                                   (shen/shen\.coll-formulae V3532)
-                                   W3534)
-                                  (shen/let W3537
-                                            (list V3531
-                                                  (list W3536)
-                                                  W3535)
-                                            (shen/let W3538
-                                                      (list V3531 V3532 V3533)
-                                                      (list W3538 W3537)))))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.lr-rule"))))
-(defun shen/shen\.coll-formulae
-    (V3541)
-  (shen/cond
-   ((shen/internal/predicate->shen
-     (null V3541))
-    nil)
+        (nthcdr 1 V1221))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 2 V1221))
+        (shen/= '{
+                (shen/hd
+                 (nthcdr 2 V1221)))))))
+    (list
+     (shen/hd
+      (nthcdr 1 V1221))
+     (shen/shen\.rectify-type
+      (shen/shen\.type-F
+       (shen/hd
+        (nthcdr 1 V1221))
+       (nthcdr 3 V1221)))))
    ((shen/and
-     (shen/cons\? V3541)
+     (shen/cons\? V1221)
+     (shen/and
+      (shen/= 'define
+              (shen/hd V1221))
+      (shen/cons\?
+       (nthcdr 1 V1221))))
+    (shen/simple-error
+     (shen/cn "missing { in "
+              (shen/shen\.app
+               (shen/hd
+                (nthcdr 1 V1221))
+               "\n" 'shen\.a))))
+   (shen/true nil)))
+(defun shen/shen\.type-F
+    (V1228 V1229)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V1229)
+     (shen/= '}
+             (shen/hd V1229)))
+    nil)
+   ((shen/cons\? V1229)
+    (append
+     (list
+      (shen/hd V1229))
+     (shen/shen\.type-F V1228
+                        (nthcdr 1 V1229))))
+   (shen/true
+    (shen/simple-error
+     (shen/cn "missing } in "
+              (shen/shen\.app V1228 "\n" 'shen\.a))))))
+(defun shen/shen\.assumetypes
+    (V1232)
+  (cl-flet
+      ((tail-trampoline
+        (V1232)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V1232))
+          nil)
+         ((shen/and
+           (shen/cons\? V1232)
+           (shen/cons\?
+            (nthcdr 1 V1232)))
+          (shen/do
+           (shen/declare
+            (shen/hd V1232)
+            (shen/hd
+             (nthcdr 1 V1232)))
+           (vector
+            (list
+             (nthcdr 2 V1232)))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.assumetype")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V1232)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.unwind-types
+    (V1237 V1238)
+  (cl-flet
+      ((tail-trampoline
+        (V1237 V1238)
+        (shen/cond
+         ((shen/and
+           (shen/cons\? V1238)
+           (shen/cons\?
+            (nthcdr 1 V1238)))
+          (shen/do
+           (shen/destroy
+            (shen/hd V1238))
+           (vector
+            (list V1237
+                  (nthcdr 2 V1238)))))
+         (shen/true
+          (shen/simple-error
+           (shen/error-to-string V1237))))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V1237 V1238)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.work-through
+    (V1241)
+  (cl-flet
+      ((tail-trampoline
+        (V1241)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V1241))
+          nil)
+         ((shen/and
+           (shen/cons\? V1241)
+           (shen/and
+            (shen/cons\?
+             (nthcdr 1 V1241))
+            (shen/and
+             (shen/cons\?
+              (nthcdr 2 V1241))
+             (shen/=
+              (shen/hd
+               (nthcdr 1 V1241))
+              (shen/intern ":")))))
+          (shen/let W1242
+                    (shen/shen\.typecheck
+                     (shen/hd V1241)
+                     (shen/hd
+                      (nthcdr 2 V1241)))
+                    (shen/if
+                     (shen/= W1242 'false)
+                     (shen/shen\.type-error)
+                     (shen/let W1243
+                               (shen/eval-kl
+                                (shen/shen\.shen->kl
+                                 (shen/hd V1241)))
+                               (shen/let W1244
+                                         (shen/pr
+                                          (shen/shen\.app W1243
+                                                          (shen/cn " : "
+                                                                   (shen/shen\.app
+                                                                    (shen/shen\.pretty-type W1242)
+                                                                    "\n" 'shen\.r))
+                                                          'shen\.s)
+                                          (shen/stoutput))
+                                         (vector
+                                          (list
+                                           (nthcdr 3 V1241))))))))
+         ((shen/cons\? V1241)
+          (vector
+           (list
+            (append
+             (list
+              (shen/hd V1241)
+              (shen/intern ":")
+              'A)
+             (nthcdr 1 V1241)))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.work-through")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V1241)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.pretty-type
+    (V1246)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V1246)
      (shen/and
       (shen/cons\?
-       (shen/hd V3541))
+       (shen/hd V1246))
       (shen/and
-       (shen/internal/predicate->shen
-        (null
-         (shen/hd
-          (shen/hd V3541))))
+       (shen/= 'list
+               (shen/hd
+                (shen/hd V1246)))
        (shen/and
         (shen/cons\?
          (nthcdr 1
-                 (shen/hd V3541)))
-        (shen/internal/predicate->shen
-         (null
-          (nthcdr 2
-                  (shen/hd V3541))))))))
+                 (shen/hd V1246)))
+        (shen/and
+         (shen/internal/predicate->shen
+          (null
+           (nthcdr 2
+                   (shen/hd V1246))))
+         (shen/and
+          (shen/cons\?
+           (nthcdr 1 V1246))
+          (shen/and
+           (shen/= '-->
+                   (shen/hd
+                    (nthcdr 1 V1246)))
+           (shen/and
+            (shen/cons\?
+             (nthcdr 2 V1246))
+            (shen/and
+             (shen/cons\?
+              (shen/hd
+               (nthcdr 2 V1246)))
+             (shen/and
+              (shen/= 'str
+                      (shen/hd
+                       (shen/hd
+                        (nthcdr 2 V1246))))
+              (shen/and
+               (shen/cons\?
+                (nthcdr 1
+                        (shen/hd
+                         (nthcdr 2 V1246))))
+               (shen/and
+                (shen/cons\?
+                 (shen/hd
+                  (nthcdr 1
+                          (shen/hd
+                           (nthcdr 2 V1246)))))
+                (shen/and
+                 (shen/= 'list
+                         (shen/hd
+                          (shen/hd
+                           (nthcdr 1
+                                   (shen/hd
+                                    (nthcdr 2 V1246))))))
+                 (shen/and
+                  (shen/cons\?
+                   (nthcdr 1
+                           (shen/hd
+                            (nthcdr 1
+                                    (shen/hd
+                                     (nthcdr 2 V1246))))))
+                  (shen/and
+                   (shen/internal/predicate->shen
+                    (null
+                     (nthcdr 2
+                             (shen/hd
+                              (nthcdr 1
+                                      (shen/hd
+                                       (nthcdr 2 V1246)))))))
+                   (shen/and
+                    (shen/cons\?
+                     (nthcdr 2
+                             (shen/hd
+                              (nthcdr 2 V1246))))
+                    (shen/and
+                     (shen/internal/predicate->shen
+                      (null
+                       (nthcdr 3
+                               (shen/hd
+                                (nthcdr 2 V1246)))))
+                     (shen/and
+                      (shen/internal/predicate->shen
+                       (null
+                        (nthcdr 3 V1246)))
+                      (shen/=
+                       (shen/hd
+                        (nthcdr 1
+                                (shen/hd V1246)))
+                       (shen/hd
+                        (nthcdr 1
+                                (shen/hd
+                                 (nthcdr 1
+                                         (shen/hd
+                                          (nthcdr 2 V1246)))))))))))))))))))))))))
     (append
      (list
       (shen/hd
        (nthcdr 1
-               (shen/hd V3541))))
-     (shen/shen\.coll-formulae
-      (nthcdr 1 V3541))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.coll-formulae"))))
-(defun shen/shen\.<expr>
-    (V3542)
-  (shen/let W3543
-            (shen/if
-             (shen/cons\? V3542)
-             (shen/let W3544
-                       (shen/head V3542)
-                       (shen/let W3545
-                                 (shen/tail V3542)
-                                 (shen/if
-                                  (shen/not
-                                   (shen/shen\.key-in-sequent-calculus\? W3544))
-                                  (shen/shen\.comb W3545
-                                                   (shen/macroexpand W3544))
-                                  (shen/shen\.parse-failure))))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W3543)
-             (shen/shen\.parse-failure)
-             W3543)))
-(defun shen/shen\.key-in-sequent-calculus\?
-    (V3546)
-  (shen/or
-   (shen/element\? V3546
-                   (list '>>
-                         (shen/intern ";")
-                         (shen/intern ",")
-                         (shen/intern ":")
-                         '<--))
-   (shen/or
-    (shen/shen\.sng\? V3546)
-    (shen/shen\.dbl\? V3546))))
-(defun shen/shen\.<type>
-    (V3547)
-  (shen/let W3548
-            (shen/let W3549
-                      (shen/shen\.<expr> V3547)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W3549)
-                       (shen/shen\.parse-failure)
-                       (shen/let W3550
-                                 (shen/shen\.<-out W3549)
-                                 (shen/let W3551
-                                           (shen/shen\.in-> W3549)
-                                           (shen/shen\.comb W3551 W3550)))))
-            (shen/if
-             (shen/shen\.parse-failure\? W3548)
-             (shen/shen\.parse-failure)
-             W3548)))
-(defun shen/shen\.<dbl>
-    (V3552)
-  (shen/let W3553
-            (shen/if
-             (shen/cons\? V3552)
-             (shen/let W3554
-                       (shen/head V3552)
-                       (shen/let W3555
-                                 (shen/tail V3552)
-                                 (shen/if
-                                  (shen/shen\.dbl\? W3554)
-                                  (shen/shen\.comb W3555 W3554)
-                                  (shen/shen\.parse-failure))))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W3553)
-             (shen/shen\.parse-failure)
-             W3553)))
-(defun shen/shen\.<sng>
-    (V3556)
-  (shen/let W3557
-            (shen/if
-             (shen/cons\? V3556)
-             (shen/let W3558
-                       (shen/head V3556)
-                       (shen/let W3559
-                                 (shen/tail V3556)
-                                 (shen/if
-                                  (shen/shen\.sng\? W3558)
-                                  (shen/shen\.comb W3559 W3558)
-                                  (shen/shen\.parse-failure))))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W3557)
-             (shen/shen\.parse-failure)
-             W3557)))
-(defun shen/shen\.sng\?
-    (V3560)
-  (shen/and
-   (shen/symbol\? V3560)
-   (shen/shen\.sng-h\?
-    (shen/str V3560))))
-(defun shen/shen\.sng-h\?
-    (V3563)
-  (cl-flet
-      ((tail-trampoline
-        (V3563)
-        (shen/cond
-         ((shen/= "___" V3563)
-          'true)
-         ((shen/and
-           (shen/shen\.+string\? V3563)
-           (shen/= "_"
-                   (shen/hdstr V3563)))
-          (vector
-           (list
-            (shen/tlstr V3563))))
-         (shen/true 'false))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V3563)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.dbl\?
-    (V3564)
-  (shen/and
-   (shen/symbol\? V3564)
-   (shen/shen\.dbl-h\?
-    (shen/str V3564))))
-(defun shen/shen\.dbl-h\?
-    (V3567)
-  (cl-flet
-      ((tail-trampoline
-        (V3567)
-        (shen/cond
-         ((shen/= "===" V3567)
-          'true)
-         ((shen/and
-           (shen/shen\.+string\? V3567)
-           (shen/= "="
-                   (shen/hdstr V3567)))
-          (vector
-           (list
-            (shen/tlstr V3567))))
-         (shen/true 'false))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V3567)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.remember-datatype
-    (V3568 V3569)
-  (shen/do
-   (shen/set 'shen\.*datatypes*
-             (shen/shen\.assoc-> V3568 V3569
-                                 (shen/value 'shen\.*datatypes*)))
-   (shen/do
-    (shen/set 'shen\.*alldatatypes*
-              (shen/shen\.assoc-> V3568 V3569
-                                  (shen/value 'shen\.*alldatatypes*)))
-    V3568)))
-(defun shen/shen\.rules->prolog
-    (V3570 V3571)
-  (shen/let W3572
-            (shen/mapcan
-             (shen/lambda Z3573
-                          (shen/shen\.rule->clause Z3573))
-             V3571)
-            (shen/eval
-             (append
-              (list 'defprolog V3570)
-              W3572))))
-(defun shen/shen\.rule->clause
-    (V3576)
+               (shen/hd
+                (nthcdr 2 V1246))))
+      '==>)
+     (nthcdr 2
+             (shen/hd
+              (nthcdr 2 V1246)))))
+   ((shen/cons\? V1246)
+    (shen/map
+     (shen/lambda Z1247
+                  (shen/shen\.pretty-type Z1247))
+     V1246))
+   (shen/true V1246)))
+(defun shen/shen\.type-error nil
+  (shen/simple-error "type error\n"))
+(defun shen/bootstrap
+    (V1248)
+  (shen/let W1249
+            (shen/shen\.klfile V1248)
+            (shen/let W1250
+                      (shen/read-file V1248)
+                      (shen/let W1251
+                                (shen/open W1249 'out)
+                                (shen/let W1252
+                                          (shen/map
+                                           (shen/lambda Z1253
+                                                        (shen/shen\.partial
+                                                         (shen/shen\.shen->kl-h Z1253)))
+                                           W1250)
+                                          (shen/let W1254
+                                                    (shen/shen\.write-kl W1252 W1251)
+                                                    W1249))))))
+(defun shen/shen\.partial
+    (V1255)
   (shen/cond
    ((shen/and
-     (shen/cons\? V3576)
+     (shen/cons\? V1255)
      (shen/and
-      (shen/cons\?
-       (nthcdr 1 V3576))
+      (shen/= 'shen\.f-error
+              (shen/hd V1255))
       (shen/and
        (shen/cons\?
-        (nthcdr 2 V3576))
+        (nthcdr 1 V1255))
+       (shen/internal/predicate->shen
+        (null
+         (nthcdr 2 V1255))))))
+    (list 'simple-error
+          (shen/cn "partial function "
+                   (shen/str
+                    (shen/hd
+                     (nthcdr 1 V1255))))))
+   ((shen/cons\? V1255)
+    (shen/map
+     (shen/lambda Z1256
+                  (shen/shen\.partial Z1256))
+     V1255))
+   (shen/true V1255)))
+(defun shen/shen\.write-kl
+    (V1259 V1260)
+  (cl-flet
+      ((tail-trampoline
+        (V1259 V1260)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V1259))
+          (shen/close V1260))
+         ((shen/and
+           (shen/cons\? V1259)
+           (shen/cons\?
+            (shen/hd V1259)))
+          (vector
+           (list
+            (nthcdr 1 V1259)
+            (shen/do
+             (shen/shen\.write-kl-h
+              (shen/hd V1259)
+              V1260)
+             V1260))))
+         ((shen/cons\? V1259)
+          (vector
+           (list
+            (nthcdr 1 V1259)
+            V1260)))
+         (shen/true
+          (shen/shen\.f-error 'shen\.write-kl)))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V1259 V1260)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.write-kl-h
+    (V1263 V1264)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V1263)
+     (shen/and
+      (shen/= 'defun
+              (shen/hd V1263))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V1263))
        (shen/and
-        (shen/cons\?
-         (shen/hd
-          (nthcdr 2 V3576)))
+        (shen/= 'fail
+                (shen/hd
+                 (nthcdr 1 V1263)))
         (shen/and
          (shen/cons\?
-          (nthcdr 1
-                  (shen/hd
-                   (nthcdr 2 V3576))))
+          (nthcdr 2 V1263))
          (shen/and
           (shen/internal/predicate->shen
            (null
-            (nthcdr 2
-                    (shen/hd
-                     (nthcdr 2 V3576)))))
-          (shen/internal/predicate->shen
-           (null
-            (nthcdr 3 V3576)))))))))
-    (shen/let W3577
-              (shen/shen\.extract-vars V3576)
-              (shen/let W3578
-                        (shen/append
-                         (shen/shen\.nvars
-                          (shen/length
-                           (shen/hd
-                            (shen/hd
-                             (nthcdr 2 V3576)))))
-                         (list 'Delta))
-                        (shen/let W3579
-                                  (shen/shen\.extract-vars
-                                   (shen/hd
-                                    (nthcdr 1
-                                            (shen/hd
-                                             (nthcdr 2 V3576)))))
-                                  (shen/let W3580
-                                            (shen/shen\.compile-consequent
-                                             (shen/hd
-                                              (nthcdr 1
-                                                      (shen/hd
-                                                       (nthcdr 2 V3576))))
-                                             W3578)
-                                            (shen/let W3581
-                                                      (shen/shen\.goals W3577
-                                                                        (shen/hd
-                                                                         (shen/hd
-                                                                          (nthcdr 2 V3576)))
-                                                                        (shen/hd V3576)
-                                                                        (shen/hd
-                                                                         (nthcdr 1 V3576))
-                                                                        W3578 W3579)
-                                                      (shen/append W3580
-                                                                   (shen/append
-                                                                    (list '<--)
-                                                                    (shen/append W3581
-                                                                                 (list
-                                                                                  (shen/intern ";")))))))))))
+            (shen/hd
+             (nthcdr 2 V1263))))
+          (shen/and
+           (shen/cons\?
+            (nthcdr 3 V1263))
+           (shen/internal/predicate->shen
+            (null
+             (nthcdr 4 V1263))))))))))
+    (shen/pr "(defun fail () shen.fail!)" V1264))
    (shen/true
-    (shen/simple-error "implementation error in shen.rule->clause"))))
-(defun shen/shen\.compile-consequent
-    (V3588 V3589)
+    (shen/pr
+     (shen/shen\.app V1263 "\n\n" 'shen\.r)
+     V1264))))
+(defun shen/shen\.klfile
+    (V1265)
   (shen/cond
-   ((shen/cons\? V3589)
-    (list
-     (shen/shen\.optimise-typing V3588)
-     (shen/hd V3589)))
+   ((shen/= "" V1265)
+    ".kl")
+   ((shen/= ".shen" V1265)
+    ".kl")
+   ((shen/shen\.+string\? V1265)
+    (concat
+     (concat
+      (shen/hdstr V1265))
+     (shen/shen\.klfile
+      (shen/tlstr V1265))))
    (shen/true
-    (shen/simple-error "implementation error in shen.compile-consequent"))))
-(defun shen/shen\.nvars
-    (V3590)
-  (shen/cond
-   ((shen/= 0 V3590)
-    nil)
-   (shen/true
-    (append
-     (list
-      (shen/gensym 'V))
-     (shen/shen\.nvars
-      (shen/- V3590 1))))))
-(defun shen/shen\.optimise-typing
-    (V3591)
+    (shen/shen\.f-error 'shen\.klfile))))
+(defun shen/asserta
+    (V1534)
+  (shen/shen\.assert* V1534 'shen\.top))
+(defun shen/assertz
+    (V1535)
+  (shen/shen\.assert* V1535 'shen\.bottom))
+(defun shen/shen\.assert*
+    (V1536 V1537)
   (shen/cond
    ((shen/and
-     (shen/cons\? V3591)
+     (shen/cons\? V1536)
      (shen/and
       (shen/cons\?
-       (nthcdr 1 V3591))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 2 V3591))
-       (shen/and
-        (shen/internal/predicate->shen
-         (null
-          (nthcdr 3 V3591)))
-        (shen/=
-         (shen/hd
-          (nthcdr 1 V3591))
-         (shen/intern ":"))))))
-    (shen/let W3592
-              (shen/shen\.expand-mode-forms
-               (list '-
-                     (list
-                      (shen/hd V3591)
-                      (shen/hd
-                       (nthcdr 1 V3591))
-                      (append
-                       (list '+)
-                       (nthcdr 2 V3591)))))
-              (shen/shen\.cons-form-with-modes W3592)))
+       (nthcdr 1 V1536))
+      (shen/= '<--
+              (shen/hd
+               (nthcdr 1 V1536)))))
+    (shen/let W1538
+              (shen/shen\.predicate
+               (shen/hd V1536))
+              (shen/let W1539
+                        (shen/shen\.terms
+                         (shen/hd V1536))
+                        (shen/let W1540
+                                  (shen/length W1539)
+                                  (shen/let W1541
+                                            (shen/shen\.parameters W1540)
+                                            (shen/let W1542
+                                                      (shen/arity W1538)
+                                                      (shen/let W1543
+                                                                (shen/if
+                                                                 (shen/= W1542 -1)
+                                                                 (shen/do
+                                                                  (shen/eval
+                                                                   (shen/shen\.create-skeleton W1538 W1541))
+                                                                  (shen/put W1538 'shen\.dynamic nil
+                                                                            (shen/value '*property-vector*)))
+                                                                 'shen\.skip)
+                                                                (shen/let W1544
+                                                                          (shen/shen\.insert-info W1538 W1539
+                                                                                                  (nthcdr 2 V1536)
+                                                                                                  V1536 V1537)
+                                                                          W1538))))))))
    (shen/true
-    (shen/let W3593
-              (shen/shen\.expand-mode-forms
-               (list '+ V3591))
-              (shen/shen\.cons-form-with-modes W3593)))))
-(defun shen/shen\.expand-mode-forms
-    (V3594)
+    (shen/shen\.f-error 'shen\.assert*))))
+(defun shen/shen\.predicate
+    (V1547)
   (shen/cond
-   ((shen/and
-     (shen/cons\? V3594)
-     (shen/and
-      (shen/= '+
-              (shen/hd V3594))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V3594))
-       (shen/internal/predicate->shen
-        (null
-         (nthcdr 2 V3594))))))
-    (list 'mode
-          (shen/shen\.expand-mode-forms
-           (shen/hd
-            (nthcdr 1 V3594)))
-          '+))
-   ((shen/and
-     (shen/cons\? V3594)
-     (shen/and
-      (shen/= '-
-              (shen/hd V3594))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V3594))
-       (shen/internal/predicate->shen
-        (null
-         (nthcdr 2 V3594))))))
-    (list 'mode
-          (shen/shen\.expand-mode-forms
-           (shen/hd
-            (nthcdr 1 V3594)))
-          '-))
-   ((shen/cons\? V3594)
-    (shen/map
-     (shen/lambda Z3595
-                  (shen/shen\.expand-mode-forms Z3595))
-     V3594))
-   (shen/true V3594)))
-(defun shen/shen\.cons-form-with-modes
-    (V3596)
+   ((shen/cons\? V1547)
+    (shen/hd V1547))
+   (shen/true V1547)))
+(defun shen/shen\.terms
+    (V1552)
   (shen/cond
-   ((shen/and
-     (shen/cons\? V3596)
-     (shen/and
-      (shen/= 'mode
-              (shen/hd V3596))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V3596))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 2 V3596))
-        (shen/internal/predicate->shen
-         (null
-          (nthcdr 3 V3596)))))))
-    (list
-     (shen/hd
-      (nthcdr 2 V3596))
-     (shen/shen\.cons-form-with-modes
-      (shen/hd
-       (nthcdr 1 V3596)))))
-   ((shen/and
-     (shen/cons\? V3596)
-     (shen/and
-      (shen/= 'bar!
-              (shen/hd V3596))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V3596))
-       (shen/internal/predicate->shen
-        (null
-         (nthcdr 2 V3596))))))
-    (shen/hd
-     (nthcdr 1 V3596)))
-   ((shen/cons\? V3596)
-    (list 'cons
-          (shen/shen\.cons-form-with-modes
-           (shen/hd V3596))
-          (shen/shen\.cons-form-with-modes
-           (nthcdr 1 V3596))))
-   (shen/true V3596)))
-(defun shen/shen\.goals
-    (V3597 V3598 V3599 V3600 V3601 V3602)
-  (shen/let W3603
-            (shen/shen\.compile-assumptions V3598 V3597 V3601 V3602)
-            (shen/let W3604
-                      (shen/shen\.compile-side-conditions V3599)
-                      (shen/let W3605
-                                (shen/shen\.compile-premises V3600 V3601)
-                                (shen/append W3603
-                                             (shen/append W3604 W3605))))))
-(defun shen/shen\.compile-assumptions
-    (V3620 V3621 V3622 V3623)
-  (shen/cond
-   ((shen/internal/predicate->shen
-     (null V3620))
-    nil)
-   ((shen/and
-     (shen/cons\? V3620)
-     (shen/and
-      (shen/cons\? V3622)
-      (shen/cons\?
-       (nthcdr 1 V3622))))
-    (shen/let W3624
-              (shen/append
-               (shen/shen\.extract-vars
-                (shen/hd V3620))
-               V3623)
-              (append
-               (list
-                (shen/shen\.compile-assumption
-                 (shen/hd V3620)
-                 (shen/hd V3622)
-                 (shen/hd
-                  (nthcdr 1 V3622))
-                 V3621 V3623))
-               (shen/shen\.compile-assumptions
-                (nthcdr 1 V3620)
-                V3621
-                (nthcdr 1 V3622)
-                W3624))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.compile-assumptions"))))
-(defun shen/shen\.compile-assumption
-    (V3625 V3626 V3627 V3628 V3629)
-  (shen/let W3630
-            (shen/gensym 'shen\.search)
-            (shen/let W3631
-                      (shen/shen\.compile-search-procedure W3630 V3625 V3626 V3627 V3628 V3629)
-                      (append
-                       (list W3630 V3626 nil V3627)
-                       V3628))))
-(defun shen/shen\.compile-search-procedure
-    (V3632 V3633 V3634 V3635 V3636 V3637)
-  (shen/let W3638
-            (shen/gensym 'Previous)
-            (shen/let W3639
-                      (shen/shen\.foundit! V3633 V3634 W3638 V3635 V3636 V3637)
-                      (shen/let W3640
-                                (shen/shen\.keep-looking V3632 V3634 W3638 V3635 V3636)
-                                (shen/eval
-                                 (append
-                                  (list 'defprolog V3632)
-                                  (shen/append W3639 W3640)))))))
-(defun shen/shen\.foundit!
-    (V3641 V3642 V3643 V3644 V3645 V3646)
-  (shen/let W3647
-            (shen/shen\.passive V3641 V3646)
-            (shen/let W3648
-                      (shen/shen\.tabulate-passive W3647)
-                      (shen/let W3649
-                                (shen/shen\.head-foundit! V3641 V3642 V3643 V3644 V3645 W3648)
-                                (shen/let W3650
-                                          (shen/shen\.body-foundit! V3642 V3643 V3644 W3648)
-                                          (shen/append W3649
-                                                       (shen/append
-                                                        (list '<--)
-                                                        (shen/append W3650
-                                                                     (list
-                                                                      (shen/intern ";"))))))))))
-(defun shen/shen\.keep-looking
-    (V3651 V3652 V3653 V3654 V3655)
-  (shen/let W3656
-            (shen/gensym 'V)
-            (shen/let W3657
-                      (append
-                       (list
-                        (list '-
-                              (list 'cons W3656 V3652))
-                        V3653 V3654)
-                       V3655)
-                      (shen/let W3658
-                                (list
-                                 (append
-                                  (list V3651 V3652
-                                        (list 'cons W3656 V3653)
-                                        V3654)
-                                  V3655))
-                                (shen/append W3657
-                                             (shen/append
-                                              (list '<--)
-                                              (shen/append W3658
-                                                           (list
-                                                            (shen/intern ";")))))))))
-(defun shen/shen\.passive
-    (V3663 V3664)
-  (shen/cond
-   ((shen/cons\? V3663)
-    (shen/union
-     (shen/shen\.passive
-      (shen/hd V3663)
-      V3664)
-     (shen/shen\.passive
-      (nthcdr 1 V3663)
-      V3664)))
-   ((shen/shen\.passive\? V3663 V3664)
-    (list V3663))
+   ((shen/cons\? V1552)
+    (nthcdr 1 V1552))
    (shen/true nil)))
-(defun shen/shen\.passive\?
-    (V3665 V3666)
-  (shen/and
-   (shen/not
-    (shen/element\? V3665 V3666))
-   (shen/variable\? V3665)))
-(defun shen/shen\.tabulate-passive
-    (V3667)
-  (shen/map
-   (shen/lambda Z3668
-                (append
-                 (list Z3668)
-                 (shen/gensym 'V)))
-   V3667))
-(defun shen/shen\.head-foundit!
-    (V3669 V3670 V3671 V3672 V3673 V3674)
-  (shen/let W3675
-            (shen/shen\.optimise-passive V3673 V3674)
-            (append
-             (list
-              (list '-
-                    (list 'cons
-                          (shen/shen\.optimise-typing V3669)
-                          V3670))
-              V3671 V3672)
-             W3675)))
-(defun shen/shen\.optimise-passive
-    (V3676 V3677)
-  (shen/map
-   (shen/lambda Z3678
-                (shen/shen\.optimise-passive-h Z3678 V3677))
-   V3676))
-(defun shen/shen\.optimise-passive-h
-    (V3679 V3680)
-  (shen/let W3681
-            (shen/assoc V3679 V3680)
-            (shen/if
-             (shen/empty\? W3681)
-             V3679
-             (nthcdr 1 W3681))))
-(defun shen/shen\.body-foundit!
-    (V3690 V3691 V3692 V3693)
+(defun shen/shen\.create-skeleton
+    (V1553 V1554)
+  (append
+   (list 'defprolog V1553)
+   (shen/shen\.dynamic-default V1553 V1554)))
+(defun shen/shen\.dynamic-default
+    (V1555 V1556)
+  (shen/append V1556
+               (list '<--
+                     (list 'shen\.call-dynamic
+                           (shen/shen\.cons-form V1556)
+                           (list 'get V1555 'shen\.dynamic))
+                     (shen/intern ";"))))
+(defun shen/shen\.insert-info
+    (V1557 V1558 V1559 V1560 V1561)
+  (shen/let W1562
+            (shen/gensym 'shen\.g)
+            (shen/let W1563
+                      (shen/eval
+                       (shen/append
+                        (list 'defprolog W1562)
+                        (shen/append V1558
+                                     (append
+                                      (list '<--)
+                                      V1559))))
+                      (shen/let W1564
+                                (append
+                                 (list
+                                  (shen/fn W1562)
+                                  W1562)
+                                 V1560)
+                                (shen/let W1565
+                                          (shen/get V1557 'shen\.dynamic
+                                                    (shen/value '*property-vector*))
+                                          (shen/let W1566
+                                                    (shen/if
+                                                     (shen/= V1561 'shen\.top)
+                                                     (append
+                                                      (list W1564)
+                                                      W1565)
+                                                     (shen/append W1565
+                                                                  (list W1564)))
+                                                    (shen/put V1557 'shen\.dynamic W1566
+                                                              (shen/value '*property-vector*))))))))
+(defun shen/shen\.newname nil
+  (shen/let W1567
+            (shen/value 'shen\.*names*)
+            (shen/let W1568
+                      (shen/if
+                       (shen/empty\? W1567)
+                       (shen/gensym 'shen\.g)
+                       (shen/do
+                        (shen/set 'shen\.*names*
+                                  (nthcdr 1 W1567))
+                        (shen/hd W1567)))
+                      W1568)))
+(defun shen/shen\.call-dynamic
+    (V1569 V1570 V1571 V1572 V1573 V1574)
+  (cl-flet
+      ((tail-trampoline
+        (V1569 V1570 V1571 V1572 V1573 V1574)
+        (shen/let W1575
+                  (shen/if
+                   (shen/shen\.unlocked\? V1572)
+                   (shen/let W1576
+                             (shen/shen\.lazyderef V1570 V1571)
+                             (shen/if
+                              (shen/cons\? W1576)
+                              (shen/let W1577
+                                        (shen/shen\.lazyderef
+                                         (shen/hd W1576)
+                                         V1571)
+                                        (shen/if
+                                         (shen/cons\? W1577)
+                                         (shen/let W1578
+                                                   (shen/hd W1577)
+                                                   (shen/do
+                                                    (shen/shen\.incinfs)
+                                                    (shen/shen\.callrec W1578 V1569 V1571 V1572 V1573 V1574)))
+                                         'false))
+                              'false))
+                   'false)
+                  (shen/if
+                   (shen/= W1575 'false)
+                   (shen/if
+                    (shen/shen\.unlocked\? V1572)
+                    (shen/let W1579
+                              (shen/shen\.lazyderef V1570 V1571)
+                              (shen/if
+                               (shen/cons\? W1579)
+                               (shen/let W1580
+                                         (nthcdr 1 W1579)
+                                         (shen/do
+                                          (shen/shen\.incinfs)
+                                          (vector
+                                           (list V1569 W1580 V1571 V1572 V1573 V1574))))
+                               'false))
+                    'false)
+                   W1575))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V1569 V1570 V1571 V1572 V1573 V1574)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.callrec
+    (V1581 V1582 V1583 V1584 V1585 V1586)
+  (cl-flet
+      ((tail-trampoline
+        (V1581 V1582 V1583 V1584 V1585 V1586)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V1582))
+          (shen/internal/apply-function-expression
+           (shen/internal/apply-function-expression
+            (shen/internal/apply-function-expression
+             (shen/internal/apply-higher-order-function V1581
+                                                        (list V1583))
+             (list V1584))
+            (list V1585))
+           (list V1586)))
+         ((shen/cons\? V1582)
+          (vector
+           (list
+            (shen/internal/apply-higher-order-function V1581
+                                                       (list
+                                                        (shen/hd V1582)))
+            (nthcdr 1 V1582)
+            V1583 V1584 V1585 V1586)))
+         (shen/true
+          (shen/shen\.f-error 'shen\.callrec)))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V1581 V1582 V1583 V1584 V1585 V1586)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/retract
+    (V1587)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V1587)
+     (shen/and
+      (shen/cons\?
+       (nthcdr 1 V1587))
+      (shen/= '<--
+              (shen/hd
+               (nthcdr 1 V1587)))))
+    (shen/let W1588
+              (shen/shen\.predicate
+               (shen/hd V1587))
+              (shen/let W1589
+                        (shen/get W1588 'shen\.dynamic
+                                  (shen/value '*property-vector*))
+                        (shen/put W1588 'shen\.dynamic
+                                  (shen/shen\.retract-clause V1587 W1589)
+                                  (shen/value '*property-vector*)))))
+   (shen/true
+    (shen/shen\.f-error 'retract))))
+(defun shen/shen\.retract-clause
+    (V1595 V1596)
   (shen/cond
    ((shen/internal/predicate->shen
-     (null V3693))
-    (list
-     (list 'bind V3692
-           (list 'append
-                 (list 1 V3691)
-                 (list 1 V3690)))))
+     (null V1596))
+    nil)
    ((shen/and
-     (shen/cons\? V3693)
-     (shen/cons\?
-      (shen/hd V3693)))
+     (shen/cons\? V1596)
+     (shen/and
+      (shen/cons\?
+       (shen/hd V1596))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1
+                (shen/hd V1596)))
+       (shen/= V1595
+               (nthcdr 2
+                       (shen/hd V1596))))))
+    (shen/do
+     (shen/set 'shen\.*names*
+               (append
+                (list
+                 (shen/hd
+                  (nthcdr 1
+                          (shen/hd V1596))))
+                (shen/value 'shen\.*names*)))
+     (nthcdr 1 V1596)))
+   ((shen/cons\? V1596)
     (append
      (list
-      (list 'bind
-            (nthcdr 1
-                    (shen/hd V3693))
-            (shen/hd
-             (shen/hd V3693))))
-     (shen/shen\.body-foundit! V3690 V3691 V3692
-                               (nthcdr 1 V3693))))
+      (shen/hd V1596))
+     (shen/shen\.retract-clause V1595
+                                (nthcdr 1 V1596))))
    (shen/true
-    (shen/simple-error "implementation error in shen.body-foundit!"))))
-(defun shen/shen\.compile-side-conditions
-    (V3694)
-  (shen/map
-   (shen/lambda Z3695
-                (shen/shen\.compile-side-condition Z3695))
-   V3694))
-(defun shen/shen\.compile-side-condition
-    (V3698)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V3698)
-     (shen/and
-      (shen/= 'let
-              (shen/hd V3698))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V3698))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 2 V3698))
-        (shen/internal/predicate->shen
-         (null
-          (nthcdr 3 V3698)))))))
-    (append
-     (list 'is)
-     (nthcdr 1 V3698)))
-   ((shen/and
-     (shen/cons\? V3698)
-     (shen/and
-      (shen/= 'shen\.let!
-              (shen/hd V3698))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V3698))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 2 V3698))
-        (shen/internal/predicate->shen
-         (null
-          (nthcdr 3 V3698)))))))
-    (append
-     (list 'is!)
-     (nthcdr 1 V3698)))
-   ((shen/and
-     (shen/cons\? V3698)
-     (shen/and
-      (shen/= 'if
-              (shen/hd V3698))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V3698))
-       (shen/internal/predicate->shen
-        (null
-         (nthcdr 2 V3698))))))
-    (append
-     (list 'when)
-     (nthcdr 1 V3698)))
-   (shen/true
-    (shen/simple-error "implementation error in shen.compile-side-condition"))))
-(defun shen/shen\.compile-premises
-    (V3699 V3700)
-  (shen/let W3701
-            (shen/hd
-             (shen/reverse V3700))
-            (shen/map
-             (shen/lambda Z3702
-                          (shen/shen\.compile-premise Z3702 W3701))
-             V3699)))
-(defun shen/shen\.compile-premise
-    (V3709 V3710)
-  (shen/cond
-   ((shen/= '! V3709)
-    '!)
-   ((shen/and
-     (shen/cons\? V3709)
-     (shen/and
-      (shen/cons\?
-       (nthcdr 1 V3709))
-      (shen/internal/predicate->shen
-       (null
-        (nthcdr 2 V3709)))))
-    (shen/shen\.compile-premise-h
-     (shen/reverse
-      (shen/hd V3709))
-     (shen/hd
-      (nthcdr 1 V3709))
-     V3710))
-   (shen/true
-    (shen/simple-error "implementation error in shen.premise"))))
-(defun shen/shen\.compile-premise-h
-    (V3717 V3718 V3719)
-  (cl-flet
-      ((tail-trampoline
-        (V3717 V3718 V3719)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V3717))
-          (list 'shen\.system-S
-                (shen/shen\.cons-form-no-modes V3718)
-                V3719))
-         ((shen/cons\? V3717)
-          (vector
-           (list
-            (nthcdr 1 V3717)
-            V3718
-            (list 'cons
-                  (shen/shen\.cons-form-no-modes
-                   (shen/hd V3717))
-                  V3719))))
-         (shen/true
-          (shen/simple-error "implementation error in shen.compile-premise-h")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V3717 V3718 V3719)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.cons-form-no-modes
-    (V3720)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V3720)
-     (shen/and
-      (shen/= 'bar!
-              (shen/hd V3720))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V3720))
-       (shen/internal/predicate->shen
-        (null
-         (nthcdr 2 V3720))))))
-    (shen/hd
-     (nthcdr 1 V3720)))
-   ((shen/cons\? V3720)
-    (list 'cons
-          (shen/shen\.cons-form-no-modes
-           (shen/hd V3720))
-          (shen/shen\.cons-form-no-modes
-           (nthcdr 1 V3720))))
-   (shen/true V3720)))
-(defun shen/preclude
-    (V3721)
-  (shen/let W3722
-            (shen/map
-             (shen/lambda Z3723
-                          (shen/shen\.intern-type Z3723))
-             V3721)
-            (shen/let W3724
-                      (shen/value 'shen\.*datatypes*)
-                      (shen/let W3725
-                                (shen/shen\.remove-datatypes W3722 W3724)
-                                (shen/let W3726
-                                          (shen/set 'shen\.*datatypes* W3725)
-                                          (shen/shen\.show-datatypes W3726))))))
-(defun shen/shen\.remove-datatypes
-    (V3731 V3732)
-  (cl-flet
-      ((tail-trampoline
-        (V3731 V3732)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V3731))
-          V3732)
-         ((shen/cons\? V3731)
-          (vector
-           (list
-            (nthcdr 1 V3731)
-            (shen/shen\.unassoc
-             (shen/hd V3731)
-             V3732))))
-         (shen/true
-          (shen/simple-error "implementation error in shen.remove-datatypes")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V3731 V3732)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.show-datatypes
-    (V3733)
-  (shen/map
-   (shen/lambda Z3734
-                (shen/hd Z3734))
-   V3733))
-(defun shen/include
-    (V3735)
-  (shen/let W3736
-            (shen/map
-             (shen/lambda Z3737
-                          (shen/shen\.intern-type Z3737))
-             V3735)
-            (shen/let W3738
-                      (shen/map
-                       (shen/lambda Z3739
-                                    (shen/shen\.remember-datatype Z3739
-                                                                  (shen/fn Z3739)))
-                       W3736)
-                      (shen/let W3740
-                                (shen/value 'shen\.*datatypes*)
-                                (shen/shen\.show-datatypes W3740)))))
-(defun shen/preclude-all-but
-    (V3741)
-  (shen/let W3742
-            (shen/set 'shen\.*datatypes* nil)
-            (shen/let W3743
-                      (shen/map
-                       (shen/lambda Z3744
-                                    (shen/shen\.intern-type Z3744))
-                       V3741)
-                      (shen/let W3745
-                                (shen/map
-                                 (shen/lambda Z3746
-                                              (shen/shen\.remember-datatype Z3746
-                                                                            (shen/fn Z3746)))
-                                 W3743)
-                                (shen/shen\.show-datatypes
-                                 (shen/value 'shen\.*datatypes*))))))
-(defun shen/include-all-but
-    (V3747)
-  (shen/let W3748
-            (shen/map
-             (shen/lambda Z3749
-                          (shen/shen\.intern-type Z3749))
-             V3747)
-            (shen/let W3750
-                      (shen/value 'shen\.*alldatatypes*)
-                      (shen/let W3751
-                                (shen/set 'shen\.*datatypes*
-                                          (shen/shen\.remove-datatypes W3748 W3750))
-                                (shen/shen\.show-datatypes W3751)))))
-(defun shen/compile
-    (V107 V108)
-  (shen/let W109
-            (shen/internal/apply-higher-order-function V107
-                                                       (list V108))
-            (shen/if
-             (shen/shen\.parse-failure\? W109)
-             (shen/simple-error "parse failure\n")
-             (shen/if
-              (shen/cons\?
-               (shen/shen\.in-> W109))
-              (shen/simple-error
-               (shen/cn "syntax error here: "
-                        (shen/shen\.app
-                         (shen/hd
-                          (shen/shen\.in-> W109))
-                         " ..." 'shen\.s)))
-              (shen/shen\.<-out W109)))))
-(defun shen/shen\.parse-failure\?
-    (V110)
-  (shen/= V110
-          (shen/fail)))
-(defun shen/shen\.objectcode
-    (V113)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V113)
-     (shen/and
-      (shen/cons\?
-       (nthcdr 1 V113))
-      (shen/internal/predicate->shen
-       (null
-        (nthcdr 2 V113)))))
-    (shen/hd
-     (nthcdr 1 V113)))
-   (shen/true
-    (shen/simple-error
-     (shen/shen\.app V113 " is not a YACC stream\n" 'shen\.s)))))
-(defun shen/shen\.yacc->shen
-    (V114)
+    (shen/shen\.f-error 'shen\.retract-clause))))
+(defun shen/shen\.compile-prolog
+    (V1597 V1598)
   (shen/compile
-   (shen/lambda Z115
-                (shen/shen\.<yacc> Z115))
-   V114))
-(defun shen/shen\.<yacc>
-    (V116)
-  (shen/let W117
+   (shen/lambda Z1599
+                (shen/shen\.<defprolog> Z1599))
+   (append
+    (list V1597)
+    V1598)))
+(defun shen/shen\.<defprolog>
+    (V1600)
+  (shen/let W1601
             (shen/if
-             (shen/cons\? V116)
-             (shen/let W118
-                       (shen/head V116)
-                       (shen/let W119
-                                 (shen/tail V116)
-                                 (shen/let W120
-                                           (shen/shen\.<yaccsig> W119)
+             (shen/cons\? V1600)
+             (shen/let W1602
+                       (shen/head V1600)
+                       (shen/let W1603
+                                 (shen/tail V1600)
+                                 (shen/let W1604
+                                           (shen/shen\.<clauses> W1603)
                                            (shen/if
-                                            (shen/shen\.parse-failure\? W120)
+                                            (shen/shen\.parse-failure\? W1604)
                                             (shen/shen\.parse-failure)
-                                            (shen/let W121
-                                                      (shen/shen\.<-out W120)
-                                                      (shen/let W122
-                                                                (shen/shen\.in-> W120)
-                                                                (shen/let W123
-                                                                          (shen/shen\.<c-rules> W122)
-                                                                          (shen/if
-                                                                           (shen/shen\.parse-failure\? W123)
-                                                                           (shen/shen\.parse-failure)
-                                                                           (shen/let W124
-                                                                                     (shen/shen\.<-out W123)
-                                                                                     (shen/let W125
-                                                                                               (shen/shen\.in-> W123)
-                                                                                               (shen/shen\.comb W125
-                                                                                                                (shen/let W126
-                                                                                                                          (shen/gensym 'S)
-                                                                                                                          (shen/let W127
-                                                                                                                                    (shen/append
-                                                                                                                                     (list 'define W118)
-                                                                                                                                     (shen/append W121
-                                                                                                                                                  (list W126 '->
-                                                                                                                                                        (shen/shen\.c-rules->shen W121 W126 W124))))
-                                                                                                                                    W127)))))))))))))
+                                            (shen/let W1605
+                                                      (shen/shen\.<-out W1604)
+                                                      (shen/let W1606
+                                                                (shen/shen\.in-> W1604)
+                                                                (shen/shen\.comb W1606
+                                                                                 (shen/let W1607
+                                                                                           (shen/shen\.prolog-arity-check W1602 W1605)
+                                                                                           (shen/let W1608
+                                                                                                     (shen/map
+                                                                                                      (shen/lambda Z1609
+                                                                                                                   (shen/shen\.linearise-clause Z1609))
+                                                                                                      W1605)
+                                                                                                     (shen/shen\.horn-clause-procedure W1602 W1608))))))))))
              (shen/shen\.parse-failure))
             (shen/if
-             (shen/shen\.parse-failure\? W117)
+             (shen/shen\.parse-failure\? W1601)
              (shen/shen\.parse-failure)
-             W117)))
-(defun shen/shen\.<yaccsig>
-    (V128)
-  (shen/let W129
-            (shen/if
-             (shen/cons\? V128)
-             (shen/let W130
-                       (shen/head V128)
-                       (shen/let W131
-                                 (shen/tail V128)
-                                 (shen/if
-                                  (shen/shen\.ccons\? W131)
-                                  (shen/let W132
-                                            (shen/head W131)
-                                            (shen/let W133
-                                                      (shen/tail W131)
-                                                      (shen/if
-                                                       (shen/shen\.hds=\? W132 'list)
-                                                       (shen/let W134
-                                                                 (shen/tail W132)
-                                                                 (shen/if
-                                                                  (shen/cons\? W134)
-                                                                  (shen/let W135
-                                                                            (shen/head W134)
-                                                                            (shen/let W136
-                                                                                      (shen/tail W134)
-                                                                                      (shen/let W137
-                                                                                                (shen/<end> W136)
-                                                                                                (shen/if
-                                                                                                 (shen/shen\.parse-failure\? W137)
-                                                                                                 (shen/shen\.parse-failure)
-                                                                                                 (shen/let W138
-                                                                                                           (shen/shen\.in-> W137)
-                                                                                                           (shen/if
-                                                                                                            (shen/shen\.hds=\? W133 '==>)
-                                                                                                            (shen/let W139
-                                                                                                                      (shen/tail W133)
-                                                                                                                      (shen/if
-                                                                                                                       (shen/cons\? W139)
-                                                                                                                       (shen/let W140
-                                                                                                                                 (shen/head W139)
-                                                                                                                                 (shen/let W141
-                                                                                                                                           (shen/tail W139)
-                                                                                                                                           (shen/if
-                                                                                                                                            (shen/cons\? W141)
-                                                                                                                                            (shen/let W142
-                                                                                                                                                      (shen/head W141)
-                                                                                                                                                      (shen/let W143
-                                                                                                                                                                (shen/tail W141)
-                                                                                                                                                                (shen/if
-                                                                                                                                                                 (shen/and
-                                                                                                                                                                  (shen/= '{ W130)
-                                                                                                                                                                  (shen/= '} W142))
-                                                                                                                                                                 (shen/shen\.comb W143
-                                                                                                                                                                                  (list '{
-                                                                                                                                                                                        (list 'list W135)
-                                                                                                                                                                                        '-->
-                                                                                                                                                                                        (list 'str
-                                                                                                                                                                                              (list 'list W135)
-                                                                                                                                                                                              W140)
-                                                                                                                                                                                        '}))
-                                                                                                                                                                 (shen/shen\.parse-failure))))
-                                                                                                                                            (shen/shen\.parse-failure))))
-                                                                                                                       (shen/shen\.parse-failure)))
-                                                                                                            (shen/shen\.parse-failure)))))))
-                                                                  (shen/shen\.parse-failure)))
-                                                       (shen/shen\.parse-failure))))
-                                  (shen/shen\.parse-failure))))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W129)
-             (shen/let W144
-                       (shen/let W145
-                                 (shen/<e> V128)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W145)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W146
-                                            (shen/shen\.in-> W145)
-                                            (shen/shen\.comb W146 nil))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W144)
-                        (shen/shen\.parse-failure)
-                        W144))
-             W129)))
-(defun shen/shen\.<c-rules>
-    (V147)
-  (shen/let W148
-            (shen/let W149
-                      (shen/shen\.<c-rule> V147)
+             W1601)))
+(defun shen/shen\.prolog-arity-check
+    (V1612 V1613)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V1613)
+     (shen/and
+      (shen/cons\?
+       (shen/hd V1613))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1
+                (shen/hd V1613)))
+       (shen/and
+        (shen/internal/predicate->shen
+         (null
+          (nthcdr 2
+                  (shen/hd V1613))))
+        (shen/internal/predicate->shen
+         (null
+          (nthcdr 1 V1613)))))))
+    (shen/length
+     (shen/hd
+      (shen/hd V1613))))
+   ((shen/and
+     (shen/cons\? V1613)
+     (shen/and
+      (shen/cons\?
+       (shen/hd V1613))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1
+                (shen/hd V1613)))
+       (shen/internal/predicate->shen
+        (null
+         (nthcdr 2
+                 (shen/hd V1613)))))))
+    (shen/shen\.pac-h V1612
+                      (shen/length
+                       (shen/hd
+                        (shen/hd V1613)))
+                      (nthcdr 1 V1613)))
+   (shen/true
+    (shen/shen\.f-error 'shen\.prolog-arity-check))))
+(defun shen/shen\.pac-h
+    (V1618 V1619 V1620)
+  (cl-flet
+      ((tail-trampoline
+        (V1618 V1619 V1620)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V1620))
+          V1619)
+         ((shen/and
+           (shen/cons\? V1620)
+           (shen/cons\?
+            (shen/hd V1620)))
+          (shen/if
+           (shen/= V1619
+                   (shen/length
+                    (shen/hd
+                     (shen/hd V1620))))
+           (vector
+            (list V1618 V1619
+                  (nthcdr 1 V1620)))
+           (shen/simple-error
+            (shen/cn "arity error in prolog procedure "
+                     (shen/shen\.app V1618 "\n" 'shen\.a)))))
+         (shen/true
+          (shen/shen\.f-error 'shen\.pac-h)))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V1618 V1619 V1620)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.<clauses>
+    (V1621)
+  (shen/let W1622
+            (shen/let W1623
+                      (shen/shen\.<clause> V1621)
                       (shen/if
-                       (shen/shen\.parse-failure\? W149)
+                       (shen/shen\.parse-failure\? W1623)
                        (shen/shen\.parse-failure)
-                       (shen/let W150
-                                 (shen/shen\.<-out W149)
-                                 (shen/let W151
-                                           (shen/shen\.in-> W149)
-                                           (shen/let W152
-                                                     (shen/shen\.<c-rules> W151)
+                       (shen/let W1624
+                                 (shen/shen\.<-out W1623)
+                                 (shen/let W1625
+                                           (shen/shen\.in-> W1623)
+                                           (shen/let W1626
+                                                     (shen/shen\.<clauses> W1625)
                                                      (shen/if
-                                                      (shen/shen\.parse-failure\? W152)
+                                                      (shen/shen\.parse-failure\? W1626)
                                                       (shen/shen\.parse-failure)
-                                                      (shen/let W153
-                                                                (shen/shen\.<-out W152)
-                                                                (shen/let W154
-                                                                          (shen/shen\.in-> W152)
-                                                                          (shen/shen\.comb W154
+                                                      (shen/let W1627
+                                                                (shen/shen\.<-out W1626)
+                                                                (shen/let W1628
+                                                                          (shen/shen\.in-> W1626)
+                                                                          (shen/shen\.comb W1628
                                                                                            (append
-                                                                                            (list W150)
-                                                                                            W153))))))))))
+                                                                                            (list W1624)
+                                                                                            W1627))))))))))
             (shen/if
-             (shen/shen\.parse-failure\? W148)
-             (shen/let W155
-                       (shen/let W156
-                                 (shen/<!> V147)
+             (shen/shen\.parse-failure\? W1622)
+             (shen/let W1629
+                       (shen/let W1630
+                                 (shen/<!> V1621)
                                  (shen/if
-                                  (shen/shen\.parse-failure\? W156)
+                                  (shen/shen\.parse-failure\? W1630)
                                   (shen/shen\.parse-failure)
-                                  (shen/let W157
-                                            (shen/shen\.<-out W156)
-                                            (shen/let W158
-                                                      (shen/shen\.in-> W156)
-                                                      (shen/shen\.comb W158
+                                  (shen/let W1631
+                                            (shen/shen\.<-out W1630)
+                                            (shen/let W1632
+                                                      (shen/shen\.in-> W1630)
+                                                      (shen/shen\.comb W1632
                                                                        (shen/if
-                                                                        (shen/empty\? W157)
+                                                                        (shen/empty\? W1631)
                                                                         nil
                                                                         (shen/simple-error
-                                                                         (shen/cn "YACC syntax error here:\n "
-                                                                                  (shen/shen\.app W157 "\n ..." 'shen\.r)))))))))
+                                                                         (shen/cn "Prolog syntax error here:\n "
+                                                                                  (shen/shen\.app W1631 "\n ..." 'shen\.r)))))))))
                        (shen/if
-                        (shen/shen\.parse-failure\? W155)
+                        (shen/shen\.parse-failure\? W1629)
                         (shen/shen\.parse-failure)
-                        W155))
-             W148)))
-(defun shen/shen\.<c-rule>
-    (V159)
-  (shen/let W160
-            (shen/let W161
-                      (shen/shen\.<syntax> V159)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W161)
-                       (shen/shen\.parse-failure)
-                       (shen/let W162
-                                 (shen/shen\.<-out W161)
-                                 (shen/let W163
-                                           (shen/shen\.in-> W161)
-                                           (shen/let W164
-                                                     (shen/shen\.<semantics> W163)
-                                                     (shen/if
-                                                      (shen/shen\.parse-failure\? W164)
-                                                      (shen/shen\.parse-failure)
-                                                      (shen/let W165
-                                                                (shen/shen\.<-out W164)
-                                                                (shen/let W166
-                                                                          (shen/shen\.in-> W164)
-                                                                          (shen/let W167
-                                                                                    (shen/shen\.<sc> W166)
-                                                                                    (shen/if
-                                                                                     (shen/shen\.parse-failure\? W167)
-                                                                                     (shen/shen\.parse-failure)
-                                                                                     (shen/let W168
-                                                                                               (shen/shen\.in-> W167)
-                                                                                               (shen/shen\.comb W168
-                                                                                                                (list W162 W165)))))))))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W160)
-             (shen/let W169
-                       (shen/let W170
-                                 (shen/shen\.<syntax> V159)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W170)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W171
-                                            (shen/shen\.<-out W170)
-                                            (shen/let W172
-                                                      (shen/shen\.in-> W170)
-                                                      (shen/let W173
-                                                                (shen/shen\.<sc> W172)
-                                                                (shen/if
-                                                                 (shen/shen\.parse-failure\? W173)
-                                                                 (shen/shen\.parse-failure)
-                                                                 (shen/let W174
-                                                                           (shen/shen\.in-> W173)
-                                                                           (shen/shen\.comb W174
-                                                                                            (list W171
-                                                                                                  (shen/shen\.autocomplete W171))))))))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W169)
-                        (shen/shen\.parse-failure)
-                        W169))
-             W160)))
-(defun shen/shen\.autocomplete
-    (V175)
+                        W1629))
+             W1622)))
+(defun shen/shen\.linearise-clause
+    (V1633)
   (shen/cond
    ((shen/and
-     (shen/cons\? V175)
-     (shen/and
-      (shen/internal/predicate->shen
-       (null
-        (nthcdr 1 V175)))
-      (shen/shen\.non-terminal\?
-       (shen/hd V175))))
-    (shen/hd V175))
-   ((shen/and
-     (shen/cons\? V175)
-     (shen/shen\.non-terminal\?
-      (shen/hd V175)))
-    (list 'append
-          (shen/hd V175)
-          (shen/shen\.autocomplete
-           (nthcdr 1 V175))))
-   ((shen/cons\? V175)
-    (list 'cons
-          (shen/shen\.autocomplete
-           (shen/hd V175))
-          (shen/shen\.autocomplete
-           (nthcdr 1 V175))))
-   (shen/true V175)))
-(defun shen/shen\.non-terminal\?
-    (V176)
-  (shen/and
-   (shen/symbol\? V176)
-   (shen/let W177
-             (shen/explode V176)
-             (shen/compile
-              (shen/lambda Z178
-                           (shen/shen\.<non-terminal\?> Z178))
-              W177))))
-(defun shen/shen\.<non-terminal\?>
-    (V179)
-  (shen/let W180
-            (shen/let W181
-                      (shen/shen\.<packagenames> V179)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W181)
-                       (shen/shen\.parse-failure)
-                       (shen/let W182
-                                 (shen/shen\.in-> W181)
-                                 (shen/let W183
-                                           (shen/shen\.<non-terminal-name> W182)
-                                           (shen/if
-                                            (shen/shen\.parse-failure\? W183)
-                                            (shen/shen\.parse-failure)
-                                            (shen/let W184
-                                                      (shen/shen\.in-> W183)
-                                                      (shen/shen\.comb W184 'true)))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W180)
-             (shen/let W185
-                       (shen/let W186
-                                 (shen/shen\.<non-terminal-name> V179)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W186)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W187
-                                            (shen/shen\.in-> W186)
-                                            (shen/shen\.comb W187 'true))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W185)
-                        (shen/let W188
-                                  (shen/let W189
-                                            (shen/<!> V179)
-                                            (shen/if
-                                             (shen/shen\.parse-failure\? W189)
-                                             (shen/shen\.parse-failure)
-                                             (shen/let W190
-                                                       (shen/shen\.in-> W189)
-                                                       (shen/shen\.comb W190 'false))))
-                                  (shen/if
-                                   (shen/shen\.parse-failure\? W188)
-                                   (shen/shen\.parse-failure)
-                                   W188))
-                        W185))
-             W180)))
-(defun shen/shen\.<packagenames>
-    (V191)
-  (shen/let W192
-            (shen/let W193
-                      (shen/shen\.<packagename> V191)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W193)
-                       (shen/shen\.parse-failure)
-                       (shen/let W194
-                                 (shen/shen\.in-> W193)
-                                 (shen/if
-                                  (shen/shen\.hds=\? W194 ".")
-                                  (shen/let W195
-                                            (shen/tail W194)
-                                            (shen/let W196
-                                                      (shen/shen\.<packagenames> W195)
-                                                      (shen/if
-                                                       (shen/shen\.parse-failure\? W196)
-                                                       (shen/shen\.parse-failure)
-                                                       (shen/let W197
-                                                                 (shen/shen\.in-> W196)
-                                                                 (shen/shen\.comb W197 'shen\.skip)))))
-                                  (shen/shen\.parse-failure)))))
-            (shen/if
-             (shen/shen\.parse-failure\? W192)
-             (shen/let W198
-                       (shen/let W199
-                                 (shen/shen\.<packagename> V191)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W199)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W200
-                                            (shen/shen\.in-> W199)
-                                            (shen/if
-                                             (shen/shen\.hds=\? W200 ".")
-                                             (shen/let W201
-                                                       (shen/tail W200)
-                                                       (shen/shen\.comb W201 'shen\.skip))
-                                             (shen/shen\.parse-failure)))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W198)
-                        (shen/shen\.parse-failure)
-                        W198))
-             W192)))
-(defun shen/shen\.<packagename>
-    (V202)
-  (shen/let W203
-            (shen/let W204
-                      (shen/shen\.<packagechar> V202)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W204)
-                       (shen/shen\.parse-failure)
-                       (shen/let W205
-                                 (shen/shen\.in-> W204)
-                                 (shen/let W206
-                                           (shen/shen\.<packagename> W205)
-                                           (shen/if
-                                            (shen/shen\.parse-failure\? W206)
-                                            (shen/shen\.parse-failure)
-                                            (shen/let W207
-                                                      (shen/shen\.in-> W206)
-                                                      (shen/shen\.comb W207 'shen\.skip)))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W203)
-             (shen/let W208
-                       (shen/let W209
-                                 (shen/<e> V202)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W209)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W210
-                                            (shen/shen\.in-> W209)
-                                            (shen/shen\.comb W210 'shen\.skip))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W208)
-                        (shen/shen\.parse-failure)
-                        W208))
-             W203)))
-(defun shen/shen\.<packagechar>
-    (V211)
-  (shen/let W212
-            (shen/if
-             (shen/cons\? V211)
-             (shen/let W213
-                       (shen/head V211)
-                       (shen/let W214
-                                 (shen/tail V211)
-                                 (shen/if
-                                  (shen/not
-                                   (shen/= W213 "."))
-                                  (shen/shen\.comb W214 'shen\.skip)
-                                  (shen/shen\.parse-failure))))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W212)
-             (shen/shen\.parse-failure)
-             W212)))
-(defun shen/shen\.<non-terminal-name>
-    (V215)
-  (shen/let W216
-            (shen/if
-             (shen/shen\.hds=\? V215 "<")
-             (shen/let W217
-                       (shen/tail V215)
-                       (shen/let W218
-                                 (shen/<!> W217)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W218)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W219
-                                            (shen/shen\.<-out W218)
-                                            (shen/let W220
-                                                      (shen/shen\.in-> W218)
-                                                      (shen/if
-                                                       (shen/let W221
-                                                                 (shen/reverse W219)
-                                                                 (shen/and
-                                                                  (shen/cons\? W221)
-                                                                  (shen/=
-                                                                   (shen/hd W221)
-                                                                   ">")))
-                                                       (shen/shen\.comb W220 'shen\.skip)
-                                                       (shen/shen\.parse-failure)))))))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W216)
-             (shen/shen\.parse-failure)
-             W216)))
-(defun shen/shen\.semicolon\?
-    (V222)
-  (shen/= V222
-          (shen/intern ";")))
-(defun shen/shen\.<colon-equal>
-    (V223)
-  (shen/let W224
-            (shen/if
-             (shen/cons\? V223)
-             (shen/let W225
-                       (shen/head V223)
-                       (shen/let W226
-                                 (shen/tail V223)
-                                 (shen/if
-                                  (shen/shen\.colon-equal\? W225)
-                                  (shen/shen\.comb W226 'shen\.skip)
-                                  (shen/shen\.parse-failure))))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W224)
-             (shen/shen\.parse-failure)
-             W224)))
-(defun shen/shen\.colon-equal\?
-    (V227)
-  (shen/=
-   (shen/intern ":=")
-   V227))
-(defun shen/shen\.<syntax>
-    (V228)
-  (shen/let W229
-            (shen/let W230
-                      (shen/shen\.<syntax-item> V228)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W230)
-                       (shen/shen\.parse-failure)
-                       (shen/let W231
-                                 (shen/shen\.<-out W230)
-                                 (shen/let W232
-                                           (shen/shen\.in-> W230)
-                                           (shen/let W233
-                                                     (shen/shen\.<syntax> W232)
-                                                     (shen/if
-                                                      (shen/shen\.parse-failure\? W233)
-                                                      (shen/shen\.parse-failure)
-                                                      (shen/let W234
-                                                                (shen/shen\.<-out W233)
-                                                                (shen/let W235
-                                                                          (shen/shen\.in-> W233)
-                                                                          (shen/shen\.comb W235
-                                                                                           (append
-                                                                                            (list W231)
-                                                                                            W234))))))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W229)
-             (shen/let W236
-                       (shen/let W237
-                                 (shen/shen\.<syntax-item> V228)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W237)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W238
-                                            (shen/shen\.<-out W237)
-                                            (shen/let W239
-                                                      (shen/shen\.in-> W237)
-                                                      (shen/shen\.comb W239
-                                                                       (list W238))))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W236)
-                        (shen/shen\.parse-failure)
-                        W236))
-             W229)))
-(defun shen/shen\.<syntax-item>
-    (V240)
-  (shen/let W241
-            (shen/if
-             (shen/cons\? V240)
-             (shen/let W242
-                       (shen/head V240)
-                       (shen/let W243
-                                 (shen/tail V240)
-                                 (shen/if
-                                  (shen/shen\.syntax-item\? W242)
-                                  (shen/shen\.comb W243 W242)
-                                  (shen/shen\.parse-failure))))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W241)
-             (shen/shen\.parse-failure)
-             W241)))
-(defun shen/shen\.syntax-item\?
-    (V246)
-  (shen/cond
-   ((shen/shen\.colon-equal\? V246)
-    'false)
-   ((shen/shen\.semicolon\? V246)
-    'false)
-   ((shen/atom\? V246)
-    'true)
-   ((shen/and
-     (shen/cons\? V246)
-     (shen/and
-      (shen/= 'cons
-              (shen/hd V246))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V246))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 2 V246))
-        (shen/internal/predicate->shen
-         (null
-          (nthcdr 3 V246)))))))
-    (shen/and
-     (shen/shen\.syntax-item\?
-      (shen/hd
-       (nthcdr 1 V246)))
-     (shen/shen\.syntax-item\?
-      (shen/hd
-       (nthcdr 2 V246)))))
-   (shen/true 'false)))
-(defun shen/shen\.<semantics>
-    (V247)
-  (shen/let W248
-            (shen/let W249
-                      (shen/shen\.<colon-equal> V247)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W249)
-                       (shen/shen\.parse-failure)
-                       (shen/let W250
-                                 (shen/shen\.in-> W249)
-                                 (shen/if
-                                  (shen/cons\? W250)
-                                  (shen/let W251
-                                            (shen/head W250)
-                                            (shen/let W252
-                                                      (shen/tail W250)
-                                                      (shen/if
-                                                       (shen/shen\.hds=\? W252 'where)
-                                                       (shen/let W253
-                                                                 (shen/tail W252)
-                                                                 (shen/if
-                                                                  (shen/cons\? W253)
-                                                                  (shen/let W254
-                                                                            (shen/head W253)
-                                                                            (shen/let W255
-                                                                                      (shen/tail W253)
-                                                                                      (shen/if
-                                                                                       (shen/not
-                                                                                        (shen/shen\.semicolon\? W251))
-                                                                                       (shen/shen\.comb W255
-                                                                                                        (list 'where W254 W251))
-                                                                                       (shen/shen\.parse-failure))))
-                                                                  (shen/shen\.parse-failure)))
-                                                       (shen/shen\.parse-failure))))
-                                  (shen/shen\.parse-failure)))))
-            (shen/if
-             (shen/shen\.parse-failure\? W248)
-             (shen/let W256
-                       (shen/let W257
-                                 (shen/shen\.<colon-equal> V247)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W257)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W258
-                                            (shen/shen\.in-> W257)
-                                            (shen/if
-                                             (shen/cons\? W258)
-                                             (shen/let W259
-                                                       (shen/head W258)
-                                                       (shen/let W260
-                                                                 (shen/tail W258)
-                                                                 (shen/if
-                                                                  (shen/not
-                                                                   (shen/shen\.semicolon\? W259))
-                                                                  (shen/shen\.comb W260 W259)
-                                                                  (shen/shen\.parse-failure))))
-                                             (shen/shen\.parse-failure)))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W256)
-                        (shen/shen\.parse-failure)
-                        W256))
-             W248)))
-(defun shen/shen\.c-rules->shen
-    (V269 V270 V271)
-  (shen/cond
-   ((shen/internal/predicate->shen
-     (null V271))
-    (list 'shen\.parse-failure))
-   ((shen/cons\? V271)
-    (shen/shen\.combine-c-code
-     (shen/shen\.c-rule->shen V269
-                              (shen/hd V271)
-                              V270)
-     (shen/shen\.c-rules->shen V269 V270
-                               (nthcdr 1 V271))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.c-rules->shen\n"))))
-(defun shen/shen\.parse-failure nil
-  (shen/fail))
-(defun shen/shen\.combine-c-code
-    (V272 V273)
-  (list 'let 'Result V272
-        (list 'if
-              (list 'shen\.parse-failure\? 'Result)
-              V273 'Result)))
-(defun shen/shen\.c-rule->shen
-    (V280 V281 V282)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V281)
+     (shen/cons\? V1633)
      (shen/and
       (shen/cons\?
-       (nthcdr 1 V281))
+       (nthcdr 1 V1633))
       (shen/internal/predicate->shen
        (null
-        (nthcdr 2 V281)))))
-    (shen/shen\.yacc-syntax V280 V282
-                            (shen/hd V281)
-                            (shen/hd
-                             (nthcdr 1 V281))))
+        (nthcdr 2 V1633)))))
+    (shen/shen\.lch
+     (shen/shen\.linearise
+      (shen/@p
+       (shen/hd V1633)
+       (shen/hd
+        (nthcdr 1 V1633))))))
    (shen/true
-    (shen/simple-error "implementation error in shen.c-rule->shen\n"))))
-(defun shen/shen\.yacc-syntax
-    (V291 V292 V293 V294)
+    (shen/shen\.f-error 'shen\.linearise-clause))))
+(defun shen/shen\.lch
+    (V1634)
   (shen/cond
-   ((shen/and
-     (shen/internal/predicate->shen
-      (null V293))
-     (shen/and
-      (shen/cons\? V294)
-      (shen/and
-       (shen/= 'where
-               (shen/hd V294))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 1 V294))
-        (shen/and
-         (shen/cons\?
-          (nthcdr 2 V294))
-         (shen/internal/predicate->shen
-          (null
-           (nthcdr 3 V294))))))))
-    (list 'if
-          (shen/shen\.process-yacc-semantics
-           (shen/hd
-            (nthcdr 1 V294)))
-          (shen/shen\.yacc-syntax V291 V292 nil
-                                  (shen/hd
-                                   (nthcdr 2 V294)))
-          (list 'shen\.parse-failure)))
-   ((shen/internal/predicate->shen
-     (null V293))
-    (shen/shen\.yacc-semantics V291 V292 V294))
-   ((shen/cons\? V293)
-    (shen/if
-     (shen/shen\.non-terminal\?
-      (shen/hd V293))
-     (shen/shen\.non-terminalcode V291 V292
-                                  (shen/hd V293)
-                                  (nthcdr 1 V293)
-                                  V294)
-     (shen/if
-      (shen/variable\?
-       (shen/hd V293))
-      (shen/shen\.variablecode V291 V292
-                               (shen/hd V293)
-                               (nthcdr 1 V293)
-                               V294)
-      (shen/if
-       (shen/= '_
-               (shen/hd V293))
-       (shen/shen\.wildcardcode V291 V292
-                                (shen/hd V293)
-                                (nthcdr 1 V293)
-                                V294)
-       (shen/if
-        (shen/atom\?
-         (shen/hd V293))
-        (shen/shen\.terminalcode V291 V292
-                                 (shen/hd V293)
-                                 (nthcdr 1 V293)
-                                 V294)
-        (shen/if
-         (shen/cons\?
-          (shen/hd V293))
-         (shen/shen\.conscode V291 V292
-                              (shen/hd V293)
-                              (nthcdr 1 V293)
-                              V294)
-         (shen/simple-error "implementation error in shen.yacc-syntax\n")))))))
+   ((shen/tuple\? V1634)
+    (list
+     (shen/fst V1634)
+     (shen/shen\.lchh
+      (shen/snd V1634))))
    (shen/true
-    (shen/simple-error "implementation error in shen.yacc-syntax\n"))))
-(defun shen/shen\.non-terminalcode
-    (V295 V296 V297 V298 V299)
-  (shen/let W300
-            (shen/concat 'Parse V297)
-            (shen/let W301
-                      (shen/concat 'Action V297)
-                      (shen/let W302
-                                (shen/concat 'Remainder V297)
-                                (list 'let W300
-                                      (list V297 V296)
-                                      (list 'if
-                                            (list 'shen\.parse-failure\? W300)
-                                            (list 'shen\.parse-failure)
-                                            (shen/let W303
-                                                      (list 'let W302
-                                                            (list 'shen\.in-> W300)
-                                                            (shen/shen\.yacc-syntax V295 W302 V298 V299))
-                                                      (shen/if
-                                                       (shen/or
-                                                        (shen/shen\.prolog-occurs\? V297 V299)
-                                                        (shen/shen\.prolog-occurs\? W301 V299))
-                                                       (list 'let W301
-                                                             (list 'shen\.<-out W300)
-                                                             W303)
-                                                       W303))))))))
-(defun shen/shen\.variablecode
-    (V304 V305 V306 V307 V308)
-  (shen/let W309
-            (shen/gensym 'Remainder)
-            (list 'if
-                  (list 'cons\? V305)
-                  (shen/let W310
-                            (list 'let W309
-                                  (list 'tail V305)
-                                  (shen/shen\.yacc-syntax V304 W309 V307 V308))
-                            (shen/if
-                             (shen/shen\.prolog-occurs\? V306 V308)
-                             (list 'let V306
-                                   (list 'head V305)
-                                   W310)
-                             W310))
-                  (list 'shen\.parse-failure))))
-(defun shen/shen\.wildcardcode
-    (V311 V312 V313 V314 V315)
-  (shen/let W316
-            (shen/gensym 'Remainder)
-            (list 'if
-                  (list 'cons\? V312)
-                  (list 'let W316
-                        (list 'tail V312)
-                        (shen/shen\.yacc-syntax V311 W316 V314 V315))
-                  (list 'shen\.parse-failure))))
-(defun shen/shen\.terminalcode
-    (V317 V318 V319 V320 V321)
-  (shen/let W322
-            (shen/gensym 'Remainder)
-            (list 'if
-                  (list 'shen\.hds=\? V318 V319)
-                  (list 'let W322
-                        (list 'tail V318)
-                        (shen/shen\.yacc-syntax V317 W322 V320 V321))
-                  (list 'shen\.parse-failure))))
-(defun shen/shen\.hds=\?
-    (V330 V331)
+    (shen/shen\.f-error 'shen\.lch))))
+(defun shen/shen\.lchh
+    (V1635)
   (shen/cond
    ((shen/and
-     (shen/cons\? V330)
-     (shen/=
-      (shen/hd V330)
-      V331))
-    'true)
-   (shen/true 'false)))
-(defun shen/shen\.conscode
-    (V332 V333 V334 V335 V336)
-  (shen/let W337
-            (shen/gensym 'Remainder)
-            (shen/let W338
-                      (shen/gensym 'Hd)
-                      (shen/let W339
-                                (shen/gensym 'Tl)
-                                (list 'if
-                                      (list 'shen\.ccons\? V333)
-                                      (list 'let W338
-                                            (list 'head V333)
-                                            W339
-                                            (list 'tail V333)
-                                            (shen/shen\.yacc-syntax V332 W338
-                                                                    (shen/append
-                                                                     (shen/shen\.decons V334)
-                                                                     (list '<end>))
-                                                                    (list 'shen\.processed
-                                                                          (shen/shen\.yacc-syntax V332 W339 V335 V336))))
-                                      (list 'shen\.parse-failure))))))
-(defun shen/shen\.ccons\?
-    (V348)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V348)
-     (shen/cons\?
-      (shen/hd V348)))
-    'true)
-   (shen/true 'false)))
-(defun shen/shen\.decons
-    (V349)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V349)
+     (shen/cons\? V1635)
      (shen/and
-      (shen/= 'cons
-              (shen/hd V349))
+      (shen/= 'where
+              (shen/hd V1635))
       (shen/and
        (shen/cons\?
-        (nthcdr 1 V349))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 2 V349))
-        (shen/internal/predicate->shen
-         (null
-          (nthcdr 3 V349)))))))
-    (append
-     (list
-      (shen/hd
-       (nthcdr 1 V349)))
-     (shen/shen\.decons
-      (shen/hd
-       (nthcdr 2 V349)))))
-   (shen/true V349)))
-(defun shen/shen\.comb
-    (V350 V351)
-  (list V350 V351))
-(defun shen/shen\.yacc-semantics
-    (V356 V357 V358)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V358)
-     (shen/and
-      (shen/= 'shen\.processed
-              (shen/hd V358))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V358))
-       (shen/internal/predicate->shen
-        (null
-         (nthcdr 2 V358))))))
-    (shen/hd
-     (nthcdr 1 V358)))
-   (shen/true
-    (shen/let W359
-              (shen/shen\.process-yacc-semantics V358)
-              (shen/let W360
-                        (shen/shen\.use-type-info V356 W359)
-                        (list 'shen\.comb V357 W360))))))
-(defun shen/shen\.use-type-info
-    (V364 V365)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V364)
-     (shen/and
-      (shen/= '{
-              (shen/hd V364))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V364))
+        (nthcdr 1 V1635))
        (shen/and
         (shen/cons\?
          (shen/hd
-          (nthcdr 1 V364)))
+          (nthcdr 1 V1635)))
         (shen/and
-         (shen/= 'list
+         (shen/= '=
                  (shen/hd
                   (shen/hd
-                   (nthcdr 1 V364))))
+                   (nthcdr 1 V1635))))
          (shen/and
           (shen/cons\?
            (nthcdr 1
                    (shen/hd
-                    (nthcdr 1 V364))))
+                    (nthcdr 1 V1635))))
           (shen/and
-           (shen/internal/predicate->shen
-            (null
-             (nthcdr 2
-                     (shen/hd
-                      (nthcdr 1 V364)))))
+           (shen/cons\?
+            (nthcdr 2
+                    (shen/hd
+                     (nthcdr 1 V1635))))
            (shen/and
-            (shen/cons\?
-             (nthcdr 2 V364))
+            (shen/internal/predicate->shen
+             (null
+              (nthcdr 3
+                      (shen/hd
+                       (nthcdr 1 V1635)))))
             (shen/and
-             (shen/= '-->
-                     (shen/hd
-                      (nthcdr 2 V364)))
-             (shen/and
-              (shen/cons\?
-               (nthcdr 3 V364))
-              (shen/and
-               (shen/cons\?
-                (shen/hd
-                 (nthcdr 3 V364)))
-               (shen/and
-                (shen/= 'str
-                        (shen/hd
-                         (shen/hd
-                          (nthcdr 3 V364))))
-                (shen/and
-                 (shen/cons\?
-                  (nthcdr 1
-                          (shen/hd
-                           (nthcdr 3 V364))))
-                 (shen/and
-                  (shen/cons\?
-                   (shen/hd
-                    (nthcdr 1
-                            (shen/hd
-                             (nthcdr 3 V364)))))
-                  (shen/and
-                   (shen/= 'list
-                           (shen/hd
-                            (shen/hd
-                             (nthcdr 1
-                                     (shen/hd
-                                      (nthcdr 3 V364))))))
-                   (shen/and
-                    (shen/cons\?
-                     (nthcdr 1
-                             (shen/hd
-                              (nthcdr 1
-                                      (shen/hd
-                                       (nthcdr 3 V364))))))
-                    (shen/and
-                     (shen/internal/predicate->shen
-                      (null
-                       (nthcdr 2
-                               (shen/hd
-                                (nthcdr 1
-                                        (shen/hd
-                                         (nthcdr 3 V364)))))))
-                     (shen/and
-                      (shen/cons\?
-                       (nthcdr 2
-                               (shen/hd
-                                (nthcdr 3 V364))))
-                      (shen/and
-                       (shen/internal/predicate->shen
-                        (null
-                         (nthcdr 3
-                                 (shen/hd
-                                  (nthcdr 3 V364)))))
-                       (shen/and
-                        (shen/cons\?
-                         (nthcdr 4 V364))
-                        (shen/and
-                         (shen/= '}
-                                 (shen/hd
-                                  (nthcdr 4 V364)))
-                         (shen/and
-                          (shen/internal/predicate->shen
-                           (null
-                            (nthcdr 5 V364)))
-                          (shen/and
-                           (shen/=
-                            (shen/hd
-                             (nthcdr 1
-                                     (shen/hd
-                                      (nthcdr 1 V364))))
-                            (shen/hd
-                             (nthcdr 1
-                                     (shen/hd
-                                      (nthcdr 1
-                                              (shen/hd
-                                               (nthcdr 3 V364)))))))
-                           (shen/shen\.monomorphic\?
-                            (shen/hd
-                             (nthcdr 2
-                                     (shen/hd
-                                      (nthcdr 3 V364))))))))))))))))))))))))))))
+             (shen/cons\?
+              (nthcdr 2 V1635))
+             (shen/internal/predicate->shen
+              (null
+               (nthcdr 3 V1635))))))))))))
     (append
-     (list 'type V365)
-     (nthcdr 2
-             (shen/hd
-              (nthcdr 3 V364)))))
-   (shen/true V365)))
-(defun shen/shen\.monomorphic\?
-    (V368)
+     (list
+      (append
+       (list
+        (shen/if
+         (shen/value 'shen\.*occurs*)
+         'is! 'is))
+       (nthcdr 1
+               (shen/hd
+                (nthcdr 1 V1635)))))
+     (shen/shen\.lchh
+      (shen/hd
+       (nthcdr 2 V1635)))))
+   (shen/true V1635)))
+(defun shen/shen\.<clause>
+    (V1636)
+  (shen/let W1637
+            (shen/let W1638
+                      (shen/shen\.<head> V1636)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W1638)
+                       (shen/shen\.parse-failure)
+                       (shen/let W1639
+                                 (shen/shen\.<-out W1638)
+                                 (shen/let W1640
+                                           (shen/shen\.in-> W1638)
+                                           (shen/if
+                                            (shen/shen\.hds=\? W1640 '<--)
+                                            (shen/let W1641
+                                                      (shen/tail W1640)
+                                                      (shen/let W1642
+                                                                (shen/shen\.<body> W1641)
+                                                                (shen/if
+                                                                 (shen/shen\.parse-failure\? W1642)
+                                                                 (shen/shen\.parse-failure)
+                                                                 (shen/let W1643
+                                                                           (shen/shen\.<-out W1642)
+                                                                           (shen/let W1644
+                                                                                     (shen/shen\.in-> W1642)
+                                                                                     (shen/let W1645
+                                                                                               (shen/shen\.<sc> W1644)
+                                                                                               (shen/if
+                                                                                                (shen/shen\.parse-failure\? W1645)
+                                                                                                (shen/shen\.parse-failure)
+                                                                                                (shen/let W1646
+                                                                                                          (shen/shen\.in-> W1645)
+                                                                                                          (shen/shen\.comb W1646
+                                                                                                                           (list W1639 W1643))))))))))
+                                            (shen/shen\.parse-failure))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W1637)
+             (shen/shen\.parse-failure)
+             W1637)))
+(defun shen/shen\.<head>
+    (V1647)
+  (shen/let W1648
+            (shen/let W1649
+                      (shen/shen\.<hterm> V1647)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W1649)
+                       (shen/shen\.parse-failure)
+                       (shen/let W1650
+                                 (shen/shen\.<-out W1649)
+                                 (shen/let W1651
+                                           (shen/shen\.in-> W1649)
+                                           (shen/let W1652
+                                                     (shen/shen\.<head> W1651)
+                                                     (shen/if
+                                                      (shen/shen\.parse-failure\? W1652)
+                                                      (shen/shen\.parse-failure)
+                                                      (shen/let W1653
+                                                                (shen/shen\.<-out W1652)
+                                                                (shen/let W1654
+                                                                          (shen/shen\.in-> W1652)
+                                                                          (shen/shen\.comb W1654
+                                                                                           (append
+                                                                                            (list W1650)
+                                                                                            W1653))))))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W1648)
+             (shen/let W1655
+                       (shen/let W1656
+                                 (shen/<e> V1647)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W1656)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W1657
+                                            (shen/shen\.in-> W1656)
+                                            (shen/shen\.comb W1657 nil))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W1655)
+                        (shen/shen\.parse-failure)
+                        W1655))
+             W1648)))
+(defun shen/shen\.<hterm>
+    (V1658)
+  (shen/let W1659
+            (shen/if
+             (shen/cons\? V1658)
+             (shen/let W1660
+                       (shen/head V1658)
+                       (shen/let W1661
+                                 (shen/tail V1658)
+                                 (shen/if
+                                  (shen/and
+                                   (shen/atom\? W1660)
+                                   (shen/not
+                                    (shen/shen\.prolog-keyword\? W1660)))
+                                  (shen/shen\.comb W1661 W1660)
+                                  (shen/shen\.parse-failure))))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W1659)
+             (shen/let W1662
+                       (shen/if
+                        (shen/cons\? V1658)
+                        (shen/let W1663
+                                  (shen/head V1658)
+                                  (shen/let W1664
+                                            (shen/tail V1658)
+                                            (shen/if
+                                             (shen/= W1663
+                                                     (shen/intern ":"))
+                                             (shen/shen\.comb W1664 W1663)
+                                             (shen/shen\.parse-failure))))
+                        (shen/shen\.parse-failure))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W1662)
+                        (shen/let W1665
+                                  (shen/if
+                                   (shen/shen\.ccons\? V1658)
+                                   (shen/let W1666
+                                             (shen/head V1658)
+                                             (shen/let W1667
+                                                       (shen/tail V1658)
+                                                       (shen/if
+                                                        (shen/shen\.hds=\? W1666 'cons)
+                                                        (shen/let W1668
+                                                                  (shen/tail W1666)
+                                                                  (shen/let W1669
+                                                                            (shen/shen\.<hterm1> W1668)
+                                                                            (shen/if
+                                                                             (shen/shen\.parse-failure\? W1669)
+                                                                             (shen/shen\.parse-failure)
+                                                                             (shen/let W1670
+                                                                                       (shen/shen\.<-out W1669)
+                                                                                       (shen/let W1671
+                                                                                                 (shen/shen\.in-> W1669)
+                                                                                                 (shen/let W1672
+                                                                                                           (shen/shen\.<hterm2> W1671)
+                                                                                                           (shen/if
+                                                                                                            (shen/shen\.parse-failure\? W1672)
+                                                                                                            (shen/shen\.parse-failure)
+                                                                                                            (shen/let W1673
+                                                                                                                      (shen/shen\.<-out W1672)
+                                                                                                                      (shen/let W1674
+                                                                                                                                (shen/shen\.in-> W1672)
+                                                                                                                                (shen/let W1675
+                                                                                                                                          (shen/<end> W1674)
+                                                                                                                                          (shen/if
+                                                                                                                                           (shen/shen\.parse-failure\? W1675)
+                                                                                                                                           (shen/shen\.parse-failure)
+                                                                                                                                           (shen/let W1676
+                                                                                                                                                     (shen/shen\.in-> W1675)
+                                                                                                                                                     (shen/shen\.comb W1667
+                                                                                                                                                                      (list 'cons W1670 W1673))))))))))))))
+                                                        (shen/shen\.parse-failure))))
+                                   (shen/shen\.parse-failure))
+                                  (shen/if
+                                   (shen/shen\.parse-failure\? W1665)
+                                   (shen/let W1677
+                                             (shen/if
+                                              (shen/shen\.ccons\? V1658)
+                                              (shen/let W1678
+                                                        (shen/head V1658)
+                                                        (shen/let W1679
+                                                                  (shen/tail V1658)
+                                                                  (shen/if
+                                                                   (shen/shen\.hds=\? W1678 '+)
+                                                                   (shen/let W1680
+                                                                             (shen/tail W1678)
+                                                                             (shen/let W1681
+                                                                                       (shen/shen\.<hterm> W1680)
+                                                                                       (shen/if
+                                                                                        (shen/shen\.parse-failure\? W1681)
+                                                                                        (shen/shen\.parse-failure)
+                                                                                        (shen/let W1682
+                                                                                                  (shen/shen\.<-out W1681)
+                                                                                                  (shen/let W1683
+                                                                                                            (shen/shen\.in-> W1681)
+                                                                                                            (shen/let W1684
+                                                                                                                      (shen/<end> W1683)
+                                                                                                                      (shen/if
+                                                                                                                       (shen/shen\.parse-failure\? W1684)
+                                                                                                                       (shen/shen\.parse-failure)
+                                                                                                                       (shen/let W1685
+                                                                                                                                 (shen/shen\.in-> W1684)
+                                                                                                                                 (shen/shen\.comb W1679
+                                                                                                                                                  (list 'shen\.+m W1682))))))))))
+                                                                   (shen/shen\.parse-failure))))
+                                              (shen/shen\.parse-failure))
+                                             (shen/if
+                                              (shen/shen\.parse-failure\? W1677)
+                                              (shen/let W1686
+                                                        (shen/if
+                                                         (shen/shen\.ccons\? V1658)
+                                                         (shen/let W1687
+                                                                   (shen/head V1658)
+                                                                   (shen/let W1688
+                                                                             (shen/tail V1658)
+                                                                             (shen/if
+                                                                              (shen/shen\.hds=\? W1687 '-)
+                                                                              (shen/let W1689
+                                                                                        (shen/tail W1687)
+                                                                                        (shen/let W1690
+                                                                                                  (shen/shen\.<hterm> W1689)
+                                                                                                  (shen/if
+                                                                                                   (shen/shen\.parse-failure\? W1690)
+                                                                                                   (shen/shen\.parse-failure)
+                                                                                                   (shen/let W1691
+                                                                                                             (shen/shen\.<-out W1690)
+                                                                                                             (shen/let W1692
+                                                                                                                       (shen/shen\.in-> W1690)
+                                                                                                                       (shen/let W1693
+                                                                                                                                 (shen/<end> W1692)
+                                                                                                                                 (shen/if
+                                                                                                                                  (shen/shen\.parse-failure\? W1693)
+                                                                                                                                  (shen/shen\.parse-failure)
+                                                                                                                                  (shen/let W1694
+                                                                                                                                            (shen/shen\.in-> W1693)
+                                                                                                                                            (shen/shen\.comb W1688
+                                                                                                                                                             (list 'shen\.-m W1691))))))))))
+                                                                              (shen/shen\.parse-failure))))
+                                                         (shen/shen\.parse-failure))
+                                                        (shen/if
+                                                         (shen/shen\.parse-failure\? W1686)
+                                                         (shen/let W1695
+                                                                   (shen/if
+                                                                    (shen/shen\.ccons\? V1658)
+                                                                    (shen/let W1696
+                                                                              (shen/head V1658)
+                                                                              (shen/let W1697
+                                                                                        (shen/tail V1658)
+                                                                                        (shen/if
+                                                                                         (shen/shen\.hds=\? W1696 'mode)
+                                                                                         (shen/let W1698
+                                                                                                   (shen/tail W1696)
+                                                                                                   (shen/let W1699
+                                                                                                             (shen/shen\.<hterm> W1698)
+                                                                                                             (shen/if
+                                                                                                              (shen/shen\.parse-failure\? W1699)
+                                                                                                              (shen/shen\.parse-failure)
+                                                                                                              (shen/let W1700
+                                                                                                                        (shen/shen\.<-out W1699)
+                                                                                                                        (shen/let W1701
+                                                                                                                                  (shen/shen\.in-> W1699)
+                                                                                                                                  (shen/if
+                                                                                                                                   (shen/shen\.hds=\? W1701 '+)
+                                                                                                                                   (shen/let W1702
+                                                                                                                                             (shen/tail W1701)
+                                                                                                                                             (shen/let W1703
+                                                                                                                                                       (shen/<end> W1702)
+                                                                                                                                                       (shen/if
+                                                                                                                                                        (shen/shen\.parse-failure\? W1703)
+                                                                                                                                                        (shen/shen\.parse-failure)
+                                                                                                                                                        (shen/let W1704
+                                                                                                                                                                  (shen/shen\.in-> W1703)
+                                                                                                                                                                  (shen/shen\.comb W1697
+                                                                                                                                                                                   (list 'shen\.+m W1700))))))
+                                                                                                                                   (shen/shen\.parse-failure)))))))
+                                                                                         (shen/shen\.parse-failure))))
+                                                                    (shen/shen\.parse-failure))
+                                                                   (shen/if
+                                                                    (shen/shen\.parse-failure\? W1695)
+                                                                    (shen/let W1705
+                                                                              (shen/if
+                                                                               (shen/shen\.ccons\? V1658)
+                                                                               (shen/let W1706
+                                                                                         (shen/head V1658)
+                                                                                         (shen/let W1707
+                                                                                                   (shen/tail V1658)
+                                                                                                   (shen/if
+                                                                                                    (shen/shen\.hds=\? W1706 'mode)
+                                                                                                    (shen/let W1708
+                                                                                                              (shen/tail W1706)
+                                                                                                              (shen/let W1709
+                                                                                                                        (shen/shen\.<hterm> W1708)
+                                                                                                                        (shen/if
+                                                                                                                         (shen/shen\.parse-failure\? W1709)
+                                                                                                                         (shen/shen\.parse-failure)
+                                                                                                                         (shen/let W1710
+                                                                                                                                   (shen/shen\.<-out W1709)
+                                                                                                                                   (shen/let W1711
+                                                                                                                                             (shen/shen\.in-> W1709)
+                                                                                                                                             (shen/if
+                                                                                                                                              (shen/shen\.hds=\? W1711 '-)
+                                                                                                                                              (shen/let W1712
+                                                                                                                                                        (shen/tail W1711)
+                                                                                                                                                        (shen/let W1713
+                                                                                                                                                                  (shen/<end> W1712)
+                                                                                                                                                                  (shen/if
+                                                                                                                                                                   (shen/shen\.parse-failure\? W1713)
+                                                                                                                                                                   (shen/shen\.parse-failure)
+                                                                                                                                                                   (shen/let W1714
+                                                                                                                                                                             (shen/shen\.in-> W1713)
+                                                                                                                                                                             (shen/shen\.comb W1707
+                                                                                                                                                                                              (list 'shen\.-m W1710))))))
+                                                                                                                                              (shen/shen\.parse-failure)))))))
+                                                                                                    (shen/shen\.parse-failure))))
+                                                                               (shen/shen\.parse-failure))
+                                                                              (shen/if
+                                                                               (shen/shen\.parse-failure\? W1705)
+                                                                               (shen/shen\.parse-failure)
+                                                                               W1705))
+                                                                    W1695))
+                                                         W1686))
+                                              W1677))
+                                   W1665))
+                        W1662))
+             W1659)))
+(defun shen/shen\.prolog-keyword\?
+    (V1715)
+  (shen/element\? V1715
+                  (list
+                   (shen/intern ";")
+                   '<--)))
+(defun shen/atom\?
+    (V1716)
+  (shen/or
+   (shen/symbol\? V1716)
+   (shen/or
+    (shen/string\? V1716)
+    (shen/or
+     (shen/boolean\? V1716)
+     (shen/or
+      (shen/number\? V1716)
+      (shen/empty\? V1716))))))
+(defun shen/shen\.<hterm1>
+    (V1717)
+  (shen/let W1718
+            (shen/let W1719
+                      (shen/shen\.<hterm> V1717)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W1719)
+                       (shen/shen\.parse-failure)
+                       (shen/let W1720
+                                 (shen/shen\.<-out W1719)
+                                 (shen/let W1721
+                                           (shen/shen\.in-> W1719)
+                                           (shen/shen\.comb W1721 W1720)))))
+            (shen/if
+             (shen/shen\.parse-failure\? W1718)
+             (shen/shen\.parse-failure)
+             W1718)))
+(defun shen/shen\.<hterm2>
+    (V1722)
+  (shen/let W1723
+            (shen/let W1724
+                      (shen/shen\.<hterm> V1722)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W1724)
+                       (shen/shen\.parse-failure)
+                       (shen/let W1725
+                                 (shen/shen\.<-out W1724)
+                                 (shen/let W1726
+                                           (shen/shen\.in-> W1724)
+                                           (shen/shen\.comb W1726 W1725)))))
+            (shen/if
+             (shen/shen\.parse-failure\? W1723)
+             (shen/shen\.parse-failure)
+             W1723)))
+(defun shen/shen\.<body>
+    (V1727)
+  (shen/let W1728
+            (shen/let W1729
+                      (shen/shen\.<literal> V1727)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W1729)
+                       (shen/shen\.parse-failure)
+                       (shen/let W1730
+                                 (shen/shen\.<-out W1729)
+                                 (shen/let W1731
+                                           (shen/shen\.in-> W1729)
+                                           (shen/let W1732
+                                                     (shen/shen\.<body> W1731)
+                                                     (shen/if
+                                                      (shen/shen\.parse-failure\? W1732)
+                                                      (shen/shen\.parse-failure)
+                                                      (shen/let W1733
+                                                                (shen/shen\.<-out W1732)
+                                                                (shen/let W1734
+                                                                          (shen/shen\.in-> W1732)
+                                                                          (shen/shen\.comb W1734
+                                                                                           (append
+                                                                                            (list W1730)
+                                                                                            W1733))))))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W1728)
+             (shen/let W1735
+                       (shen/let W1736
+                                 (shen/<e> V1727)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W1736)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W1737
+                                            (shen/shen\.in-> W1736)
+                                            (shen/shen\.comb W1737 nil))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W1735)
+                        (shen/shen\.parse-failure)
+                        W1735))
+             W1728)))
+(defun shen/shen\.<literal>
+    (V1738)
+  (shen/let W1739
+            (shen/if
+             (shen/shen\.hds=\? V1738 '!)
+             (shen/let W1740
+                       (shen/tail V1738)
+                       (shen/shen\.comb W1740 '!))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W1739)
+             (shen/let W1741
+                       (shen/if
+                        (shen/shen\.ccons\? V1738)
+                        (shen/let W1742
+                                  (shen/head V1738)
+                                  (shen/let W1743
+                                            (shen/tail V1738)
+                                            (shen/let W1744
+                                                      (shen/shen\.<bterms> W1742)
+                                                      (shen/if
+                                                       (shen/shen\.parse-failure\? W1744)
+                                                       (shen/shen\.parse-failure)
+                                                       (shen/let W1745
+                                                                 (shen/shen\.<-out W1744)
+                                                                 (shen/let W1746
+                                                                           (shen/shen\.in-> W1744)
+                                                                           (shen/let W1747
+                                                                                     (shen/<end> W1746)
+                                                                                     (shen/if
+                                                                                      (shen/shen\.parse-failure\? W1747)
+                                                                                      (shen/shen\.parse-failure)
+                                                                                      (shen/let W1748
+                                                                                                (shen/shen\.in-> W1747)
+                                                                                                (shen/shen\.comb W1743 W1745))))))))))
+                        (shen/shen\.parse-failure))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W1741)
+                        (shen/shen\.parse-failure)
+                        W1741))
+             W1739)))
+(defun shen/shen\.<bterms>
+    (V1749)
+  (shen/let W1750
+            (shen/let W1751
+                      (shen/shen\.<bterm> V1749)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W1751)
+                       (shen/shen\.parse-failure)
+                       (shen/let W1752
+                                 (shen/shen\.<-out W1751)
+                                 (shen/let W1753
+                                           (shen/shen\.in-> W1751)
+                                           (shen/let W1754
+                                                     (shen/shen\.<bterms> W1753)
+                                                     (shen/if
+                                                      (shen/shen\.parse-failure\? W1754)
+                                                      (shen/shen\.parse-failure)
+                                                      (shen/let W1755
+                                                                (shen/shen\.<-out W1754)
+                                                                (shen/let W1756
+                                                                          (shen/shen\.in-> W1754)
+                                                                          (shen/shen\.comb W1756
+                                                                                           (append
+                                                                                            (list W1752)
+                                                                                            W1755))))))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W1750)
+             (shen/let W1757
+                       (shen/let W1758
+                                 (shen/<e> V1749)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W1758)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W1759
+                                            (shen/shen\.in-> W1758)
+                                            (shen/shen\.comb W1759 nil))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W1757)
+                        (shen/shen\.parse-failure)
+                        W1757))
+             W1750)))
+(defun shen/shen\.<bterm>
+    (V1760)
+  (shen/let W1761
+            (shen/let W1762
+                      (shen/shen\.<wildcard> V1760)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W1762)
+                       (shen/shen\.parse-failure)
+                       (shen/let W1763
+                                 (shen/shen\.<-out W1762)
+                                 (shen/let W1764
+                                           (shen/shen\.in-> W1762)
+                                           (shen/shen\.comb W1764 W1763)))))
+            (shen/if
+             (shen/shen\.parse-failure\? W1761)
+             (shen/let W1765
+                       (shen/if
+                        (shen/cons\? V1760)
+                        (shen/let W1766
+                                  (shen/head V1760)
+                                  (shen/let W1767
+                                            (shen/tail V1760)
+                                            (shen/if
+                                             (shen/atom\? W1766)
+                                             (shen/shen\.comb W1767 W1766)
+                                             (shen/shen\.parse-failure))))
+                        (shen/shen\.parse-failure))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W1765)
+                        (shen/let W1768
+                                  (shen/if
+                                   (shen/shen\.ccons\? V1760)
+                                   (shen/let W1769
+                                             (shen/head V1760)
+                                             (shen/let W1770
+                                                       (shen/tail V1760)
+                                                       (shen/let W1771
+                                                                 (shen/shen\.<bterms> W1769)
+                                                                 (shen/if
+                                                                  (shen/shen\.parse-failure\? W1771)
+                                                                  (shen/shen\.parse-failure)
+                                                                  (shen/let W1772
+                                                                            (shen/shen\.<-out W1771)
+                                                                            (shen/let W1773
+                                                                                      (shen/shen\.in-> W1771)
+                                                                                      (shen/let W1774
+                                                                                                (shen/<end> W1773)
+                                                                                                (shen/if
+                                                                                                 (shen/shen\.parse-failure\? W1774)
+                                                                                                 (shen/shen\.parse-failure)
+                                                                                                 (shen/let W1775
+                                                                                                           (shen/shen\.in-> W1774)
+                                                                                                           (shen/shen\.comb W1770 W1772))))))))))
+                                   (shen/shen\.parse-failure))
+                                  (shen/if
+                                   (shen/shen\.parse-failure\? W1768)
+                                   (shen/shen\.parse-failure)
+                                   W1768))
+                        W1765))
+             W1761)))
+(defun shen/shen\.<wildcard>
+    (V1776)
+  (shen/let W1777
+            (shen/if
+             (shen/cons\? V1776)
+             (shen/let W1778
+                       (shen/head V1776)
+                       (shen/let W1779
+                                 (shen/tail V1776)
+                                 (shen/if
+                                  (shen/= W1778 '_)
+                                  (shen/shen\.comb W1779
+                                                   (shen/gensym 'Y))
+                                  (shen/shen\.parse-failure))))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W1777)
+             (shen/shen\.parse-failure)
+             W1777)))
+(defun shen/shen\.<sc>
+    (V1780)
+  (shen/let W1781
+            (shen/if
+             (shen/cons\? V1780)
+             (shen/let W1782
+                       (shen/head V1780)
+                       (shen/let W1783
+                                 (shen/tail V1780)
+                                 (shen/if
+                                  (shen/shen\.semicolon\? W1782)
+                                  (shen/shen\.comb W1783 W1782)
+                                  (shen/shen\.parse-failure))))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W1781)
+             (shen/shen\.parse-failure)
+             W1781)))
+(defun shen/shen\.horn-clause-procedure
+    (V1784 V1785)
+  (shen/let W1786
+            (shen/gensym 'B)
+            (shen/let W1787
+                      (shen/gensym 'L)
+                      (shen/let W1788
+                                (shen/gensym 'K)
+                                (shen/let W1789
+                                          (shen/gensym 'C)
+                                          (shen/let W1790
+                                                    (shen/shen\.prolog-parameters V1785)
+                                                    (shen/let W1791
+                                                              (shen/shen\.hascut\? V1785)
+                                                              (shen/let W1792
+                                                                        (shen/shen\.prolog-fbody V1785 W1790 W1786 W1787 W1788 W1789 W1791)
+                                                                        (shen/let W1793
+                                                                                  (shen/if W1791
+                                                                                           (list 'let W1788
+                                                                                                 (list '+ W1788 1)
+                                                                                                 W1792)
+                                                                                           W1792)
+                                                                                  (shen/let W1794
+                                                                                            (append
+                                                                                             (list 'define V1784)
+                                                                                             (shen/append W1790
+                                                                                                          (shen/append
+                                                                                                           (list W1786 W1787 W1788 W1789 '->)
+                                                                                                           (list W1793))))
+                                                                                            W1794))))))))))
+(defun shen/shen\.hascut\?
+    (V1797)
   (shen/cond
-   ((shen/variable\? V368)
-    'false)
-   ((shen/cons\? V368)
-    (shen/and
-     (shen/shen\.monomorphic\?
-      (shen/hd V368))
-     (shen/shen\.monomorphic\?
-      (nthcdr 1 V368))))
-   (shen/true 'true)))
-(defun shen/shen\.process-yacc-semantics
-    (V369)
+   ((shen/= '! V1797)
+    'true)
+   ((shen/cons\? V1797)
+    (shen/or
+     (shen/shen\.hascut\?
+      (shen/hd V1797))
+     (shen/shen\.hascut\?
+      (nthcdr 1 V1797))))
+   (shen/true 'false)))
+(defun shen/shen\.prolog-parameters
+    (V1802)
   (shen/cond
    ((shen/and
-     (shen/cons\? V369)
+     (shen/cons\? V1802)
+     (shen/cons\?
+      (shen/hd V1802)))
+    (shen/shen\.parameters
+     (shen/length
+      (shen/hd
+       (shen/hd V1802)))))
+   (shen/true
+    (shen/shen\.f-error 'shen\.prolog-parameters))))
+(defun shen/shen\.prolog-fbody
+    (V1823 V1824 V1825 V1826 V1827 V1828 V1829)
+  (shen/cond
+   ((shen/and
+     (shen/internal/predicate->shen
+      (null V1823))
+     (shen/= 'true V1829))
+    (list 'shen\.unlock V1826 V1827))
+   ((shen/and
+     (shen/cons\? V1823)
      (shen/and
-      (shen/= 'protect
-              (shen/hd V369))
+      (shen/cons\?
+       (shen/hd V1823))
       (shen/and
        (shen/cons\?
-        (nthcdr 1 V369))
+        (nthcdr 1
+                (shen/hd V1823)))
        (shen/and
         (shen/internal/predicate->shen
          (null
-          (nthcdr 2 V369)))
-        (shen/shen\.non-terminal\?
-         (shen/hd
-          (nthcdr 1 V369)))))))
-    (shen/hd
-     (nthcdr 1 V369)))
-   ((shen/cons\? V369)
-    (shen/map
-     (shen/lambda Z370
-                  (shen/shen\.process-yacc-semantics Z370))
-     V369))
-   ((shen/shen\.non-terminal\? V369)
-    (shen/concat 'Action V369))
-   (shen/true V369)))
-(defun shen/shen\.<-out
-    (V373)
-  (shen/cond
+          (nthcdr 2
+                  (shen/hd V1823))))
+        (shen/and
+         (shen/internal/predicate->shen
+          (null
+           (nthcdr 1 V1823)))
+         (shen/= 'false V1829))))))
+    (shen/let W1830
+              (shen/shen\.continue
+               (shen/hd
+                (shen/hd V1823))
+               (shen/hd
+                (nthcdr 1
+                        (shen/hd V1823)))
+               V1825 V1826 V1827 V1828)
+              (list 'if
+                    (list 'shen\.unlocked\? V1826)
+                    (shen/shen\.compile-head 'shen\.+m
+                                             (shen/hd
+                                              (shen/hd V1823))
+                                             V1824 V1825 W1830)
+                    'false)))
    ((shen/and
-     (shen/cons\? V373)
+     (shen/cons\? V1823)
      (shen/and
       (shen/cons\?
-       (nthcdr 1 V373))
-      (shen/internal/predicate->shen
-       (null
-        (nthcdr 2 V373)))))
-    (shen/hd
-     (nthcdr 1 V373)))
+       (shen/hd V1823))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1
+                (shen/hd V1823)))
+       (shen/internal/predicate->shen
+        (null
+         (nthcdr 2
+                 (shen/hd V1823)))))))
+    (shen/let W1831
+              (shen/gensym 'C)
+              (shen/let W1832
+                        (shen/shen\.continue
+                         (shen/hd
+                          (shen/hd V1823))
+                         (shen/hd
+                          (nthcdr 1
+                                  (shen/hd V1823)))
+                         V1825 V1826 V1827 V1828)
+                        (list 'let W1831
+                              (list 'if
+                                    (list 'shen\.unlocked\? V1826)
+                                    (shen/shen\.compile-head 'shen\.+m
+                                                             (shen/hd
+                                                              (shen/hd V1823))
+                                                             V1824 V1825 W1832)
+                                    'false)
+                              (list 'if
+                                    (list '= W1831 'false)
+                                    (shen/shen\.prolog-fbody
+                                     (nthcdr 1 V1823)
+                                     V1824 V1825 V1826 V1827 V1828 V1829)
+                                    W1831)))))
    (shen/true
-    (shen/hd
-     (nthcdr 1 V373)))))
-(defun shen/shen\.in->
-    (V374)
-  (shen/hd V374))
-(defun shen/<!>
-    (V375)
-  (list nil V375))
-(defun shen/<e>
-    (V376)
-  (list V376 nil))
-(defun shen/<end>
-    (V379)
+    (shen/simple-error "implementation error in shen.prolog-fbody"))))
+(defun shen/shen\.unlock
+    (V1833 V1834)
+  (shen/if
+   (shen/and
+    (shen/shen\.locked\? V1833)
+    (shen/shen\.fits\? V1834 V1833))
+   (shen/shen\.openlock V1833)
+   'false))
+(defun shen/shen\.locked\?
+    (V1835)
+  (shen/not
+   (shen/shen\.unlocked\? V1835)))
+(defun shen/shen\.unlocked\?
+    (V1836)
+  (shen/<-address V1836 1))
+(defun shen/shen\.openlock
+    (V1837)
+  (shen/do
+   (shen/address-> V1837 1 'true)
+   'false))
+(defun shen/shen\.fits\?
+    (V1838 V1839)
+  (shen/= V1838
+          (shen/<-address V1839 2)))
+(defun shen/shen\.cut
+    (V1842 V1843 V1844 V1845)
+  (shen/let W1846
+            (shen/thaw V1845)
+            (shen/if
+             (shen/and
+              (shen/= W1846 'false)
+              (shen/shen\.unlocked\? V1843))
+             (shen/shen\.lock V1844 V1843)
+             W1846)))
+(defun shen/shen\.lock
+    (V1847 V1848)
+  (shen/let W1849
+            (shen/address-> V1848 1 'false)
+            (shen/let W1850
+                      (shen/address-> V1848 2 V1847)
+                      'false)))
+(defun shen/shen\.continue
+    (V1851 V1852 V1853 V1854 V1855 V1856)
+  (shen/let W1857
+            (shen/shen\.extract-vars V1851)
+            (shen/let W1858
+                      (shen/shen\.extract-free-vars V1852)
+                      (shen/let W1859
+                                (shen/difference W1858 W1857)
+                                (shen/let W1860
+                                          (list 'do
+                                                (list 'shen\.incinfs)
+                                                (shen/shen\.compile-body V1852 V1853 V1854 V1855 V1856))
+                                          (shen/shen\.stpart W1859 W1860 V1853))))))
+(defun shen/shen\.extract-free-vars
+    (V1863)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V1863)
+     (shen/and
+      (shen/= 'lambda
+              (shen/hd V1863))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V1863))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 2 V1863))
+        (shen/internal/predicate->shen
+         (null
+          (nthcdr 3 V1863)))))))
+    (shen/remove
+     (shen/hd
+      (nthcdr 1 V1863))
+     (shen/shen\.extract-free-vars
+      (shen/hd
+       (nthcdr 2 V1863)))))
+   ((shen/cons\? V1863)
+    (shen/union
+     (shen/shen\.extract-free-vars
+      (shen/hd V1863))
+     (shen/shen\.extract-free-vars
+      (nthcdr 1 V1863))))
+   ((shen/variable\? V1863)
+    (list V1863))
+   (shen/true nil)))
+(defun shen/shen\.compile-body
+    (V1880 V1881 V1882 V1883 V1884)
+  (cl-flet
+      ((tail-trampoline
+        (V1880 V1881 V1882 V1883 V1884)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V1880))
+          (list 'thaw V1884))
+         ((shen/and
+           (shen/cons\? V1880)
+           (shen/= '!
+                   (shen/hd V1880)))
+          (vector
+           (list
+            (append
+             (list
+              (list 'shen\.cut))
+             (nthcdr 1 V1880))
+            V1881 V1882 V1883 V1884)))
+         ((shen/and
+           (shen/cons\? V1880)
+           (shen/internal/predicate->shen
+            (null
+             (nthcdr 1 V1880))))
+          (shen/append
+           (shen/shen\.deref-calls
+            (shen/hd V1880)
+            V1881)
+           (list V1881 V1882 V1883 V1884)))
+         ((shen/cons\? V1880)
+          (shen/let W1885
+                    (shen/shen\.deref-calls
+                     (shen/hd V1880)
+                     V1881)
+                    (shen/append W1885
+                                 (list V1881 V1882 V1883
+                                       (shen/shen\.freeze-literals
+                                        (nthcdr 1 V1880)
+                                        V1881 V1882 V1883 V1884)))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.compile-fbody")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V1880 V1881 V1882 V1883 V1884)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.freeze-literals
+    (V1902 V1903 V1904 V1905 V1906)
+  (cl-flet
+      ((tail-trampoline
+        (V1902 V1903 V1904 V1905 V1906)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V1902))
+          V1906)
+         ((shen/and
+           (shen/cons\? V1902)
+           (shen/= '!
+                   (shen/hd V1902)))
+          (vector
+           (list
+            (append
+             (list
+              (list 'shen\.cut))
+             (nthcdr 1 V1902))
+            V1903 V1904 V1905 V1906)))
+         ((shen/cons\? V1902)
+          (shen/let W1907
+                    (shen/shen\.deref-calls
+                     (shen/hd V1902)
+                     V1903)
+                    (list 'freeze
+                          (shen/append W1907
+                                       (list V1903 V1904 V1905
+                                             (shen/shen\.freeze-literals
+                                              (nthcdr 1 V1902)
+                                              V1903 V1904 V1905 V1906))))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.freeze-literals")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V1902 V1903 V1904 V1905 V1906)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.deref-calls
+    (V1912 V1913)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V1912)
+     (shen/= 'fork
+             (shen/hd V1912)))
+    (list 'fork
+          (shen/shen\.deref-forked-literals
+           (nthcdr 1 V1912)
+           V1913)))
+   ((shen/cons\? V1912)
+    (append
+     (list
+      (shen/hd V1912))
+     (shen/map
+      (shen/lambda Z1914
+                   (shen/shen\.function-calls Z1914 V1913))
+      (nthcdr 1 V1912))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.deref-calls"))))
+(defun shen/shen\.deref-forked-literals
+    (V1921 V1922)
   (shen/cond
    ((shen/internal/predicate->shen
-     (null V379))
-    (list nil nil))
+     (null V1921))
+    nil)
+   ((shen/cons\? V1921)
+    (list 'cons
+          (shen/shen\.deref-calls
+           (shen/hd V1921)
+           V1922)
+          (shen/shen\.deref-forked-literals
+           (nthcdr 1 V1921)
+           V1922)))
    (shen/true
-    (shen/shen\.parse-failure))))
+    (shen/simple-error "fork requires a list of literals\n"))))
+(defun shen/shen\.function-calls
+    (V1925 V1926)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V1925)
+     (shen/and
+      (shen/= 'cons
+              (shen/hd V1925))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V1925))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 2 V1925))
+        (shen/internal/predicate->shen
+         (null
+          (nthcdr 3 V1925)))))))
+    (list 'cons
+          (shen/shen\.function-calls
+           (shen/hd
+            (nthcdr 1 V1925))
+           V1926)
+          (shen/shen\.function-calls
+           (shen/hd
+            (nthcdr 2 V1925))
+           V1926)))
+   ((shen/cons\? V1925)
+    (shen/shen\.deref-terms V1925 V1926 nil))
+   (shen/true V1925)))
+(defun shen/shen\.deref-terms
+    (V1935 V1936 V1937)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V1935)
+     (shen/and
+      (shen/= 0
+              (shen/hd V1935))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V1935))
+       (shen/internal/predicate->shen
+        (null
+         (nthcdr 2 V1935))))))
+    (shen/if
+     (shen/variable\?
+      (shen/hd
+       (nthcdr 1 V1935)))
+     (shen/hd
+      (nthcdr 1 V1935))
+     (shen/simple-error
+      (shen/cn "attempt to optimise a non-variable "
+               (shen/shen\.app
+                (shen/hd
+                 (nthcdr 1 V1935))
+                "\n" 'shen\.s)))))
+   ((shen/and
+     (shen/cons\? V1935)
+     (shen/and
+      (shen/= 1
+              (shen/hd V1935))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V1935))
+       (shen/internal/predicate->shen
+        (null
+         (nthcdr 2 V1935))))))
+    (shen/if
+     (shen/variable\?
+      (shen/hd
+       (nthcdr 1 V1935)))
+     (list 'shen\.lazyderef
+           (shen/hd
+            (nthcdr 1 V1935))
+           V1936)
+     (shen/simple-error
+      (shen/cn "attempt to optimise a non-variable "
+               (shen/shen\.app
+                (shen/hd
+                 (nthcdr 1 V1935))
+                "\n" 'shen\.s)))))
+   ((shen/and
+     (shen/not
+      (shen/element\? V1935 V1937))
+     (shen/variable\? V1935))
+    (list 'shen\.deref V1935 V1936))
+   ((shen/and
+     (shen/cons\? V1935)
+     (shen/and
+      (shen/= 'lambda
+              (shen/hd V1935))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V1935))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 2 V1935))
+        (shen/internal/predicate->shen
+         (null
+          (nthcdr 3 V1935)))))))
+    (list 'lambda
+          (shen/hd
+           (nthcdr 1 V1935))
+          (shen/shen\.deref-terms
+           (shen/hd
+            (nthcdr 2 V1935))
+           V1936
+           (append
+            (list
+             (shen/hd
+              (nthcdr 1 V1935)))
+            V1937))))
+   ((shen/cons\? V1935)
+    (shen/map
+     (shen/lambda Z1938
+                  (shen/shen\.deref-terms Z1938 V1936 V1937))
+     V1935))
+   (shen/true V1935)))
+(defun shen/shen\.compile-head
+    (V1956 V1957 V1958 V1959 V1960)
+  (cl-flet
+      ((tail-trampoline
+        (V1956 V1957 V1958 V1959 V1960)
+        (shen/cond
+         ((shen/and
+           (shen/internal/predicate->shen
+            (null V1957))
+           (shen/internal/predicate->shen
+            (null V1958)))
+          V1960)
+         ((shen/and
+           (shen/cons\? V1957)
+           (shen/and
+            (shen/cons\?
+             (shen/hd V1957))
+            (shen/and
+             (shen/= 'shen\.+m
+                     (shen/hd
+                      (shen/hd V1957)))
+             (shen/and
+              (shen/cons\?
+               (nthcdr 1
+                       (shen/hd V1957)))
+              (shen/internal/predicate->shen
+               (null
+                (nthcdr 2
+                        (shen/hd V1957))))))))
+          (vector
+           (list V1956
+                 (append
+                  (list 'shen\.+m
+                        (shen/hd
+                         (nthcdr 1
+                                 (shen/hd V1957)))
+                        V1956)
+                  (nthcdr 1 V1957))
+                 V1958 V1959 V1960)))
+         ((shen/and
+           (shen/cons\? V1957)
+           (shen/and
+            (shen/cons\?
+             (shen/hd V1957))
+            (shen/and
+             (shen/= 'shen\.-m
+                     (shen/hd
+                      (shen/hd V1957)))
+             (shen/and
+              (shen/cons\?
+               (nthcdr 1
+                       (shen/hd V1957)))
+              (shen/internal/predicate->shen
+               (null
+                (nthcdr 2
+                        (shen/hd V1957))))))))
+          (vector
+           (list V1956
+                 (append
+                  (list 'shen\.-m
+                        (shen/hd
+                         (nthcdr 1
+                                 (shen/hd V1957)))
+                        V1956)
+                  (nthcdr 1 V1957))
+                 V1958 V1959 V1960)))
+         ((shen/and
+           (shen/cons\? V1957)
+           (shen/= 'shen\.-m
+                   (shen/hd V1957)))
+          (vector
+           (list 'shen\.-m
+                 (nthcdr 1 V1957)
+                 V1958 V1959 V1960)))
+         ((shen/and
+           (shen/cons\? V1957)
+           (shen/= 'shen\.+m
+                   (shen/hd V1957)))
+          (vector
+           (list 'shen\.+m
+                 (nthcdr 1 V1957)
+                 V1958 V1959 V1960)))
+         ((shen/and
+           (shen/cons\? V1957)
+           (shen/and
+            (shen/cons\? V1958)
+            (shen/shen\.wildcard\?
+             (shen/hd V1957))))
+          (vector
+           (list V1956
+                 (nthcdr 1 V1957)
+                 (nthcdr 1 V1958)
+                 V1959 V1960)))
+         ((shen/and
+           (shen/cons\? V1957)
+           (shen/variable\?
+            (shen/hd V1957)))
+          (shen/shen\.variable-case V1956 V1957 V1958 V1959 V1960))
+         ((shen/and
+           (shen/= 'shen\.-m V1956)
+           (shen/and
+            (shen/cons\? V1957)
+            (shen/atom\?
+             (shen/hd V1957))))
+          (shen/shen\.atom-case-minus V1957 V1958 V1959 V1960))
+         ((shen/and
+           (shen/= 'shen\.-m V1956)
+           (shen/and
+            (shen/cons\? V1957)
+            (shen/and
+             (shen/cons\?
+              (shen/hd V1957))
+             (shen/and
+              (shen/= 'cons
+                      (shen/hd
+                       (shen/hd V1957)))
+              (shen/and
+               (shen/cons\?
+                (nthcdr 1
+                        (shen/hd V1957)))
+               (shen/and
+                (shen/cons\?
+                 (nthcdr 2
+                         (shen/hd V1957)))
+                (shen/internal/predicate->shen
+                 (null
+                  (nthcdr 3
+                          (shen/hd V1957))))))))))
+          (shen/shen\.cons-case-minus V1957 V1958 V1959 V1960))
+         ((shen/and
+           (shen/= 'shen\.+m V1956)
+           (shen/and
+            (shen/cons\? V1957)
+            (shen/atom\?
+             (shen/hd V1957))))
+          (shen/shen\.atom-case-plus V1957 V1958 V1959 V1960))
+         ((shen/and
+           (shen/= 'shen\.+m V1956)
+           (shen/and
+            (shen/cons\? V1957)
+            (shen/and
+             (shen/cons\?
+              (shen/hd V1957))
+             (shen/and
+              (shen/= 'cons
+                      (shen/hd
+                       (shen/hd V1957)))
+              (shen/and
+               (shen/cons\?
+                (nthcdr 1
+                        (shen/hd V1957)))
+               (shen/and
+                (shen/cons\?
+                 (nthcdr 2
+                         (shen/hd V1957)))
+                (shen/internal/predicate->shen
+                 (null
+                  (nthcdr 3
+                          (shen/hd V1957))))))))))
+          (shen/shen\.cons-case-plus V1957 V1958 V1959 V1960))
+         (shen/true
+          (shen/simple-error "implementation error in shen.compile-head")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V1956 V1957 V1958 V1959 V1960)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.variable-case
+    (V1971 V1972 V1973 V1974 V1975)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V1972)
+     (shen/cons\? V1973))
+    (shen/if
+     (shen/variable\?
+      (shen/hd V1973))
+     (shen/shen\.compile-head V1971
+                              (nthcdr 1 V1972)
+                              (nthcdr 1 V1973)
+                              V1974
+                              (shen/subst
+                               (shen/hd V1973)
+                               (shen/hd V1972)
+                               V1975))
+     (list 'let
+           (shen/hd V1972)
+           (shen/hd V1973)
+           (shen/shen\.compile-head V1971
+                                    (nthcdr 1 V1972)
+                                    (nthcdr 1 V1973)
+                                    V1974 V1975))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.variable-case"))))
+(defun shen/shen\.atom-case-minus
+    (V1984 V1985 V1986 V1987)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V1984)
+     (shen/cons\? V1985))
+    (shen/let W1988
+              (shen/gensym 'Tm)
+              (list 'let W1988
+                    (list 'shen\.lazyderef
+                          (shen/hd V1985)
+                          V1986)
+                    (list 'if
+                          (list '= W1988
+                                (shen/hd V1984))
+                          (shen/shen\.compile-head 'shen\.-m
+                                                   (nthcdr 1 V1984)
+                                                   (nthcdr 1 V1985)
+                                                   V1986 V1987)
+                          'false))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.atom-case-minus"))))
+(defun shen/shen\.cons-case-minus
+    (V1997 V1998 V1999 V2000)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V1997)
+     (shen/and
+      (shen/cons\?
+       (shen/hd V1997))
+      (shen/and
+       (shen/= 'cons
+               (shen/hd
+                (shen/hd V1997)))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 1
+                 (shen/hd V1997)))
+        (shen/and
+         (shen/cons\?
+          (nthcdr 2
+                  (shen/hd V1997)))
+         (shen/and
+          (shen/internal/predicate->shen
+           (null
+            (nthcdr 3
+                    (shen/hd V1997))))
+          (shen/cons\? V1998)))))))
+    (shen/let W2001
+              (shen/gensym 'Tm)
+              (list 'let W2001
+                    (list 'shen\.lazyderef
+                          (shen/hd V1998)
+                          V1999)
+                    (list 'if
+                          (list 'cons\? W2001)
+                          (shen/shen\.compile-head 'shen\.-m
+                                                   (append
+                                                    (list
+                                                     (shen/hd
+                                                      (nthcdr 1
+                                                              (shen/hd V1997)))
+                                                     (shen/hd
+                                                      (nthcdr 2
+                                                              (shen/hd V1997))))
+                                                    (nthcdr 1 V1997))
+                                                   (append
+                                                    (list
+                                                     (list 'hd W2001)
+                                                     (list 'tl W2001))
+                                                    (nthcdr 1 V1998))
+                                                   V1999 V2000)
+                          'false))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.cons-case-minus"))))
+(defun shen/shen\.atom-case-plus
+    (V2010 V2011 V2012 V2013)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V2010)
+     (shen/cons\? V2011))
+    (shen/let W2014
+              (shen/gensym 'Tm)
+              (shen/let W2015
+                        (shen/gensym 'GoTo)
+                        (list 'let W2014
+                              (list 'shen\.lazyderef
+                                    (shen/hd V2011)
+                                    V2012)
+                              W2015
+                              (list 'freeze
+                                    (shen/shen\.compile-head 'shen\.+m
+                                                             (nthcdr 1 V2010)
+                                                             (nthcdr 1 V2011)
+                                                             V2012 V2013))
+                              (list 'if
+                                    (list '= W2014
+                                          (shen/hd V2010))
+                                    (list 'thaw W2015)
+                                    (list 'if
+                                          (list 'shen\.pvar\? W2014)
+                                          (list 'shen\.bind! W2014
+                                                (shen/shen\.demode
+                                                 (shen/hd V2010))
+                                                V2012 W2015)
+                                          'false))))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.atom-case-plus"))))
+(defun shen/shen\.cons-case-plus
+    (V2024 V2025 V2026 V2027)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V2024)
+     (shen/and
+      (shen/cons\?
+       (shen/hd V2024))
+      (shen/and
+       (shen/= 'cons
+               (shen/hd
+                (shen/hd V2024)))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 1
+                 (shen/hd V2024)))
+        (shen/and
+         (shen/cons\?
+          (nthcdr 2
+                  (shen/hd V2024)))
+         (shen/and
+          (shen/internal/predicate->shen
+           (null
+            (nthcdr 3
+                    (shen/hd V2024))))
+          (shen/cons\? V2025)))))))
+    (shen/let W2028
+              (shen/gensym 'Tm)
+              (shen/let W2029
+                        (shen/gensym 'GoTo)
+                        (shen/let W2030
+                                  (shen/shen\.extract-vars
+                                   (append
+                                    (list
+                                     (shen/hd
+                                      (nthcdr 1
+                                              (shen/hd V2024))))
+                                    (shen/hd
+                                     (nthcdr 2
+                                             (shen/hd V2024)))))
+                                  (shen/let W2031
+                                            (shen/shen\.tame
+                                             (shen/hd V2024))
+                                            (shen/let W2032
+                                                      (shen/shen\.extract-vars W2031)
+                                                      (list 'let W2028
+                                                            (list 'shen\.lazyderef
+                                                                  (shen/hd V2025)
+                                                                  V2026)
+                                                            W2029
+                                                            (shen/shen\.goto W2030
+                                                                             (shen/shen\.compile-head 'shen\.+m
+                                                                                                      (nthcdr 1 V2024)
+                                                                                                      (nthcdr 1 V2025)
+                                                                                                      V2026 V2027))
+                                                            (list 'if
+                                                                  (list 'cons\? W2028)
+                                                                  (shen/shen\.compile-head 'shen\.+m
+                                                                                           (nthcdr 1
+                                                                                                   (shen/hd V2024))
+                                                                                           (list
+                                                                                            (list 'hd W2028)
+                                                                                            (list 'tl W2028))
+                                                                                           V2026
+                                                                                           (shen/shen\.invoke W2029 W2030))
+                                                                  (list 'if
+                                                                        (list 'shen\.pvar\? W2028)
+                                                                        (shen/shen\.stpart W2032
+                                                                                           (list 'shen\.bind! W2028
+                                                                                                 (shen/shen\.demode W2031)
+                                                                                                 V2026
+                                                                                                 (list 'freeze
+                                                                                                       (shen/shen\.invoke W2029 W2030)))
+                                                                                           V2026)
+                                                                        'false)))))))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.cons-case-plus"))))
+(defun shen/shen\.demode
+    (V2033)
+  (cl-flet
+      ((tail-trampoline
+        (V2033)
+        (shen/cond
+         ((shen/and
+           (shen/cons\? V2033)
+           (shen/and
+            (shen/= 'shen\.+m
+                    (shen/hd V2033))
+            (shen/and
+             (shen/cons\?
+              (nthcdr 1 V2033))
+             (shen/internal/predicate->shen
+              (null
+               (nthcdr 2 V2033))))))
+          (vector
+           (list
+            (shen/hd
+             (nthcdr 1 V2033)))))
+         ((shen/and
+           (shen/cons\? V2033)
+           (shen/and
+            (shen/= 'shen\.-m
+                    (shen/hd V2033))
+            (shen/and
+             (shen/cons\?
+              (nthcdr 1 V2033))
+             (shen/internal/predicate->shen
+              (null
+               (nthcdr 2 V2033))))))
+          (vector
+           (list
+            (shen/hd
+             (nthcdr 1 V2033)))))
+         ((shen/cons\? V2033)
+          (shen/map
+           (shen/lambda Z2034
+                        (shen/shen\.demode Z2034))
+           V2033))
+         (shen/true V2033))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V2033)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.tame
+    (V2035)
+  (shen/cond
+   ((shen/shen\.wildcard\? V2035)
+    (shen/gensym 'Y))
+   ((shen/cons\? V2035)
+    (shen/map
+     (shen/lambda Z2036
+                  (shen/shen\.tame Z2036))
+     V2035))
+   (shen/true V2035)))
+(defun shen/shen\.goto
+    (V2037 V2038)
+  (shen/cond
+   ((shen/internal/predicate->shen
+     (null V2037))
+    (list 'freeze V2038))
+   (shen/true
+    (shen/shen\.goto-h V2037 V2038))))
+(defun shen/shen\.goto-h
+    (V2039 V2040)
+  (shen/cond
+   ((shen/internal/predicate->shen
+     (null V2039))
+    V2040)
+   ((shen/cons\? V2039)
+    (list 'lambda
+          (shen/hd V2039)
+          (shen/shen\.goto-h
+           (nthcdr 1 V2039)
+           V2040)))
+   (shen/true
+    (shen/shen\.f-error 'shen\.goto-h))))
+(defun shen/shen\.invoke
+    (V2041 V2042)
+  (shen/cond
+   ((shen/internal/predicate->shen
+     (null V2042))
+    (list 'thaw V2041))
+   (shen/true
+    (append
+     (list V2041)
+     V2042))))
+(defun shen/shen\.wildcard\?
+    (V2043)
+  (shen/= V2043 '_))
+(defun shen/shen\.pvar\?
+    (V2044)
+  (shen/and
+   (shen/absvector\? V2044)
+   (shen/=
+    (shen/trap-error
+     (shen/<-address V2044 0)
+     (shen/lambda Z2045 'shen\.not-pvar))
+    'shen\.pvar)))
+(defun shen/shen\.lazyderef
+    (X ProcessN)
+  (let
+      ((Current X)
+       (KeepLooking t))
+    (while KeepLooking
+      (shen/if
+       (shen/shen\.pvar\? Current)
+       (shen/let Value
+                 (shen/shen\.valvector Current ProcessN)
+                 (shen/if
+                  (shen/= Value 'shen\.-null-)
+                  (setq KeepLooking nil)
+                  (setq Current Value)))
+       (setq KeepLooking nil)))
+    Current))
+(defun shen/shen\.deref
+    (V2049 V2050)
+  (cl-flet
+      ((tail-trampoline
+        (V2049 V2050)
+        (shen/cond
+         ((shen/cons\? V2049)
+          (append
+           (list
+            (shen/shen\.deref
+             (shen/hd V2049)
+             V2050))
+           (shen/shen\.deref
+            (nthcdr 1 V2049)
+            V2050)))
+         (shen/true
+          (shen/if
+           (shen/shen\.pvar\? V2049)
+           (shen/let W2051
+                     (shen/<-address V2050
+                                     (shen/<-address V2049 1))
+                     (shen/if
+                      (shen/= W2051 'shen\.-null-)
+                      V2049
+                      (vector
+                       (list W2051 V2050))))
+           V2049)))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V2049 V2050)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.bind!
+    (V2052 V2053 V2054 V2055)
+  (shen/let W2056
+            (shen/shen\.bindv V2052 V2053 V2054)
+            (shen/let W2057
+                      (shen/thaw V2055)
+                      (shen/if
+                       (shen/= W2057 'false)
+                       (shen/shen\.unwind V2052 V2054 W2057)
+                       W2057))))
+(defun shen/shen\.bindv
+    (V2058 V2059 V2060)
+  (shen/address-> V2060
+                  (shen/<-address V2058 1)
+                  V2059))
+(defun shen/shen\.unwind
+    (V2061 V2062 V2063)
+  (shen/do
+   (shen/address-> V2062
+                   (shen/<-address V2061 1)
+                   'shen\.-null-)
+   V2063))
+(defun shen/shen\.stpart
+    (V2072 V2073 V2074)
+  (shen/cond
+   ((shen/internal/predicate->shen
+     (null V2072))
+    V2073)
+   ((shen/cons\? V2072)
+    (list 'let
+          (shen/hd V2072)
+          (list 'shen\.newpv V2074)
+          (list 'shen\.gc V2074
+                (shen/shen\.stpart
+                 (nthcdr 1 V2072)
+                 V2073 V2074))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.stpart"))))
+(defun shen/shen\.gc
+    (V2075 V2076)
+  (shen/if
+   (shen/= V2076 'false)
+   (shen/let W2077
+             (shen/shen\.ticket-number V2075)
+             (shen/do
+              (shen/shen\.decrement-ticket W2077 V2075)
+              V2076))
+   V2076))
+(defun shen/shen\.decrement-ticket
+    (V2078 V2079)
+  (shen/address-> V2079 1
+                  (shen/- V2078 1)))
+(defun shen/shen\.newpv
+    (V2080)
+  (shen/let W2081
+            (shen/shen\.ticket-number V2080)
+            (shen/let W2082
+                      (shen/shen\.make-prolog-variable W2081)
+                      (shen/let W2083
+                                (shen/shen\.nextticket V2080 W2081)
+                                W2082))))
+(defun shen/shen\.ticket-number
+    (V2084)
+  (shen/<-address V2084 1))
+(defun shen/shen\.nextticket
+    (V2085 V2086)
+  (shen/let W2087
+            (shen/address-> V2085 V2086 'shen\.-null-)
+            (shen/address-> W2087 1
+                            (1+ V2086))))
+(defun shen/shen\.make-prolog-variable
+    (V2088)
+  (shen/address->
+   (shen/address->
+    (shen/absvector 2)
+    0 'shen\.pvar)
+   1 V2088))
+(defun shen/shen\.pvar
+    (V2089)
+  (shen/cn "Var"
+           (shen/shen\.app
+            (shen/<-address V2089 1)
+            "" 'shen\.a)))
+(defun shen/shen\.incinfs nil
+  (shen/set 'shen\.*infs*
+            (1+
+             (shen/value 'shen\.*infs*))))
+(defun shen/shen\.prolog-vector-size
+    (V2090)
+  (shen/if
+   (shen/and
+    (shen/integer\? V2090)
+    (shen/> V2090 0))
+   (shen/set 'shen\.*size-prolog-vector* V2090)
+   (shen/simple-error
+    (shen/cn "prolog vector size: size should be a positive integer; not "
+             (shen/shen\.app V2090 "" 'shen\.a)))))
+(defun shen/shen\.lzy=!
+    (V2102 V2103 V2104 V2105)
+  (cl-flet
+      ((tail-trampoline
+        (V2102 V2103 V2104 V2105)
+        (shen/cond
+         ((shen/= V2102 V2103)
+          (shen/thaw V2105))
+         ((shen/and
+           (shen/shen\.pvar\? V2102)
+           (shen/not
+            (shen/shen\.prolog-occurs\? V2102
+                                        (shen/shen\.deref V2103 V2104))))
+          (shen/shen\.bind! V2102 V2103 V2104 V2105))
+         ((shen/and
+           (shen/shen\.pvar\? V2103)
+           (shen/not
+            (shen/shen\.prolog-occurs\? V2103
+                                        (shen/shen\.deref V2102 V2104))))
+          (shen/shen\.bind! V2103 V2102 V2104 V2105))
+         ((shen/and
+           (shen/cons\? V2102)
+           (shen/cons\? V2103))
+          (vector
+           (list
+            (shen/shen\.lazyderef
+             (shen/hd V2102)
+             V2104)
+            (shen/shen\.lazyderef
+             (shen/hd V2103)
+             V2104)
+            V2104
+            (shen/freeze
+             (shen/shen\.lzy=!
+              (shen/shen\.lazyderef
+               (nthcdr 1 V2102)
+               V2104)
+              (shen/shen\.lazyderef
+               (nthcdr 1 V2103)
+               V2104)
+              V2104 V2105)))))
+         (shen/true 'false))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V2102 V2103 V2104 V2105)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.lzy=
+    (V2117 V2118 V2119 V2120)
+  (cl-flet
+      ((tail-trampoline
+        (V2117 V2118 V2119 V2120)
+        (shen/cond
+         ((shen/= V2117 V2118)
+          (shen/thaw V2120))
+         ((shen/shen\.pvar\? V2117)
+          (shen/shen\.bind! V2117 V2118 V2119 V2120))
+         ((shen/shen\.pvar\? V2118)
+          (shen/shen\.bind! V2118 V2117 V2119 V2120))
+         ((shen/and
+           (shen/cons\? V2117)
+           (shen/cons\? V2118))
+          (vector
+           (list
+            (shen/shen\.lazyderef
+             (shen/hd V2117)
+             V2119)
+            (shen/shen\.lazyderef
+             (shen/hd V2118)
+             V2119)
+            V2119
+            (shen/freeze
+             (shen/shen\.lzy=
+              (shen/shen\.lazyderef
+               (nthcdr 1 V2117)
+               V2119)
+              (shen/shen\.lazyderef
+               (nthcdr 1 V2118)
+               V2119)
+              V2119 V2120)))))
+         (shen/true 'false))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V2117 V2118 V2119 V2120)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.prolog-occurs\?
+    (V2126 V2127)
+  (shen/cond
+   ((shen/= V2126 V2127)
+    'true)
+   ((shen/cons\? V2127)
+    (shen/or
+     (shen/shen\.prolog-occurs\? V2126
+                                 (shen/hd V2127))
+     (shen/shen\.prolog-occurs\? V2126
+                                 (nthcdr 1 V2127))))
+   (shen/true 'false)))
+(defun shen/call
+    (V2128 V2129 V2130 V2131 V2132)
+  (shen/internal/apply-function-expression
+   (shen/internal/apply-function-expression
+    (shen/internal/apply-function-expression
+     (shen/internal/apply-higher-order-function V2128
+                                                (list V2129))
+     (list V2130))
+    (list V2131))
+   (list V2132)))
+(defun shen/return
+    (V2139 V2140 V2141 V2142 V2143)
+  (shen/shen\.deref V2139 V2140))
+(defun shen/when
+    (V2150 V2151 V2152 V2153 V2154)
+  (shen/if V2150
+           (shen/thaw V2154)
+           'false))
+(defun shen/is
+    (V2155 V2156 V2157 V2158 V2159 V2160)
+  (shen/shen\.lzy=
+   (shen/shen\.lazyderef V2155 V2157)
+   (shen/shen\.lazyderef V2156 V2157)
+   V2157 V2160))
+(defun shen/is!
+    (V2161 V2162 V2163 V2164 V2165 V2166)
+  (shen/shen\.lzy=!
+   (shen/shen\.lazyderef V2161 V2163)
+   (shen/shen\.lazyderef V2162 V2163)
+   V2163 V2166))
+(defun shen/bind
+    (V2171 V2172 V2173 V2174 V2175 V2176)
+  (shen/shen\.bind! V2171 V2172 V2173 V2176))
+(defun shen/var\?
+    (V2177 V2178 V2179 V2180 V2181)
+  (shen/if
+   (shen/shen\.pvar\?
+    (shen/shen\.lazyderef V2177 V2178))
+   (shen/thaw V2181)
+   'false))
+(defun shen/shen\.print-prolog-vector
+    (V2184)
+  "|prolog vector|")
+(defun shen/fork
+    (V2203 V2204 V2205 V2206 V2207)
+  (cl-flet
+      ((tail-trampoline
+        (V2203 V2204 V2205 V2206 V2207)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V2203))
+          'false)
+         ((shen/cons\? V2203)
+          (shen/let W2208
+                    (shen/internal/apply-function-expression
+                     (shen/internal/apply-function-expression
+                      (shen/internal/apply-function-expression
+                       (shen/internal/apply-function-expression
+                        (shen/hd V2203)
+                        (list V2204))
+                       (list V2205))
+                      (list V2206))
+                     (list V2207))
+                    (shen/if
+                     (shen/= W2208 'false)
+                     (vector
+                      (list
+                       (nthcdr 1 V2203)
+                       V2204 V2205 V2206 V2207))
+                     W2208)))
+         (shen/true
+          (shen/simple-error "fork expects a list of literals\n")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V2203 V2204 V2205 V2206 V2207)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/findall
+    (V2209 V2210 V2211 V2212 V2213 V2214 V2215)
+  (shen/if
+   (shen/shen\.unlocked\? V2213)
+   (shen/let W2216
+             (shen/shen\.newpv V2212)
+             (shen/shen\.gc V2212
+                            (shen/do
+                             (shen/shen\.incinfs)
+                             (shen/is W2216 nil V2212 V2213 V2214
+                                      (shen/freeze
+                                       (shen/shen\.findall-h V2209 V2210 V2211 W2216 V2212 V2213 V2214 V2215))))))
+   'false))
+(defun shen/shen\.findall-h
+    (V2217 V2218 V2219 V2220 V2221 V2222 V2223 V2224)
+  (shen/let W2225
+            (shen/if
+             (shen/shen\.unlocked\? V2222)
+             (shen/do
+              (shen/shen\.incinfs)
+              (shen/call V2218 V2221 V2222 V2223
+                         (shen/freeze
+                          (shen/shen\.overbind V2217 V2220 V2221 V2222 V2223 V2224))))
+             'false)
+            (shen/if
+             (shen/= W2225 'false)
+             (shen/if
+              (shen/shen\.unlocked\? V2222)
+              (shen/do
+               (shen/shen\.incinfs)
+               (shen/is! V2219 V2220 V2221 V2222 V2223 V2224))
+              'false)
+             W2225)))
+(defun shen/shen\.overbind
+    (V2232 V2233 V2234 V2235 V2236 V2237)
+  (shen/do
+   (shen/shen\.bindv V2233
+                     (append
+                      (list
+                       (shen/shen\.deref V2232 V2234))
+                      (shen/shen\.lazyderef V2233 V2234))
+                     V2234)
+   'false))
+(defun shen/occurs-check
+    (V2240)
+  (shen/cond
+   ((shen/= '+ V2240)
+    (shen/set 'shen\.*occurs* 'true))
+   ((shen/= '- V2240)
+    (shen/set 'shen\.*occurs* 'false))
+   (shen/true
+    (shen/simple-error "occurs-check expects a + or a -.\n"))))
 (defun shen/read-file
     (V2484)
   (shen/let W2485
@@ -10207,4899 +9578,2883 @@
                           (shen/stoutput))
                          'shen\.skip)
                         W3201)))))
-(defun shen/asserta
-    (V1534)
-  (shen/shen\.assert* V1534 'shen\.top))
-(defun shen/assertz
-    (V1535)
-  (shen/shen\.assert* V1535 'shen\.bottom))
-(defun shen/shen\.assert*
-    (V1536 V1537)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V1536)
-     (shen/and
-      (shen/cons\?
-       (nthcdr 1 V1536))
-      (shen/= '<--
-              (shen/hd
-               (nthcdr 1 V1536)))))
-    (shen/let W1538
-              (shen/shen\.predicate
-               (shen/hd V1536))
-              (shen/let W1539
-                        (shen/shen\.terms
-                         (shen/hd V1536))
-                        (shen/let W1540
-                                  (shen/length W1539)
-                                  (shen/let W1541
-                                            (shen/shen\.parameters W1540)
-                                            (shen/let W1542
-                                                      (shen/arity W1538)
-                                                      (shen/let W1543
-                                                                (shen/if
-                                                                 (shen/= W1542 -1)
-                                                                 (shen/do
-                                                                  (shen/eval
-                                                                   (shen/shen\.create-skeleton W1538 W1541))
-                                                                  (shen/put W1538 'shen\.dynamic nil
-                                                                            (shen/value '*property-vector*)))
-                                                                 'shen\.skip)
-                                                                (shen/let W1544
-                                                                          (shen/shen\.insert-info W1538 W1539
-                                                                                                  (nthcdr 2 V1536)
-                                                                                                  V1536 V1537)
-                                                                          W1538))))))))
-   (shen/true
-    (shen/shen\.f-error 'shen\.assert*))))
-(defun shen/shen\.predicate
-    (V1547)
-  (shen/cond
-   ((shen/cons\? V1547)
-    (shen/hd V1547))
-   (shen/true V1547)))
-(defun shen/shen\.terms
-    (V1552)
-  (shen/cond
-   ((shen/cons\? V1552)
-    (nthcdr 1 V1552))
-   (shen/true nil)))
-(defun shen/shen\.create-skeleton
-    (V1553 V1554)
-  (append
-   (list 'defprolog V1553)
-   (shen/shen\.dynamic-default V1553 V1554)))
-(defun shen/shen\.dynamic-default
-    (V1555 V1556)
-  (shen/append V1556
-               (list '<--
-                     (list 'shen\.call-dynamic
-                           (shen/shen\.cons-form V1556)
-                           (list 'get V1555 'shen\.dynamic))
-                     (shen/intern ";"))))
-(defun shen/shen\.insert-info
-    (V1557 V1558 V1559 V1560 V1561)
-  (shen/let W1562
-            (shen/gensym 'shen\.g)
-            (shen/let W1563
-                      (shen/eval
-                       (shen/append
-                        (list 'defprolog W1562)
-                        (shen/append V1558
-                                     (append
-                                      (list '<--)
-                                      V1559))))
-                      (shen/let W1564
-                                (append
-                                 (list
-                                  (shen/fn W1562)
-                                  W1562)
-                                 V1560)
-                                (shen/let W1565
-                                          (shen/get V1557 'shen\.dynamic
-                                                    (shen/value '*property-vector*))
-                                          (shen/let W1566
-                                                    (shen/if
-                                                     (shen/= V1561 'shen\.top)
-                                                     (append
-                                                      (list W1564)
-                                                      W1565)
-                                                     (shen/append W1565
-                                                                  (list W1564)))
-                                                    (shen/put V1557 'shen\.dynamic W1566
-                                                              (shen/value '*property-vector*))))))))
-(defun shen/shen\.newname nil
-  (shen/let W1567
-            (shen/value 'shen\.*names*)
-            (shen/let W1568
-                      (shen/if
-                       (shen/empty\? W1567)
-                       (shen/gensym 'shen\.g)
-                       (shen/do
-                        (shen/set 'shen\.*names*
-                                  (nthcdr 1 W1567))
-                        (shen/hd W1567)))
-                      W1568)))
-(defun shen/shen\.call-dynamic
-    (V1569 V1570 V1571 V1572 V1573 V1574)
-  (cl-flet
-      ((tail-trampoline
-        (V1569 V1570 V1571 V1572 V1573 V1574)
-        (shen/let W1575
-                  (shen/if
-                   (shen/shen\.unlocked\? V1572)
-                   (shen/let W1576
-                             (shen/shen\.lazyderef V1570 V1571)
-                             (shen/if
-                              (shen/cons\? W1576)
-                              (shen/let W1577
-                                        (shen/shen\.lazyderef
-                                         (shen/hd W1576)
-                                         V1571)
-                                        (shen/if
-                                         (shen/cons\? W1577)
-                                         (shen/let W1578
-                                                   (shen/hd W1577)
-                                                   (shen/do
-                                                    (shen/shen\.incinfs)
-                                                    (shen/shen\.callrec W1578 V1569 V1571 V1572 V1573 V1574)))
-                                         'false))
-                              'false))
-                   'false)
-                  (shen/if
-                   (shen/= W1575 'false)
-                   (shen/if
-                    (shen/shen\.unlocked\? V1572)
-                    (shen/let W1579
-                              (shen/shen\.lazyderef V1570 V1571)
-                              (shen/if
-                               (shen/cons\? W1579)
-                               (shen/let W1580
-                                         (nthcdr 1 W1579)
-                                         (shen/do
-                                          (shen/shen\.incinfs)
-                                          (vector
-                                           (list V1569 W1580 V1571 V1572 V1573 V1574))))
-                               'false))
-                    'false)
-                   W1575))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V1569 V1570 V1571 V1572 V1573 V1574)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.callrec
-    (V1581 V1582 V1583 V1584 V1585 V1586)
-  (cl-flet
-      ((tail-trampoline
-        (V1581 V1582 V1583 V1584 V1585 V1586)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V1582))
-          (shen/internal/apply-function-expression
-           (shen/internal/apply-function-expression
-            (shen/internal/apply-function-expression
-             (shen/internal/apply-higher-order-function V1581
-                                                        (list V1583))
-             (list V1584))
-            (list V1585))
-           (list V1586)))
-         ((shen/cons\? V1582)
-          (vector
-           (list
-            (shen/internal/apply-higher-order-function V1581
-                                                       (list
-                                                        (shen/hd V1582)))
-            (nthcdr 1 V1582)
-            V1583 V1584 V1585 V1586)))
-         (shen/true
-          (shen/shen\.f-error 'shen\.callrec)))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V1581 V1582 V1583 V1584 V1585 V1586)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/retract
-    (V1587)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V1587)
-     (shen/and
-      (shen/cons\?
-       (nthcdr 1 V1587))
-      (shen/= '<--
-              (shen/hd
-               (nthcdr 1 V1587)))))
-    (shen/let W1588
-              (shen/shen\.predicate
-               (shen/hd V1587))
-              (shen/let W1589
-                        (shen/get W1588 'shen\.dynamic
-                                  (shen/value '*property-vector*))
-                        (shen/put W1588 'shen\.dynamic
-                                  (shen/shen\.retract-clause V1587 W1589)
-                                  (shen/value '*property-vector*)))))
-   (shen/true
-    (shen/shen\.f-error 'retract))))
-(defun shen/shen\.retract-clause
-    (V1595 V1596)
-  (shen/cond
-   ((shen/internal/predicate->shen
-     (null V1596))
-    nil)
-   ((shen/and
-     (shen/cons\? V1596)
-     (shen/and
-      (shen/cons\?
-       (shen/hd V1596))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1
-                (shen/hd V1596)))
-       (shen/= V1595
-               (nthcdr 2
-                       (shen/hd V1596))))))
-    (shen/do
-     (shen/set 'shen\.*names*
-               (append
-                (list
-                 (shen/hd
-                  (nthcdr 1
-                          (shen/hd V1596))))
-                (shen/value 'shen\.*names*)))
-     (nthcdr 1 V1596)))
-   ((shen/cons\? V1596)
-    (append
-     (list
-      (shen/hd V1596))
-     (shen/shen\.retract-clause V1595
-                                (nthcdr 1 V1596))))
-   (shen/true
-    (shen/shen\.f-error 'shen\.retract-clause))))
-(defun shen/shen\.compile-prolog
-    (V1597 V1598)
-  (shen/compile
-   (shen/lambda Z1599
-                (shen/shen\.<defprolog> Z1599))
-   (append
-    (list V1597)
-    V1598)))
-(defun shen/shen\.<defprolog>
-    (V1600)
-  (shen/let W1601
+(defun shen/shen\.<datatype>
+    (V3342)
+  (shen/let W3343
             (shen/if
-             (shen/cons\? V1600)
-             (shen/let W1602
-                       (shen/head V1600)
-                       (shen/let W1603
-                                 (shen/tail V1600)
-                                 (shen/let W1604
-                                           (shen/shen\.<clauses> W1603)
+             (shen/cons\? V3342)
+             (shen/let W3344
+                       (shen/head V3342)
+                       (shen/let W3345
+                                 (shen/tail V3342)
+                                 (shen/let W3346
+                                           (shen/shen\.<datatype-rules> W3345)
                                            (shen/if
-                                            (shen/shen\.parse-failure\? W1604)
+                                            (shen/shen\.parse-failure\? W3346)
                                             (shen/shen\.parse-failure)
-                                            (shen/let W1605
-                                                      (shen/shen\.<-out W1604)
-                                                      (shen/let W1606
-                                                                (shen/shen\.in-> W1604)
-                                                                (shen/shen\.comb W1606
-                                                                                 (shen/let W1607
-                                                                                           (shen/shen\.prolog-arity-check W1602 W1605)
-                                                                                           (shen/let W1608
-                                                                                                     (shen/map
-                                                                                                      (shen/lambda Z1609
-                                                                                                                   (shen/shen\.linearise-clause Z1609))
-                                                                                                      W1605)
-                                                                                                     (shen/shen\.horn-clause-procedure W1602 W1608))))))))))
+                                            (shen/let W3347
+                                                      (shen/shen\.<-out W3346)
+                                                      (shen/let W3348
+                                                                (shen/shen\.in-> W3346)
+                                                                (shen/shen\.comb W3348
+                                                                                 (shen/let W3349
+                                                                                           (shen/shen\.rules->prolog W3344 W3347)
+                                                                                           (shen/shen\.remember-datatype W3344
+                                                                                                                         (shen/fn W3344))))))))))
              (shen/shen\.parse-failure))
             (shen/if
-             (shen/shen\.parse-failure\? W1601)
+             (shen/shen\.parse-failure\? W3343)
              (shen/shen\.parse-failure)
-             W1601)))
-(defun shen/shen\.prolog-arity-check
-    (V1612 V1613)
+             W3343)))
+(defun shen/shen\.<datatype-rules>
+    (V3350)
+  (shen/let W3351
+            (shen/let W3352
+                      (shen/shen\.<datatype-rule> V3350)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W3352)
+                       (shen/shen\.parse-failure)
+                       (shen/let W3353
+                                 (shen/shen\.<-out W3352)
+                                 (shen/let W3354
+                                           (shen/shen\.in-> W3352)
+                                           (shen/let W3355
+                                                     (shen/shen\.<datatype-rules> W3354)
+                                                     (shen/if
+                                                      (shen/shen\.parse-failure\? W3355)
+                                                      (shen/shen\.parse-failure)
+                                                      (shen/let W3356
+                                                                (shen/shen\.<-out W3355)
+                                                                (shen/let W3357
+                                                                          (shen/shen\.in-> W3355)
+                                                                          (shen/shen\.comb W3357
+                                                                                           (shen/append W3353 W3356))))))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W3351)
+             (shen/let W3358
+                       (shen/let W3359
+                                 (shen/<!> V3350)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W3359)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W3360
+                                            (shen/shen\.<-out W3359)
+                                            (shen/let W3361
+                                                      (shen/shen\.in-> W3359)
+                                                      (shen/shen\.comb W3361
+                                                                       (shen/if
+                                                                        (shen/empty\? W3360)
+                                                                        nil
+                                                                        (shen/simple-error
+                                                                         (shen/cn "datatype syntax error here:\n "
+                                                                                  (shen/shen\.app W3360 "\n ..." 'shen\.r)))))))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W3358)
+                        (shen/shen\.parse-failure)
+                        W3358))
+             W3351)))
+(defun shen/shen\.<datatype-rule>
+    (V3362)
+  (shen/let W3363
+            (shen/let W3364
+                      (shen/shen\.<single> V3362)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W3364)
+                       (shen/shen\.parse-failure)
+                       (shen/let W3365
+                                 (shen/shen\.<-out W3364)
+                                 (shen/let W3366
+                                           (shen/shen\.in-> W3364)
+                                           (shen/shen\.comb W3366 W3365)))))
+            (shen/if
+             (shen/shen\.parse-failure\? W3363)
+             (shen/let W3367
+                       (shen/let W3368
+                                 (shen/shen\.<double> V3362)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W3368)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W3369
+                                            (shen/shen\.<-out W3368)
+                                            (shen/let W3370
+                                                      (shen/shen\.in-> W3368)
+                                                      (shen/shen\.comb W3370 W3369)))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W3367)
+                        (shen/shen\.parse-failure)
+                        W3367))
+             W3363)))
+(defun shen/shen\.<single>
+    (V3371)
+  (shen/let W3372
+            (shen/let W3373
+                      (shen/shen\.<sides> V3371)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W3373)
+                       (shen/shen\.parse-failure)
+                       (shen/let W3374
+                                 (shen/shen\.<-out W3373)
+                                 (shen/let W3375
+                                           (shen/shen\.in-> W3373)
+                                           (shen/let W3376
+                                                     (shen/shen\.<prems> W3375)
+                                                     (shen/if
+                                                      (shen/shen\.parse-failure\? W3376)
+                                                      (shen/shen\.parse-failure)
+                                                      (shen/let W3377
+                                                                (shen/shen\.<-out W3376)
+                                                                (shen/let W3378
+                                                                          (shen/shen\.in-> W3376)
+                                                                          (shen/let W3379
+                                                                                    (shen/shen\.<sng> W3378)
+                                                                                    (shen/if
+                                                                                     (shen/shen\.parse-failure\? W3379)
+                                                                                     (shen/shen\.parse-failure)
+                                                                                     (shen/let W3380
+                                                                                               (shen/shen\.in-> W3379)
+                                                                                               (shen/let W3381
+                                                                                                         (shen/shen\.<conc> W3380)
+                                                                                                         (shen/if
+                                                                                                          (shen/shen\.parse-failure\? W3381)
+                                                                                                          (shen/shen\.parse-failure)
+                                                                                                          (shen/let W3382
+                                                                                                                    (shen/shen\.<-out W3381)
+                                                                                                                    (shen/let W3383
+                                                                                                                              (shen/shen\.in-> W3381)
+                                                                                                                              (shen/let W3384
+                                                                                                                                        (shen/shen\.<sc> W3383)
+                                                                                                                                        (shen/if
+                                                                                                                                         (shen/shen\.parse-failure\? W3384)
+                                                                                                                                         (shen/shen\.parse-failure)
+                                                                                                                                         (shen/let W3385
+                                                                                                                                                   (shen/shen\.in-> W3384)
+                                                                                                                                                   (shen/shen\.comb W3385
+                                                                                                                                                                    (list
+                                                                                                                                                                     (list W3374 W3377 W3382)))))))))))))))))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W3372)
+             (shen/shen\.parse-failure)
+             W3372)))
+(defun shen/shen\.<double>
+    (V3386)
+  (shen/let W3387
+            (shen/let W3388
+                      (shen/shen\.<sides> V3386)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W3388)
+                       (shen/shen\.parse-failure)
+                       (shen/let W3389
+                                 (shen/shen\.<-out W3388)
+                                 (shen/let W3390
+                                           (shen/shen\.in-> W3388)
+                                           (shen/let W3391
+                                                     (shen/shen\.<formulae> W3390)
+                                                     (shen/if
+                                                      (shen/shen\.parse-failure\? W3391)
+                                                      (shen/shen\.parse-failure)
+                                                      (shen/let W3392
+                                                                (shen/shen\.<-out W3391)
+                                                                (shen/let W3393
+                                                                          (shen/shen\.in-> W3391)
+                                                                          (shen/let W3394
+                                                                                    (shen/shen\.<dbl> W3393)
+                                                                                    (shen/if
+                                                                                     (shen/shen\.parse-failure\? W3394)
+                                                                                     (shen/shen\.parse-failure)
+                                                                                     (shen/let W3395
+                                                                                               (shen/shen\.in-> W3394)
+                                                                                               (shen/let W3396
+                                                                                                         (shen/shen\.<formula> W3395)
+                                                                                                         (shen/if
+                                                                                                          (shen/shen\.parse-failure\? W3396)
+                                                                                                          (shen/shen\.parse-failure)
+                                                                                                          (shen/let W3397
+                                                                                                                    (shen/shen\.<-out W3396)
+                                                                                                                    (shen/let W3398
+                                                                                                                              (shen/shen\.in-> W3396)
+                                                                                                                              (shen/let W3399
+                                                                                                                                        (shen/shen\.<sc> W3398)
+                                                                                                                                        (shen/if
+                                                                                                                                         (shen/shen\.parse-failure\? W3399)
+                                                                                                                                         (shen/shen\.parse-failure)
+                                                                                                                                         (shen/let W3400
+                                                                                                                                                   (shen/shen\.in-> W3399)
+                                                                                                                                                   (shen/shen\.comb W3400
+                                                                                                                                                                    (shen/shen\.lr-rule W3389 W3392
+                                                                                                                                                                                        (list nil W3397)))))))))))))))))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W3387)
+             (shen/shen\.parse-failure)
+             W3387)))
+(defun shen/shen\.<formulae>
+    (V3401)
+  (shen/let W3402
+            (shen/let W3403
+                      (shen/shen\.<formula> V3401)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W3403)
+                       (shen/shen\.parse-failure)
+                       (shen/let W3404
+                                 (shen/shen\.<-out W3403)
+                                 (shen/let W3405
+                                           (shen/shen\.in-> W3403)
+                                           (shen/let W3406
+                                                     (shen/shen\.<sc> W3405)
+                                                     (shen/if
+                                                      (shen/shen\.parse-failure\? W3406)
+                                                      (shen/shen\.parse-failure)
+                                                      (shen/let W3407
+                                                                (shen/shen\.in-> W3406)
+                                                                (shen/let W3408
+                                                                          (shen/shen\.<formulae> W3407)
+                                                                          (shen/if
+                                                                           (shen/shen\.parse-failure\? W3408)
+                                                                           (shen/shen\.parse-failure)
+                                                                           (shen/let W3409
+                                                                                     (shen/shen\.<-out W3408)
+                                                                                     (shen/let W3410
+                                                                                               (shen/shen\.in-> W3408)
+                                                                                               (shen/shen\.comb W3410
+                                                                                                                (append
+                                                                                                                 (list
+                                                                                                                  (list nil W3404))
+                                                                                                                 W3409)))))))))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W3402)
+             (shen/let W3411
+                       (shen/let W3412
+                                 (shen/shen\.<formula> V3401)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W3412)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W3413
+                                            (shen/shen\.<-out W3412)
+                                            (shen/let W3414
+                                                      (shen/shen\.in-> W3412)
+                                                      (shen/let W3415
+                                                                (shen/shen\.<sc> W3414)
+                                                                (shen/if
+                                                                 (shen/shen\.parse-failure\? W3415)
+                                                                 (shen/shen\.parse-failure)
+                                                                 (shen/let W3416
+                                                                           (shen/shen\.in-> W3415)
+                                                                           (shen/shen\.comb W3416
+                                                                                            (list
+                                                                                             (list nil W3413))))))))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W3411)
+                        (shen/shen\.parse-failure)
+                        W3411))
+             W3402)))
+(defun shen/shen\.<conc>
+    (V3417)
+  (shen/let W3418
+            (shen/let W3419
+                      (shen/shen\.<ass> V3417)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W3419)
+                       (shen/shen\.parse-failure)
+                       (shen/let W3420
+                                 (shen/shen\.<-out W3419)
+                                 (shen/let W3421
+                                           (shen/shen\.in-> W3419)
+                                           (shen/if
+                                            (shen/shen\.hds=\? W3421 '>>)
+                                            (shen/let W3422
+                                                      (shen/tail W3421)
+                                                      (shen/let W3423
+                                                                (shen/shen\.<formula> W3422)
+                                                                (shen/if
+                                                                 (shen/shen\.parse-failure\? W3423)
+                                                                 (shen/shen\.parse-failure)
+                                                                 (shen/let W3424
+                                                                           (shen/shen\.<-out W3423)
+                                                                           (shen/let W3425
+                                                                                     (shen/shen\.in-> W3423)
+                                                                                     (shen/shen\.comb W3425
+                                                                                                      (list W3420 W3424)))))))
+                                            (shen/shen\.parse-failure))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W3418)
+             (shen/let W3426
+                       (shen/let W3427
+                                 (shen/shen\.<formula> V3417)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W3427)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W3428
+                                            (shen/shen\.<-out W3427)
+                                            (shen/let W3429
+                                                      (shen/shen\.in-> W3427)
+                                                      (shen/shen\.comb W3429
+                                                                       (list nil W3428))))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W3426)
+                        (shen/shen\.parse-failure)
+                        W3426))
+             W3418)))
+(defun shen/shen\.<prems>
+    (V3430)
+  (shen/let W3431
+            (shen/let W3432
+                      (shen/shen\.<prem> V3430)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W3432)
+                       (shen/shen\.parse-failure)
+                       (shen/let W3433
+                                 (shen/shen\.<-out W3432)
+                                 (shen/let W3434
+                                           (shen/shen\.in-> W3432)
+                                           (shen/let W3435
+                                                     (shen/shen\.<sc> W3434)
+                                                     (shen/if
+                                                      (shen/shen\.parse-failure\? W3435)
+                                                      (shen/shen\.parse-failure)
+                                                      (shen/let W3436
+                                                                (shen/shen\.in-> W3435)
+                                                                (shen/let W3437
+                                                                          (shen/shen\.<prems> W3436)
+                                                                          (shen/if
+                                                                           (shen/shen\.parse-failure\? W3437)
+                                                                           (shen/shen\.parse-failure)
+                                                                           (shen/let W3438
+                                                                                     (shen/shen\.<-out W3437)
+                                                                                     (shen/let W3439
+                                                                                               (shen/shen\.in-> W3437)
+                                                                                               (shen/shen\.comb W3439
+                                                                                                                (append
+                                                                                                                 (list W3433)
+                                                                                                                 W3438)))))))))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W3431)
+             (shen/let W3440
+                       (shen/let W3441
+                                 (shen/<e> V3430)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W3441)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W3442
+                                            (shen/shen\.in-> W3441)
+                                            (shen/shen\.comb W3442 nil))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W3440)
+                        (shen/shen\.parse-failure)
+                        W3440))
+             W3431)))
+(defun shen/shen\.<prem>
+    (V3443)
+  (shen/let W3444
+            (shen/if
+             (shen/shen\.hds=\? V3443 '!)
+             (shen/let W3445
+                       (shen/tail V3443)
+                       (shen/shen\.comb W3445 '!))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W3444)
+             (shen/let W3446
+                       (shen/let W3447
+                                 (shen/shen\.<ass> V3443)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W3447)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W3448
+                                            (shen/shen\.<-out W3447)
+                                            (shen/let W3449
+                                                      (shen/shen\.in-> W3447)
+                                                      (shen/if
+                                                       (shen/shen\.hds=\? W3449 '>>)
+                                                       (shen/let W3450
+                                                                 (shen/tail W3449)
+                                                                 (shen/let W3451
+                                                                           (shen/shen\.<formula> W3450)
+                                                                           (shen/if
+                                                                            (shen/shen\.parse-failure\? W3451)
+                                                                            (shen/shen\.parse-failure)
+                                                                            (shen/let W3452
+                                                                                      (shen/shen\.<-out W3451)
+                                                                                      (shen/let W3453
+                                                                                                (shen/shen\.in-> W3451)
+                                                                                                (shen/shen\.comb W3453
+                                                                                                                 (list W3448 W3452)))))))
+                                                       (shen/shen\.parse-failure))))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W3446)
+                        (shen/let W3454
+                                  (shen/let W3455
+                                            (shen/shen\.<formula> V3443)
+                                            (shen/if
+                                             (shen/shen\.parse-failure\? W3455)
+                                             (shen/shen\.parse-failure)
+                                             (shen/let W3456
+                                                       (shen/shen\.<-out W3455)
+                                                       (shen/let W3457
+                                                                 (shen/shen\.in-> W3455)
+                                                                 (shen/shen\.comb W3457
+                                                                                  (list nil W3456))))))
+                                  (shen/if
+                                   (shen/shen\.parse-failure\? W3454)
+                                   (shen/shen\.parse-failure)
+                                   W3454))
+                        W3446))
+             W3444)))
+(defun shen/shen\.<ass>
+    (V3458)
+  (shen/let W3459
+            (shen/let W3460
+                      (shen/shen\.<formula> V3458)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W3460)
+                       (shen/shen\.parse-failure)
+                       (shen/let W3461
+                                 (shen/shen\.<-out W3460)
+                                 (shen/let W3462
+                                           (shen/shen\.in-> W3460)
+                                           (shen/let W3463
+                                                     (shen/shen\.<iscomma> W3462)
+                                                     (shen/if
+                                                      (shen/shen\.parse-failure\? W3463)
+                                                      (shen/shen\.parse-failure)
+                                                      (shen/let W3464
+                                                                (shen/shen\.in-> W3463)
+                                                                (shen/let W3465
+                                                                          (shen/shen\.<ass> W3464)
+                                                                          (shen/if
+                                                                           (shen/shen\.parse-failure\? W3465)
+                                                                           (shen/shen\.parse-failure)
+                                                                           (shen/let W3466
+                                                                                     (shen/shen\.<-out W3465)
+                                                                                     (shen/let W3467
+                                                                                               (shen/shen\.in-> W3465)
+                                                                                               (shen/shen\.comb W3467
+                                                                                                                (append
+                                                                                                                 (list W3461)
+                                                                                                                 W3466)))))))))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W3459)
+             (shen/let W3468
+                       (shen/let W3469
+                                 (shen/shen\.<formula> V3458)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W3469)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W3470
+                                            (shen/shen\.<-out W3469)
+                                            (shen/let W3471
+                                                      (shen/shen\.in-> W3469)
+                                                      (shen/shen\.comb W3471
+                                                                       (list W3470))))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W3468)
+                        (shen/let W3472
+                                  (shen/let W3473
+                                            (shen/<e> V3458)
+                                            (shen/if
+                                             (shen/shen\.parse-failure\? W3473)
+                                             (shen/shen\.parse-failure)
+                                             (shen/let W3474
+                                                       (shen/shen\.in-> W3473)
+                                                       (shen/shen\.comb W3474 nil))))
+                                  (shen/if
+                                   (shen/shen\.parse-failure\? W3472)
+                                   (shen/shen\.parse-failure)
+                                   W3472))
+                        W3468))
+             W3459)))
+(defun shen/shen\.<iscomma>
+    (V3475)
+  (shen/let W3476
+            (shen/if
+             (shen/cons\? V3475)
+             (shen/let W3477
+                       (shen/head V3475)
+                       (shen/let W3478
+                                 (shen/tail V3475)
+                                 (shen/if
+                                  (shen/= W3477
+                                          (shen/intern ","))
+                                  (shen/shen\.comb W3478 'shen\.skip)
+                                  (shen/shen\.parse-failure))))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W3476)
+             (shen/shen\.parse-failure)
+             W3476)))
+(defun shen/shen\.<formula>
+    (V3479)
+  (shen/let W3480
+            (shen/let W3481
+                      (shen/shen\.<expr> V3479)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W3481)
+                       (shen/shen\.parse-failure)
+                       (shen/let W3482
+                                 (shen/shen\.<-out W3481)
+                                 (shen/let W3483
+                                           (shen/shen\.in-> W3481)
+                                           (shen/let W3484
+                                                     (shen/shen\.<iscolon> W3483)
+                                                     (shen/if
+                                                      (shen/shen\.parse-failure\? W3484)
+                                                      (shen/shen\.parse-failure)
+                                                      (shen/let W3485
+                                                                (shen/shen\.in-> W3484)
+                                                                (shen/let W3486
+                                                                          (shen/shen\.<type> W3485)
+                                                                          (shen/if
+                                                                           (shen/shen\.parse-failure\? W3486)
+                                                                           (shen/shen\.parse-failure)
+                                                                           (shen/let W3487
+                                                                                     (shen/shen\.<-out W3486)
+                                                                                     (shen/let W3488
+                                                                                               (shen/shen\.in-> W3486)
+                                                                                               (shen/shen\.comb W3488
+                                                                                                                (list
+                                                                                                                 (shen/shen\.curry W3482)
+                                                                                                                 (shen/intern ":")
+                                                                                                                 (shen/shen\.rectify-type W3487))))))))))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W3480)
+             (shen/let W3489
+                       (shen/let W3490
+                                 (shen/shen\.<expr> V3479)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W3490)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W3491
+                                            (shen/shen\.<-out W3490)
+                                            (shen/let W3492
+                                                      (shen/shen\.in-> W3490)
+                                                      (shen/shen\.comb W3492 W3491)))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W3489)
+                        (shen/shen\.parse-failure)
+                        W3489))
+             W3480)))
+(defun shen/shen\.<iscolon>
+    (V3493)
+  (shen/let W3494
+            (shen/if
+             (shen/cons\? V3493)
+             (shen/let W3495
+                       (shen/head V3493)
+                       (shen/let W3496
+                                 (shen/tail V3493)
+                                 (shen/if
+                                  (shen/= W3495
+                                          (shen/intern ":"))
+                                  (shen/shen\.comb W3496 'shen\.skip)
+                                  (shen/shen\.parse-failure))))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W3494)
+             (shen/shen\.parse-failure)
+             W3494)))
+(defun shen/shen\.<sides>
+    (V3497)
+  (shen/let W3498
+            (shen/let W3499
+                      (shen/shen\.<side> V3497)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W3499)
+                       (shen/shen\.parse-failure)
+                       (shen/let W3500
+                                 (shen/shen\.<-out W3499)
+                                 (shen/let W3501
+                                           (shen/shen\.in-> W3499)
+                                           (shen/let W3502
+                                                     (shen/shen\.<sides> W3501)
+                                                     (shen/if
+                                                      (shen/shen\.parse-failure\? W3502)
+                                                      (shen/shen\.parse-failure)
+                                                      (shen/let W3503
+                                                                (shen/shen\.<-out W3502)
+                                                                (shen/let W3504
+                                                                          (shen/shen\.in-> W3502)
+                                                                          (shen/shen\.comb W3504
+                                                                                           (append
+                                                                                            (list W3500)
+                                                                                            W3503))))))))))
+            (shen/if
+             (shen/shen\.parse-failure\? W3498)
+             (shen/let W3505
+                       (shen/let W3506
+                                 (shen/<e> V3497)
+                                 (shen/if
+                                  (shen/shen\.parse-failure\? W3506)
+                                  (shen/shen\.parse-failure)
+                                  (shen/let W3507
+                                            (shen/shen\.in-> W3506)
+                                            (shen/shen\.comb W3507 nil))))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W3505)
+                        (shen/shen\.parse-failure)
+                        W3505))
+             W3498)))
+(defun shen/shen\.<side>
+    (V3508)
+  (shen/let W3509
+            (shen/if
+             (shen/shen\.hds=\? V3508 'if)
+             (shen/let W3510
+                       (shen/tail V3508)
+                       (shen/if
+                        (shen/cons\? W3510)
+                        (shen/let W3511
+                                  (shen/head W3510)
+                                  (shen/let W3512
+                                            (shen/tail W3510)
+                                            (shen/shen\.comb W3512
+                                                             (list 'if W3511))))
+                        (shen/shen\.parse-failure)))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W3509)
+             (shen/let W3513
+                       (shen/if
+                        (shen/shen\.hds=\? V3508 'let)
+                        (shen/let W3514
+                                  (shen/tail V3508)
+                                  (shen/if
+                                   (shen/cons\? W3514)
+                                   (shen/let W3515
+                                             (shen/head W3514)
+                                             (shen/let W3516
+                                                       (shen/tail W3514)
+                                                       (shen/if
+                                                        (shen/cons\? W3516)
+                                                        (shen/let W3517
+                                                                  (shen/head W3516)
+                                                                  (shen/let W3518
+                                                                            (shen/tail W3516)
+                                                                            (shen/shen\.comb W3518
+                                                                                             (list 'let W3515 W3517))))
+                                                        (shen/shen\.parse-failure))))
+                                   (shen/shen\.parse-failure)))
+                        (shen/shen\.parse-failure))
+                       (shen/if
+                        (shen/shen\.parse-failure\? W3513)
+                        (shen/let W3519
+                                  (shen/if
+                                   (shen/shen\.hds=\? V3508 'shen\.let!)
+                                   (shen/let W3520
+                                             (shen/tail V3508)
+                                             (shen/if
+                                              (shen/cons\? W3520)
+                                              (shen/let W3521
+                                                        (shen/head W3520)
+                                                        (shen/let W3522
+                                                                  (shen/tail W3520)
+                                                                  (shen/if
+                                                                   (shen/cons\? W3522)
+                                                                   (shen/let W3523
+                                                                             (shen/head W3522)
+                                                                             (shen/let W3524
+                                                                                       (shen/tail W3522)
+                                                                                       (shen/shen\.comb W3524
+                                                                                                        (list 'shen\.let! W3521 W3523))))
+                                                                   (shen/shen\.parse-failure))))
+                                              (shen/shen\.parse-failure)))
+                                   (shen/shen\.parse-failure))
+                                  (shen/if
+                                   (shen/shen\.parse-failure\? W3519)
+                                   (shen/shen\.parse-failure)
+                                   W3519))
+                        W3513))
+             W3509)))
+(defun shen/shen\.lr-rule
+    (V3531 V3532 V3533)
   (shen/cond
    ((shen/and
-     (shen/cons\? V1613)
+     (shen/cons\? V3533)
      (shen/and
-      (shen/cons\?
-       (shen/hd V1613))
+      (shen/internal/predicate->shen
+       (null
+        (shen/hd V3533)))
       (shen/and
        (shen/cons\?
-        (nthcdr 1
-                (shen/hd V1613)))
+        (nthcdr 1 V3533))
+       (shen/internal/predicate->shen
+        (null
+         (nthcdr 2 V3533))))))
+    (shen/let W3534
+              (shen/gensym 'P)
+              (shen/let W3535
+                        (list
+                         (nthcdr 1 V3533)
+                         W3534)
+                        (shen/let W3536
+                                  (list
+                                   (shen/shen\.coll-formulae V3532)
+                                   W3534)
+                                  (shen/let W3537
+                                            (list V3531
+                                                  (list W3536)
+                                                  W3535)
+                                            (shen/let W3538
+                                                      (list V3531 V3532 V3533)
+                                                      (list W3538 W3537)))))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.lr-rule"))))
+(defun shen/shen\.coll-formulae
+    (V3541)
+  (shen/cond
+   ((shen/internal/predicate->shen
+     (null V3541))
+    nil)
+   ((shen/and
+     (shen/cons\? V3541)
+     (shen/and
+      (shen/cons\?
+       (shen/hd V3541))
+      (shen/and
+       (shen/internal/predicate->shen
+        (null
+         (shen/hd
+          (shen/hd V3541))))
        (shen/and
+        (shen/cons\?
+         (nthcdr 1
+                 (shen/hd V3541)))
         (shen/internal/predicate->shen
          (null
           (nthcdr 2
-                  (shen/hd V1613))))
-        (shen/internal/predicate->shen
-         (null
-          (nthcdr 1 V1613)))))))
-    (shen/length
-     (shen/hd
-      (shen/hd V1613))))
-   ((shen/and
-     (shen/cons\? V1613)
-     (shen/and
-      (shen/cons\?
-       (shen/hd V1613))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1
-                (shen/hd V1613)))
-       (shen/internal/predicate->shen
-        (null
-         (nthcdr 2
-                 (shen/hd V1613)))))))
-    (shen/shen\.pac-h V1612
-                      (shen/length
-                       (shen/hd
-                        (shen/hd V1613)))
-                      (nthcdr 1 V1613)))
+                  (shen/hd V3541))))))))
+    (append
+     (list
+      (shen/hd
+       (nthcdr 1
+               (shen/hd V3541))))
+     (shen/shen\.coll-formulae
+      (nthcdr 1 V3541))))
    (shen/true
-    (shen/shen\.f-error 'shen\.prolog-arity-check))))
-(defun shen/shen\.pac-h
-    (V1618 V1619 V1620)
+    (shen/simple-error "implementation error in shen.coll-formulae"))))
+(defun shen/shen\.<expr>
+    (V3542)
+  (shen/let W3543
+            (shen/if
+             (shen/cons\? V3542)
+             (shen/let W3544
+                       (shen/head V3542)
+                       (shen/let W3545
+                                 (shen/tail V3542)
+                                 (shen/if
+                                  (shen/not
+                                   (shen/shen\.key-in-sequent-calculus\? W3544))
+                                  (shen/shen\.comb W3545
+                                                   (shen/macroexpand W3544))
+                                  (shen/shen\.parse-failure))))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W3543)
+             (shen/shen\.parse-failure)
+             W3543)))
+(defun shen/shen\.key-in-sequent-calculus\?
+    (V3546)
+  (shen/or
+   (shen/element\? V3546
+                   (list '>>
+                         (shen/intern ";")
+                         (shen/intern ",")
+                         (shen/intern ":")
+                         '<--))
+   (shen/or
+    (shen/shen\.sng\? V3546)
+    (shen/shen\.dbl\? V3546))))
+(defun shen/shen\.<type>
+    (V3547)
+  (shen/let W3548
+            (shen/let W3549
+                      (shen/shen\.<expr> V3547)
+                      (shen/if
+                       (shen/shen\.parse-failure\? W3549)
+                       (shen/shen\.parse-failure)
+                       (shen/let W3550
+                                 (shen/shen\.<-out W3549)
+                                 (shen/let W3551
+                                           (shen/shen\.in-> W3549)
+                                           (shen/shen\.comb W3551 W3550)))))
+            (shen/if
+             (shen/shen\.parse-failure\? W3548)
+             (shen/shen\.parse-failure)
+             W3548)))
+(defun shen/shen\.<dbl>
+    (V3552)
+  (shen/let W3553
+            (shen/if
+             (shen/cons\? V3552)
+             (shen/let W3554
+                       (shen/head V3552)
+                       (shen/let W3555
+                                 (shen/tail V3552)
+                                 (shen/if
+                                  (shen/shen\.dbl\? W3554)
+                                  (shen/shen\.comb W3555 W3554)
+                                  (shen/shen\.parse-failure))))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W3553)
+             (shen/shen\.parse-failure)
+             W3553)))
+(defun shen/shen\.<sng>
+    (V3556)
+  (shen/let W3557
+            (shen/if
+             (shen/cons\? V3556)
+             (shen/let W3558
+                       (shen/head V3556)
+                       (shen/let W3559
+                                 (shen/tail V3556)
+                                 (shen/if
+                                  (shen/shen\.sng\? W3558)
+                                  (shen/shen\.comb W3559 W3558)
+                                  (shen/shen\.parse-failure))))
+             (shen/shen\.parse-failure))
+            (shen/if
+             (shen/shen\.parse-failure\? W3557)
+             (shen/shen\.parse-failure)
+             W3557)))
+(defun shen/shen\.sng\?
+    (V3560)
+  (shen/and
+   (shen/symbol\? V3560)
+   (shen/shen\.sng-h\?
+    (shen/str V3560))))
+(defun shen/shen\.sng-h\?
+    (V3563)
   (cl-flet
       ((tail-trampoline
-        (V1618 V1619 V1620)
+        (V3563)
         (shen/cond
-         ((shen/internal/predicate->shen
-           (null V1620))
-          V1619)
+         ((shen/= "___" V3563)
+          'true)
          ((shen/and
-           (shen/cons\? V1620)
-           (shen/cons\?
-            (shen/hd V1620)))
-          (shen/if
-           (shen/= V1619
-                   (shen/length
-                    (shen/hd
-                     (shen/hd V1620))))
-           (vector
-            (list V1618 V1619
-                  (nthcdr 1 V1620)))
-           (shen/simple-error
-            (shen/cn "arity error in prolog procedure "
-                     (shen/shen\.app V1618 "\n" 'shen\.a)))))
-         (shen/true
-          (shen/shen\.f-error 'shen\.pac-h)))))
+           (shen/shen\.+string\? V3563)
+           (shen/= "_"
+                   (shen/hdstr V3563)))
+          (vector
+           (list
+            (shen/tlstr V3563))))
+         (shen/true 'false))))
     (let
         ((result
-          (funcall #'tail-trampoline V1618 V1619 V1620)))
+          (funcall #'tail-trampoline V3563)))
       (while
           (vectorp result)
         (setq result
               (apply #'tail-trampoline
                      (aref result 0))))
       result)))
-(defun shen/shen\.<clauses>
-    (V1621)
-  (shen/let W1622
-            (shen/let W1623
-                      (shen/shen\.<clause> V1621)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W1623)
-                       (shen/shen\.parse-failure)
-                       (shen/let W1624
-                                 (shen/shen\.<-out W1623)
-                                 (shen/let W1625
-                                           (shen/shen\.in-> W1623)
-                                           (shen/let W1626
-                                                     (shen/shen\.<clauses> W1625)
-                                                     (shen/if
-                                                      (shen/shen\.parse-failure\? W1626)
-                                                      (shen/shen\.parse-failure)
-                                                      (shen/let W1627
-                                                                (shen/shen\.<-out W1626)
-                                                                (shen/let W1628
-                                                                          (shen/shen\.in-> W1626)
-                                                                          (shen/shen\.comb W1628
-                                                                                           (append
-                                                                                            (list W1624)
-                                                                                            W1627))))))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W1622)
-             (shen/let W1629
-                       (shen/let W1630
-                                 (shen/<!> V1621)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W1630)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W1631
-                                            (shen/shen\.<-out W1630)
-                                            (shen/let W1632
-                                                      (shen/shen\.in-> W1630)
-                                                      (shen/shen\.comb W1632
-                                                                       (shen/if
-                                                                        (shen/empty\? W1631)
-                                                                        nil
-                                                                        (shen/simple-error
-                                                                         (shen/cn "Prolog syntax error here:\n "
-                                                                                  (shen/shen\.app W1631 "\n ..." 'shen\.r)))))))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W1629)
-                        (shen/shen\.parse-failure)
-                        W1629))
-             W1622)))
-(defun shen/shen\.linearise-clause
-    (V1633)
+(defun shen/shen\.dbl\?
+    (V3564)
+  (shen/and
+   (shen/symbol\? V3564)
+   (shen/shen\.dbl-h\?
+    (shen/str V3564))))
+(defun shen/shen\.dbl-h\?
+    (V3567)
+  (cl-flet
+      ((tail-trampoline
+        (V3567)
+        (shen/cond
+         ((shen/= "===" V3567)
+          'true)
+         ((shen/and
+           (shen/shen\.+string\? V3567)
+           (shen/= "="
+                   (shen/hdstr V3567)))
+          (vector
+           (list
+            (shen/tlstr V3567))))
+         (shen/true 'false))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V3567)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.remember-datatype
+    (V3568 V3569)
+  (shen/do
+   (shen/set 'shen\.*datatypes*
+             (shen/shen\.assoc-> V3568 V3569
+                                 (shen/value 'shen\.*datatypes*)))
+   (shen/do
+    (shen/set 'shen\.*alldatatypes*
+              (shen/shen\.assoc-> V3568 V3569
+                                  (shen/value 'shen\.*alldatatypes*)))
+    V3568)))
+(defun shen/shen\.rules->prolog
+    (V3570 V3571)
+  (shen/let W3572
+            (shen/mapcan
+             (shen/lambda Z3573
+                          (shen/shen\.rule->clause Z3573))
+             V3571)
+            (shen/eval
+             (append
+              (list 'defprolog V3570)
+              W3572))))
+(defun shen/shen\.rule->clause
+    (V3576)
   (shen/cond
    ((shen/and
-     (shen/cons\? V1633)
+     (shen/cons\? V3576)
      (shen/and
       (shen/cons\?
-       (nthcdr 1 V1633))
-      (shen/internal/predicate->shen
-       (null
-        (nthcdr 2 V1633)))))
-    (shen/shen\.lch
-     (shen/shen\.linearise
-      (shen/@p
-       (shen/hd V1633)
-       (shen/hd
-        (nthcdr 1 V1633))))))
-   (shen/true
-    (shen/shen\.f-error 'shen\.linearise-clause))))
-(defun shen/shen\.lch
-    (V1634)
-  (shen/cond
-   ((shen/tuple\? V1634)
-    (list
-     (shen/fst V1634)
-     (shen/shen\.lchh
-      (shen/snd V1634))))
-   (shen/true
-    (shen/shen\.f-error 'shen\.lch))))
-(defun shen/shen\.lchh
-    (V1635)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V1635)
-     (shen/and
-      (shen/= 'where
-              (shen/hd V1635))
+       (nthcdr 1 V3576))
       (shen/and
        (shen/cons\?
-        (nthcdr 1 V1635))
+        (nthcdr 2 V3576))
        (shen/and
         (shen/cons\?
          (shen/hd
-          (nthcdr 1 V1635)))
+          (nthcdr 2 V3576)))
         (shen/and
-         (shen/= '=
-                 (shen/hd
+         (shen/cons\?
+          (nthcdr 1
                   (shen/hd
-                   (nthcdr 1 V1635))))
+                   (nthcdr 2 V3576))))
          (shen/and
-          (shen/cons\?
-           (nthcdr 1
-                   (shen/hd
-                    (nthcdr 1 V1635))))
-          (shen/and
-           (shen/cons\?
+          (shen/internal/predicate->shen
+           (null
             (nthcdr 2
                     (shen/hd
-                     (nthcdr 1 V1635))))
-           (shen/and
-            (shen/internal/predicate->shen
-             (null
-              (nthcdr 3
+                     (nthcdr 2 V3576)))))
+          (shen/internal/predicate->shen
+           (null
+            (nthcdr 3 V3576)))))))))
+    (shen/let W3577
+              (shen/shen\.extract-vars V3576)
+              (shen/let W3578
+                        (shen/append
+                         (shen/shen\.nvars
+                          (shen/length
+                           (shen/hd
+                            (shen/hd
+                             (nthcdr 2 V3576)))))
+                         (list 'Delta))
+                        (shen/let W3579
+                                  (shen/shen\.extract-vars
+                                   (shen/hd
+                                    (nthcdr 1
+                                            (shen/hd
+                                             (nthcdr 2 V3576)))))
+                                  (shen/let W3580
+                                            (shen/shen\.compile-consequent
+                                             (shen/hd
+                                              (nthcdr 1
+                                                      (shen/hd
+                                                       (nthcdr 2 V3576))))
+                                             W3578)
+                                            (shen/let W3581
+                                                      (shen/shen\.goals W3577
+                                                                        (shen/hd
+                                                                         (shen/hd
+                                                                          (nthcdr 2 V3576)))
+                                                                        (shen/hd V3576)
+                                                                        (shen/hd
+                                                                         (nthcdr 1 V3576))
+                                                                        W3578 W3579)
+                                                      (shen/append W3580
+                                                                   (shen/append
+                                                                    (list '<--)
+                                                                    (shen/append W3581
+                                                                                 (list
+                                                                                  (shen/intern ";")))))))))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.rule->clause"))))
+(defun shen/shen\.compile-consequent
+    (V3588 V3589)
+  (shen/cond
+   ((shen/cons\? V3589)
+    (list
+     (shen/shen\.optimise-typing V3588)
+     (shen/hd V3589)))
+   (shen/true
+    (shen/simple-error "implementation error in shen.compile-consequent"))))
+(defun shen/shen\.nvars
+    (V3590)
+  (shen/cond
+   ((shen/= 0 V3590)
+    nil)
+   (shen/true
+    (append
+     (list
+      (shen/gensym 'V))
+     (shen/shen\.nvars
+      (shen/- V3590 1))))))
+(defun shen/shen\.optimise-typing
+    (V3591)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V3591)
+     (shen/and
+      (shen/cons\?
+       (nthcdr 1 V3591))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 2 V3591))
+       (shen/and
+        (shen/internal/predicate->shen
+         (null
+          (nthcdr 3 V3591)))
+        (shen/=
+         (shen/hd
+          (nthcdr 1 V3591))
+         (shen/intern ":"))))))
+    (shen/let W3592
+              (shen/shen\.expand-mode-forms
+               (list '-
+                     (list
+                      (shen/hd V3591)
                       (shen/hd
-                       (nthcdr 1 V1635)))))
-            (shen/and
-             (shen/cons\?
-              (nthcdr 2 V1635))
-             (shen/internal/predicate->shen
-              (null
-               (nthcdr 3 V1635))))))))))))
+                       (nthcdr 1 V3591))
+                      (append
+                       (list '+)
+                       (nthcdr 2 V3591)))))
+              (shen/shen\.cons-form-with-modes W3592)))
+   (shen/true
+    (shen/let W3593
+              (shen/shen\.expand-mode-forms
+               (list '+ V3591))
+              (shen/shen\.cons-form-with-modes W3593)))))
+(defun shen/shen\.expand-mode-forms
+    (V3594)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V3594)
+     (shen/and
+      (shen/= '+
+              (shen/hd V3594))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V3594))
+       (shen/internal/predicate->shen
+        (null
+         (nthcdr 2 V3594))))))
+    (list 'mode
+          (shen/shen\.expand-mode-forms
+           (shen/hd
+            (nthcdr 1 V3594)))
+          '+))
+   ((shen/and
+     (shen/cons\? V3594)
+     (shen/and
+      (shen/= '-
+              (shen/hd V3594))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V3594))
+       (shen/internal/predicate->shen
+        (null
+         (nthcdr 2 V3594))))))
+    (list 'mode
+          (shen/shen\.expand-mode-forms
+           (shen/hd
+            (nthcdr 1 V3594)))
+          '-))
+   ((shen/cons\? V3594)
+    (shen/map
+     (shen/lambda Z3595
+                  (shen/shen\.expand-mode-forms Z3595))
+     V3594))
+   (shen/true V3594)))
+(defun shen/shen\.cons-form-with-modes
+    (V3596)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V3596)
+     (shen/and
+      (shen/= 'mode
+              (shen/hd V3596))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V3596))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 2 V3596))
+        (shen/internal/predicate->shen
+         (null
+          (nthcdr 3 V3596)))))))
+    (list
+     (shen/hd
+      (nthcdr 2 V3596))
+     (shen/shen\.cons-form-with-modes
+      (shen/hd
+       (nthcdr 1 V3596)))))
+   ((shen/and
+     (shen/cons\? V3596)
+     (shen/and
+      (shen/= 'bar!
+              (shen/hd V3596))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V3596))
+       (shen/internal/predicate->shen
+        (null
+         (nthcdr 2 V3596))))))
+    (shen/hd
+     (nthcdr 1 V3596)))
+   ((shen/cons\? V3596)
+    (list 'cons
+          (shen/shen\.cons-form-with-modes
+           (shen/hd V3596))
+          (shen/shen\.cons-form-with-modes
+           (nthcdr 1 V3596))))
+   (shen/true V3596)))
+(defun shen/shen\.goals
+    (V3597 V3598 V3599 V3600 V3601 V3602)
+  (shen/let W3603
+            (shen/shen\.compile-assumptions V3598 V3597 V3601 V3602)
+            (shen/let W3604
+                      (shen/shen\.compile-side-conditions V3599)
+                      (shen/let W3605
+                                (shen/shen\.compile-premises V3600 V3601)
+                                (shen/append W3603
+                                             (shen/append W3604 W3605))))))
+(defun shen/shen\.compile-assumptions
+    (V3620 V3621 V3622 V3623)
+  (shen/cond
+   ((shen/internal/predicate->shen
+     (null V3620))
+    nil)
+   ((shen/and
+     (shen/cons\? V3620)
+     (shen/and
+      (shen/cons\? V3622)
+      (shen/cons\?
+       (nthcdr 1 V3622))))
+    (shen/let W3624
+              (shen/append
+               (shen/shen\.extract-vars
+                (shen/hd V3620))
+               V3623)
+              (append
+               (list
+                (shen/shen\.compile-assumption
+                 (shen/hd V3620)
+                 (shen/hd V3622)
+                 (shen/hd
+                  (nthcdr 1 V3622))
+                 V3621 V3623))
+               (shen/shen\.compile-assumptions
+                (nthcdr 1 V3620)
+                V3621
+                (nthcdr 1 V3622)
+                W3624))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.compile-assumptions"))))
+(defun shen/shen\.compile-assumption
+    (V3625 V3626 V3627 V3628 V3629)
+  (shen/let W3630
+            (shen/gensym 'shen\.search)
+            (shen/let W3631
+                      (shen/shen\.compile-search-procedure W3630 V3625 V3626 V3627 V3628 V3629)
+                      (append
+                       (list W3630 V3626 nil V3627)
+                       V3628))))
+(defun shen/shen\.compile-search-procedure
+    (V3632 V3633 V3634 V3635 V3636 V3637)
+  (shen/let W3638
+            (shen/gensym 'Previous)
+            (shen/let W3639
+                      (shen/shen\.foundit! V3633 V3634 W3638 V3635 V3636 V3637)
+                      (shen/let W3640
+                                (shen/shen\.keep-looking V3632 V3634 W3638 V3635 V3636)
+                                (shen/eval
+                                 (append
+                                  (list 'defprolog V3632)
+                                  (shen/append W3639 W3640)))))))
+(defun shen/shen\.foundit!
+    (V3641 V3642 V3643 V3644 V3645 V3646)
+  (shen/let W3647
+            (shen/shen\.passive V3641 V3646)
+            (shen/let W3648
+                      (shen/shen\.tabulate-passive W3647)
+                      (shen/let W3649
+                                (shen/shen\.head-foundit! V3641 V3642 V3643 V3644 V3645 W3648)
+                                (shen/let W3650
+                                          (shen/shen\.body-foundit! V3642 V3643 V3644 W3648)
+                                          (shen/append W3649
+                                                       (shen/append
+                                                        (list '<--)
+                                                        (shen/append W3650
+                                                                     (list
+                                                                      (shen/intern ";"))))))))))
+(defun shen/shen\.keep-looking
+    (V3651 V3652 V3653 V3654 V3655)
+  (shen/let W3656
+            (shen/gensym 'V)
+            (shen/let W3657
+                      (append
+                       (list
+                        (list '-
+                              (list 'cons W3656 V3652))
+                        V3653 V3654)
+                       V3655)
+                      (shen/let W3658
+                                (list
+                                 (append
+                                  (list V3651 V3652
+                                        (list 'cons W3656 V3653)
+                                        V3654)
+                                  V3655))
+                                (shen/append W3657
+                                             (shen/append
+                                              (list '<--)
+                                              (shen/append W3658
+                                                           (list
+                                                            (shen/intern ";")))))))))
+(defun shen/shen\.passive
+    (V3663 V3664)
+  (shen/cond
+   ((shen/cons\? V3663)
+    (shen/union
+     (shen/shen\.passive
+      (shen/hd V3663)
+      V3664)
+     (shen/shen\.passive
+      (nthcdr 1 V3663)
+      V3664)))
+   ((shen/shen\.passive\? V3663 V3664)
+    (list V3663))
+   (shen/true nil)))
+(defun shen/shen\.passive\?
+    (V3665 V3666)
+  (shen/and
+   (shen/not
+    (shen/element\? V3665 V3666))
+   (shen/variable\? V3665)))
+(defun shen/shen\.tabulate-passive
+    (V3667)
+  (shen/map
+   (shen/lambda Z3668
+                (append
+                 (list Z3668)
+                 (shen/gensym 'V)))
+   V3667))
+(defun shen/shen\.head-foundit!
+    (V3669 V3670 V3671 V3672 V3673 V3674)
+  (shen/let W3675
+            (shen/shen\.optimise-passive V3673 V3674)
+            (append
+             (list
+              (list '-
+                    (list 'cons
+                          (shen/shen\.optimise-typing V3669)
+                          V3670))
+              V3671 V3672)
+             W3675)))
+(defun shen/shen\.optimise-passive
+    (V3676 V3677)
+  (shen/map
+   (shen/lambda Z3678
+                (shen/shen\.optimise-passive-h Z3678 V3677))
+   V3676))
+(defun shen/shen\.optimise-passive-h
+    (V3679 V3680)
+  (shen/let W3681
+            (shen/assoc V3679 V3680)
+            (shen/if
+             (shen/empty\? W3681)
+             V3679
+             (nthcdr 1 W3681))))
+(defun shen/shen\.body-foundit!
+    (V3690 V3691 V3692 V3693)
+  (shen/cond
+   ((shen/internal/predicate->shen
+     (null V3693))
+    (list
+     (list 'bind V3692
+           (list 'append
+                 (list 1 V3691)
+                 (list 1 V3690)))))
+   ((shen/and
+     (shen/cons\? V3693)
+     (shen/cons\?
+      (shen/hd V3693)))
+    (append
+     (list
+      (list 'bind
+            (nthcdr 1
+                    (shen/hd V3693))
+            (shen/hd
+             (shen/hd V3693))))
+     (shen/shen\.body-foundit! V3690 V3691 V3692
+                               (nthcdr 1 V3693))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.body-foundit!"))))
+(defun shen/shen\.compile-side-conditions
+    (V3694)
+  (shen/map
+   (shen/lambda Z3695
+                (shen/shen\.compile-side-condition Z3695))
+   V3694))
+(defun shen/shen\.compile-side-condition
+    (V3698)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V3698)
+     (shen/and
+      (shen/= 'let
+              (shen/hd V3698))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V3698))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 2 V3698))
+        (shen/internal/predicate->shen
+         (null
+          (nthcdr 3 V3698)))))))
+    (append
+     (list 'is)
+     (nthcdr 1 V3698)))
+   ((shen/and
+     (shen/cons\? V3698)
+     (shen/and
+      (shen/= 'shen\.let!
+              (shen/hd V3698))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V3698))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 2 V3698))
+        (shen/internal/predicate->shen
+         (null
+          (nthcdr 3 V3698)))))))
+    (append
+     (list 'is!)
+     (nthcdr 1 V3698)))
+   ((shen/and
+     (shen/cons\? V3698)
+     (shen/and
+      (shen/= 'if
+              (shen/hd V3698))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V3698))
+       (shen/internal/predicate->shen
+        (null
+         (nthcdr 2 V3698))))))
+    (append
+     (list 'when)
+     (nthcdr 1 V3698)))
+   (shen/true
+    (shen/simple-error "implementation error in shen.compile-side-condition"))))
+(defun shen/shen\.compile-premises
+    (V3699 V3700)
+  (shen/let W3701
+            (shen/hd
+             (shen/reverse V3700))
+            (shen/map
+             (shen/lambda Z3702
+                          (shen/shen\.compile-premise Z3702 W3701))
+             V3699)))
+(defun shen/shen\.compile-premise
+    (V3709 V3710)
+  (shen/cond
+   ((shen/= '! V3709)
+    '!)
+   ((shen/and
+     (shen/cons\? V3709)
+     (shen/and
+      (shen/cons\?
+       (nthcdr 1 V3709))
+      (shen/internal/predicate->shen
+       (null
+        (nthcdr 2 V3709)))))
+    (shen/shen\.compile-premise-h
+     (shen/reverse
+      (shen/hd V3709))
+     (shen/hd
+      (nthcdr 1 V3709))
+     V3710))
+   (shen/true
+    (shen/simple-error "implementation error in shen.premise"))))
+(defun shen/shen\.compile-premise-h
+    (V3717 V3718 V3719)
+  (cl-flet
+      ((tail-trampoline
+        (V3717 V3718 V3719)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V3717))
+          (list 'shen\.system-S
+                (shen/shen\.cons-form-no-modes V3718)
+                V3719))
+         ((shen/cons\? V3717)
+          (vector
+           (list
+            (nthcdr 1 V3717)
+            V3718
+            (list 'cons
+                  (shen/shen\.cons-form-no-modes
+                   (shen/hd V3717))
+                  V3719))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.compile-premise-h")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V3717 V3718 V3719)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.cons-form-no-modes
+    (V3720)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V3720)
+     (shen/and
+      (shen/= 'bar!
+              (shen/hd V3720))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V3720))
+       (shen/internal/predicate->shen
+        (null
+         (nthcdr 2 V3720))))))
+    (shen/hd
+     (nthcdr 1 V3720)))
+   ((shen/cons\? V3720)
+    (list 'cons
+          (shen/shen\.cons-form-no-modes
+           (shen/hd V3720))
+          (shen/shen\.cons-form-no-modes
+           (nthcdr 1 V3720))))
+   (shen/true V3720)))
+(defun shen/preclude
+    (V3721)
+  (shen/let W3722
+            (shen/map
+             (shen/lambda Z3723
+                          (shen/shen\.intern-type Z3723))
+             V3721)
+            (shen/let W3724
+                      (shen/value 'shen\.*datatypes*)
+                      (shen/let W3725
+                                (shen/shen\.remove-datatypes W3722 W3724)
+                                (shen/let W3726
+                                          (shen/set 'shen\.*datatypes* W3725)
+                                          (shen/shen\.show-datatypes W3726))))))
+(defun shen/shen\.remove-datatypes
+    (V3731 V3732)
+  (cl-flet
+      ((tail-trampoline
+        (V3731 V3732)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V3731))
+          V3732)
+         ((shen/cons\? V3731)
+          (vector
+           (list
+            (nthcdr 1 V3731)
+            (shen/shen\.unassoc
+             (shen/hd V3731)
+             V3732))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.remove-datatypes")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V3731 V3732)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.show-datatypes
+    (V3733)
+  (shen/map
+   (shen/lambda Z3734
+                (shen/hd Z3734))
+   V3733))
+(defun shen/include
+    (V3735)
+  (shen/let W3736
+            (shen/map
+             (shen/lambda Z3737
+                          (shen/shen\.intern-type Z3737))
+             V3735)
+            (shen/let W3738
+                      (shen/map
+                       (shen/lambda Z3739
+                                    (shen/shen\.remember-datatype Z3739
+                                                                  (shen/fn Z3739)))
+                       W3736)
+                      (shen/let W3740
+                                (shen/value 'shen\.*datatypes*)
+                                (shen/shen\.show-datatypes W3740)))))
+(defun shen/preclude-all-but
+    (V3741)
+  (shen/let W3742
+            (shen/set 'shen\.*datatypes* nil)
+            (shen/let W3743
+                      (shen/map
+                       (shen/lambda Z3744
+                                    (shen/shen\.intern-type Z3744))
+                       V3741)
+                      (shen/let W3745
+                                (shen/map
+                                 (shen/lambda Z3746
+                                              (shen/shen\.remember-datatype Z3746
+                                                                            (shen/fn Z3746)))
+                                 W3743)
+                                (shen/shen\.show-datatypes
+                                 (shen/value 'shen\.*datatypes*))))))
+(defun shen/include-all-but
+    (V3747)
+  (shen/let W3748
+            (shen/map
+             (shen/lambda Z3749
+                          (shen/shen\.intern-type Z3749))
+             V3747)
+            (shen/let W3750
+                      (shen/value 'shen\.*alldatatypes*)
+                      (shen/let W3751
+                                (shen/set 'shen\.*datatypes*
+                                          (shen/shen\.remove-datatypes W3748 W3750))
+                                (shen/shen\.show-datatypes W3751)))))
+(defun shen/thaw
+    (V3809)
+  (shen/internal/apply-higher-order-function V3809
+                                             (list)))
+(defun shen/eval
+    (V3810)
+  (shen/eval-kl
+   (shen/shen\.shen->kl
+    (shen/shen\.process-applications
+     (shen/macroexpand V3810)
+     (shen/shen\.find-types V3810)))))
+(defun shen/external
+    (V3811)
+  (shen/cond
+   ((shen/= 'null V3811)
+    nil)
+   (shen/true
+    (shen/trap-error
+     (shen/get V3811 'shen\.external-symbols
+               (shen/value '*property-vector*))
+     (shen/lambda Z3812
+                  (shen/simple-error
+                   (shen/cn "package "
+                            (shen/shen\.app V3811 " does not exist.\n;" 'shen\.a))))))))
+(defun shen/internal
+    (V3813)
+  (shen/cond
+   ((shen/= 'null V3813)
+    nil)
+   (shen/true
+    (shen/trap-error
+     (shen/get V3813 'shen\.internal-symbols
+               (shen/value '*property-vector*))
+     (shen/lambda Z3814
+                  (shen/simple-error
+                   (shen/cn "package "
+                            (shen/shen\.app V3813 " does not exist.\n;" 'shen\.a))))))))
+(defun shen/fail-if
+    (V3815 V3816)
+  (shen/if
+   (shen/internal/apply-higher-order-function V3815
+                                              (list V3816))
+   (shen/fail)
+   V3816))
+(defun shen/@s
+    (V3817 V3818)
+  (shen/cn V3817 V3818))
+(defun shen/tc\? nil
+  (shen/value 'shen\.*tc*))
+(defun shen/occurs\? nil
+  (shen/value 'shen\.*occurs*))
+(defun shen/factorise\? nil
+  (shen/value 'shen\.*factorise\?*))
+(defun shen/tracked nil
+  (shen/value 'shen\.*tracking*))
+(defun shen/ps
+    (V3819)
+  (shen/trap-error
+   (shen/get V3819 'shen\.source
+             (shen/value '*property-vector*))
+   (shen/lambda Z3820
+                (shen/simple-error
+                 (shen/shen\.app V3819 " not found.\n" 'shen\.a)))))
+(defun shen/stinput nil
+  (shen/value '*stinput*))
+(defun shen/vector
+    (V3821)
+  (shen/let W3822
+            (shen/absvector
+             (1+ V3821))
+            (shen/let W3823
+                      (shen/address-> W3822 0 V3821)
+                      (shen/let W3824
+                                (shen/if
+                                 (shen/= V3821 0)
+                                 W3823
+                                 (shen/shen\.fillvector W3823 1 V3821
+                                                        (shen/fail)))
+                                W3824))))
+(defun shen/shen\.fillvector
+    (V3826 V3827 V3828 V3829)
+  (cl-flet
+      ((tail-trampoline
+        (V3826 V3827 V3828 V3829)
+        (shen/cond
+         ((shen/= V3827 V3828)
+          (shen/address-> V3826 V3828 V3829))
+         (shen/true
+          (vector
+           (list
+            (shen/address-> V3826 V3827 V3829)
+            (1+ V3827)
+            V3828 V3829))))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V3826 V3827 V3828 V3829)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/vector\?
+    (V3830)
+  (shen/and
+   (shen/absvector\? V3830)
+   (shen/let W3831
+             (shen/trap-error
+              (shen/<-address V3830 0)
+              (shen/lambda Z3832 -1))
+             (shen/and
+              (shen/number\? W3831)
+              (shen/>= W3831 0)))))
+(defun shen/vector->
+    (V3833 V3834 V3835)
+  (shen/if
+   (shen/= V3834 0)
+   (shen/simple-error "cannot access 0th element of a vector\n")
+   (shen/address-> V3833 V3834 V3835)))
+(defun shen/<-vector
+    (V3836 V3837)
+  (shen/if
+   (shen/= V3837 0)
+   (shen/simple-error "cannot access 0th element of a vector\n")
+   (shen/let W3838
+             (shen/<-address V3836 V3837)
+             (shen/if
+              (shen/= W3838
+                      (shen/fail))
+              (shen/simple-error "vector element not found\n")
+              W3838))))
+(defun shen/shen\.posint\?
+    (V3839)
+  (shen/and
+   (shen/integer\? V3839)
+   (shen/>= V3839 0)))
+(defun shen/limit
+    (V3840)
+  (shen/<-address V3840 0))
+(defun shen/symbol\?
+    (V3841)
+  (shen/cond
+   ((shen/or
+     (shen/boolean\? V3841)
+     (shen/or
+      (shen/number\? V3841)
+      (shen/or
+       (shen/string\? V3841)
+       (shen/or
+        (shen/cons\? V3841)
+        (shen/or
+         (shen/empty\? V3841)
+         (shen/vector\? V3841))))))
+    'false)
+   ((shen/element\? V3841
+                    (list '{ '}
+                          (shen/intern ":")
+                          (shen/intern ";")
+                          (shen/intern ",")))
+    'true)
+   (shen/true
+    (shen/trap-error
+     (shen/let W3842
+               (shen/str V3841)
+               (shen/shen\.analyse-symbol\? W3842))
+     (shen/lambda Z3843 'false)))))
+(defun shen/shen\.analyse-symbol\?
+    (V3846)
+  (shen/cond
+   ((shen/shen\.+string\? V3846)
+    (shen/and
+     (shen/shen\.alpha\?
+      (shen/string->n
+       (shen/hdstr V3846)))
+     (shen/shen\.alphanums\?
+      (shen/tlstr V3846))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.analyse-symbol?"))))
+(defun shen/shen\.alphanums\?
+    (V3849)
+  (shen/cond
+   ((shen/= "" V3849)
+    'true)
+   ((shen/shen\.+string\? V3849)
+    (shen/let W3850
+              (shen/string->n
+               (shen/hdstr V3849))
+              (shen/and
+               (shen/or
+                (shen/shen\.alpha\? W3850)
+                (shen/shen\.digit\? W3850))
+               (shen/shen\.alphanums\?
+                (shen/tlstr V3849)))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.alphanums?"))))
+(defun shen/variable\?
+    (V3851)
+  (shen/cond
+   ((shen/or
+     (shen/boolean\? V3851)
+     (shen/or
+      (shen/number\? V3851)
+      (shen/string\? V3851)))
+    'false)
+   (shen/true
+    (shen/trap-error
+     (shen/let W3852
+               (shen/str V3851)
+               (shen/shen\.analyse-variable\? W3852))
+     (shen/lambda Z3853 'false)))))
+(defun shen/shen\.analyse-variable\?
+    (V3856)
+  (shen/cond
+   ((shen/shen\.+string\? V3856)
+    (shen/and
+     (shen/shen\.uppercase\?
+      (shen/string->n
+       (shen/hdstr V3856)))
+     (shen/shen\.alphanums\?
+      (shen/tlstr V3856))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.analyse-variable?"))))
+(defun shen/gensym
+    (V3857)
+  (shen/concat V3857
+               (shen/set 'shen\.*gensym*
+                         (1+
+                          (shen/value 'shen\.*gensym*)))))
+(defun shen/concat
+    (V3858 V3859)
+  (shen/intern
+   (shen/cn
+    (shen/str V3858)
+    (shen/str V3859))))
+(defun shen/@p
+    (V3860 V3861)
+  (shen/let W3862
+            (shen/absvector 3)
+            (shen/let W3863
+                      (shen/address-> W3862 0 'shen\.tuple)
+                      (shen/let W3864
+                                (shen/address-> W3862 1 V3860)
+                                (shen/let W3865
+                                          (shen/address-> W3862 2 V3861)
+                                          W3862)))))
+(defun shen/fst
+    (V3866)
+  (shen/<-address V3866 1))
+(defun shen/snd
+    (V3867)
+  (shen/<-address V3867 2))
+(defun shen/tuple\?
+    (V3868)
+  (shen/and
+   (shen/absvector\? V3868)
+   (shen/= 'shen\.tuple
+           (shen/trap-error
+            (shen/<-address V3868 0)
+            (shen/lambda Z3869 'shen\.not-tuple)))))
+(defun shen/append
+    (Xs Ys)
+  (append Xs Ys))
+(defun shen/@v
+    (V3876 V3877)
+  (shen/let W3878
+            (shen/limit V3877)
+            (shen/let W3879
+                      (shen/vector
+                       (1+ W3878))
+                      (shen/let W3880
+                                (shen/vector-> W3879 1 V3876)
+                                (shen/if
+                                 (shen/= W3878 0)
+                                 W3880
+                                 (shen/shen\.@v-help V3877 1 W3878 W3880))))))
+(defun shen/shen\.@v-help
+    (V3882 V3883 V3884 V3885)
+  (cl-flet
+      ((tail-trampoline
+        (V3882 V3883 V3884 V3885)
+        (shen/cond
+         ((shen/= V3883 V3884)
+          (shen/shen\.copyfromvector V3882 V3885 V3884
+                                     (1+ V3884)))
+         (shen/true
+          (vector
+           (list V3882
+                 (1+ V3883)
+                 V3884
+                 (shen/shen\.copyfromvector V3882 V3885 V3883
+                                            (1+ V3883))))))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V3882 V3883 V3884 V3885)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.copyfromvector
+    (V3886 V3887 V3888 V3889)
+  (shen/trap-error
+   (shen/vector-> V3887 V3889
+                  (shen/<-vector V3886 V3888))
+   (shen/lambda Z3890 V3887)))
+(defun shen/hdv
+    (V3891)
+  (shen/trap-error
+   (shen/<-vector V3891 1)
+   (shen/lambda Z3892
+                (shen/simple-error "hdv needs a non-empty vector as an argument\n"))))
+(defun shen/tlv
+    (V3893)
+  (shen/let W3894
+            (shen/limit V3893)
+            (shen/if
+             (shen/= W3894 0)
+             (shen/simple-error "cannot take the tail of the empty vector\n")
+             (shen/if
+              (shen/= W3894 1)
+              (shen/vector 0)
+              (shen/let W3895
+                        (shen/vector
+                         (shen/- W3894 1))
+                        (shen/shen\.tlv-help V3893 2 W3894
+                                             (shen/vector
+                                              (shen/- W3894 1))))))))
+(defun shen/shen\.tlv-help
+    (V3897 V3898 V3899 V3900)
+  (cl-flet
+      ((tail-trampoline
+        (V3897 V3898 V3899 V3900)
+        (shen/cond
+         ((shen/= V3898 V3899)
+          (shen/shen\.copyfromvector V3897 V3900 V3899
+                                     (shen/- V3899 1)))
+         (shen/true
+          (vector
+           (list V3897
+                 (1+ V3898)
+                 V3899
+                 (shen/shen\.copyfromvector V3897 V3900 V3898
+                                            (shen/- V3898 1))))))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V3897 V3898 V3899 V3900)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/assoc
+    (V3912 V3913)
+  (cl-flet
+      ((tail-trampoline
+        (V3912 V3913)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V3913))
+          nil)
+         ((shen/and
+           (shen/cons\? V3913)
+           (shen/and
+            (shen/cons\?
+             (shen/hd V3913))
+            (shen/= V3912
+                    (shen/hd
+                     (shen/hd V3913)))))
+          (shen/hd V3913))
+         ((shen/cons\? V3913)
+          (vector
+           (list V3912
+                 (nthcdr 1 V3913))))
+         (shen/true
+          (shen/simple-error "attempt to search a non-list with assoc\n")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V3912 V3913)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.assoc-set
+    (V3917 V3918 V3919)
+  (shen/cond
+   ((shen/internal/predicate->shen
+     (null V3919))
+    (list
+     (append
+      (list V3917)
+      V3918)))
+   ((shen/and
+     (shen/cons\? V3919)
+     (shen/and
+      (shen/cons\?
+       (shen/hd V3919))
+      (shen/= V3917
+              (shen/hd
+               (shen/hd V3919)))))
     (append
      (list
       (append
        (list
-        (shen/if
-         (shen/value 'shen\.*occurs*)
-         'is! 'is))
-       (nthcdr 1
-               (shen/hd
-                (nthcdr 1 V1635)))))
-     (shen/shen\.lchh
-      (shen/hd
-       (nthcdr 2 V1635)))))
-   (shen/true V1635)))
-(defun shen/shen\.<clause>
-    (V1636)
-  (shen/let W1637
-            (shen/let W1638
-                      (shen/shen\.<head> V1636)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W1638)
-                       (shen/shen\.parse-failure)
-                       (shen/let W1639
-                                 (shen/shen\.<-out W1638)
-                                 (shen/let W1640
-                                           (shen/shen\.in-> W1638)
-                                           (shen/if
-                                            (shen/shen\.hds=\? W1640 '<--)
-                                            (shen/let W1641
-                                                      (shen/tail W1640)
-                                                      (shen/let W1642
-                                                                (shen/shen\.<body> W1641)
-                                                                (shen/if
-                                                                 (shen/shen\.parse-failure\? W1642)
-                                                                 (shen/shen\.parse-failure)
-                                                                 (shen/let W1643
-                                                                           (shen/shen\.<-out W1642)
-                                                                           (shen/let W1644
-                                                                                     (shen/shen\.in-> W1642)
-                                                                                     (shen/let W1645
-                                                                                               (shen/shen\.<sc> W1644)
-                                                                                               (shen/if
-                                                                                                (shen/shen\.parse-failure\? W1645)
-                                                                                                (shen/shen\.parse-failure)
-                                                                                                (shen/let W1646
-                                                                                                          (shen/shen\.in-> W1645)
-                                                                                                          (shen/shen\.comb W1646
-                                                                                                                           (list W1639 W1643))))))))))
-                                            (shen/shen\.parse-failure))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W1637)
-             (shen/shen\.parse-failure)
-             W1637)))
-(defun shen/shen\.<head>
-    (V1647)
-  (shen/let W1648
-            (shen/let W1649
-                      (shen/shen\.<hterm> V1647)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W1649)
-                       (shen/shen\.parse-failure)
-                       (shen/let W1650
-                                 (shen/shen\.<-out W1649)
-                                 (shen/let W1651
-                                           (shen/shen\.in-> W1649)
-                                           (shen/let W1652
-                                                     (shen/shen\.<head> W1651)
-                                                     (shen/if
-                                                      (shen/shen\.parse-failure\? W1652)
-                                                      (shen/shen\.parse-failure)
-                                                      (shen/let W1653
-                                                                (shen/shen\.<-out W1652)
-                                                                (shen/let W1654
-                                                                          (shen/shen\.in-> W1652)
-                                                                          (shen/shen\.comb W1654
-                                                                                           (append
-                                                                                            (list W1650)
-                                                                                            W1653))))))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W1648)
-             (shen/let W1655
-                       (shen/let W1656
-                                 (shen/<e> V1647)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W1656)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W1657
-                                            (shen/shen\.in-> W1656)
-                                            (shen/shen\.comb W1657 nil))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W1655)
-                        (shen/shen\.parse-failure)
-                        W1655))
-             W1648)))
-(defun shen/shen\.<hterm>
-    (V1658)
-  (shen/let W1659
-            (shen/if
-             (shen/cons\? V1658)
-             (shen/let W1660
-                       (shen/head V1658)
-                       (shen/let W1661
-                                 (shen/tail V1658)
-                                 (shen/if
-                                  (shen/and
-                                   (shen/atom\? W1660)
-                                   (shen/not
-                                    (shen/shen\.prolog-keyword\? W1660)))
-                                  (shen/shen\.comb W1661 W1660)
-                                  (shen/shen\.parse-failure))))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W1659)
-             (shen/let W1662
-                       (shen/if
-                        (shen/cons\? V1658)
-                        (shen/let W1663
-                                  (shen/head V1658)
-                                  (shen/let W1664
-                                            (shen/tail V1658)
-                                            (shen/if
-                                             (shen/= W1663
-                                                     (shen/intern ":"))
-                                             (shen/shen\.comb W1664 W1663)
-                                             (shen/shen\.parse-failure))))
-                        (shen/shen\.parse-failure))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W1662)
-                        (shen/let W1665
-                                  (shen/if
-                                   (shen/shen\.ccons\? V1658)
-                                   (shen/let W1666
-                                             (shen/head V1658)
-                                             (shen/let W1667
-                                                       (shen/tail V1658)
-                                                       (shen/if
-                                                        (shen/shen\.hds=\? W1666 'cons)
-                                                        (shen/let W1668
-                                                                  (shen/tail W1666)
-                                                                  (shen/let W1669
-                                                                            (shen/shen\.<hterm1> W1668)
-                                                                            (shen/if
-                                                                             (shen/shen\.parse-failure\? W1669)
-                                                                             (shen/shen\.parse-failure)
-                                                                             (shen/let W1670
-                                                                                       (shen/shen\.<-out W1669)
-                                                                                       (shen/let W1671
-                                                                                                 (shen/shen\.in-> W1669)
-                                                                                                 (shen/let W1672
-                                                                                                           (shen/shen\.<hterm2> W1671)
-                                                                                                           (shen/if
-                                                                                                            (shen/shen\.parse-failure\? W1672)
-                                                                                                            (shen/shen\.parse-failure)
-                                                                                                            (shen/let W1673
-                                                                                                                      (shen/shen\.<-out W1672)
-                                                                                                                      (shen/let W1674
-                                                                                                                                (shen/shen\.in-> W1672)
-                                                                                                                                (shen/let W1675
-                                                                                                                                          (shen/<end> W1674)
-                                                                                                                                          (shen/if
-                                                                                                                                           (shen/shen\.parse-failure\? W1675)
-                                                                                                                                           (shen/shen\.parse-failure)
-                                                                                                                                           (shen/let W1676
-                                                                                                                                                     (shen/shen\.in-> W1675)
-                                                                                                                                                     (shen/shen\.comb W1667
-                                                                                                                                                                      (list 'cons W1670 W1673))))))))))))))
-                                                        (shen/shen\.parse-failure))))
-                                   (shen/shen\.parse-failure))
-                                  (shen/if
-                                   (shen/shen\.parse-failure\? W1665)
-                                   (shen/let W1677
-                                             (shen/if
-                                              (shen/shen\.ccons\? V1658)
-                                              (shen/let W1678
-                                                        (shen/head V1658)
-                                                        (shen/let W1679
-                                                                  (shen/tail V1658)
-                                                                  (shen/if
-                                                                   (shen/shen\.hds=\? W1678 '+)
-                                                                   (shen/let W1680
-                                                                             (shen/tail W1678)
-                                                                             (shen/let W1681
-                                                                                       (shen/shen\.<hterm> W1680)
-                                                                                       (shen/if
-                                                                                        (shen/shen\.parse-failure\? W1681)
-                                                                                        (shen/shen\.parse-failure)
-                                                                                        (shen/let W1682
-                                                                                                  (shen/shen\.<-out W1681)
-                                                                                                  (shen/let W1683
-                                                                                                            (shen/shen\.in-> W1681)
-                                                                                                            (shen/let W1684
-                                                                                                                      (shen/<end> W1683)
-                                                                                                                      (shen/if
-                                                                                                                       (shen/shen\.parse-failure\? W1684)
-                                                                                                                       (shen/shen\.parse-failure)
-                                                                                                                       (shen/let W1685
-                                                                                                                                 (shen/shen\.in-> W1684)
-                                                                                                                                 (shen/shen\.comb W1679
-                                                                                                                                                  (list 'shen\.+m W1682))))))))))
-                                                                   (shen/shen\.parse-failure))))
-                                              (shen/shen\.parse-failure))
-                                             (shen/if
-                                              (shen/shen\.parse-failure\? W1677)
-                                              (shen/let W1686
-                                                        (shen/if
-                                                         (shen/shen\.ccons\? V1658)
-                                                         (shen/let W1687
-                                                                   (shen/head V1658)
-                                                                   (shen/let W1688
-                                                                             (shen/tail V1658)
-                                                                             (shen/if
-                                                                              (shen/shen\.hds=\? W1687 '-)
-                                                                              (shen/let W1689
-                                                                                        (shen/tail W1687)
-                                                                                        (shen/let W1690
-                                                                                                  (shen/shen\.<hterm> W1689)
-                                                                                                  (shen/if
-                                                                                                   (shen/shen\.parse-failure\? W1690)
-                                                                                                   (shen/shen\.parse-failure)
-                                                                                                   (shen/let W1691
-                                                                                                             (shen/shen\.<-out W1690)
-                                                                                                             (shen/let W1692
-                                                                                                                       (shen/shen\.in-> W1690)
-                                                                                                                       (shen/let W1693
-                                                                                                                                 (shen/<end> W1692)
-                                                                                                                                 (shen/if
-                                                                                                                                  (shen/shen\.parse-failure\? W1693)
-                                                                                                                                  (shen/shen\.parse-failure)
-                                                                                                                                  (shen/let W1694
-                                                                                                                                            (shen/shen\.in-> W1693)
-                                                                                                                                            (shen/shen\.comb W1688
-                                                                                                                                                             (list 'shen\.-m W1691))))))))))
-                                                                              (shen/shen\.parse-failure))))
-                                                         (shen/shen\.parse-failure))
-                                                        (shen/if
-                                                         (shen/shen\.parse-failure\? W1686)
-                                                         (shen/let W1695
-                                                                   (shen/if
-                                                                    (shen/shen\.ccons\? V1658)
-                                                                    (shen/let W1696
-                                                                              (shen/head V1658)
-                                                                              (shen/let W1697
-                                                                                        (shen/tail V1658)
-                                                                                        (shen/if
-                                                                                         (shen/shen\.hds=\? W1696 'mode)
-                                                                                         (shen/let W1698
-                                                                                                   (shen/tail W1696)
-                                                                                                   (shen/let W1699
-                                                                                                             (shen/shen\.<hterm> W1698)
-                                                                                                             (shen/if
-                                                                                                              (shen/shen\.parse-failure\? W1699)
-                                                                                                              (shen/shen\.parse-failure)
-                                                                                                              (shen/let W1700
-                                                                                                                        (shen/shen\.<-out W1699)
-                                                                                                                        (shen/let W1701
-                                                                                                                                  (shen/shen\.in-> W1699)
-                                                                                                                                  (shen/if
-                                                                                                                                   (shen/shen\.hds=\? W1701 '+)
-                                                                                                                                   (shen/let W1702
-                                                                                                                                             (shen/tail W1701)
-                                                                                                                                             (shen/let W1703
-                                                                                                                                                       (shen/<end> W1702)
-                                                                                                                                                       (shen/if
-                                                                                                                                                        (shen/shen\.parse-failure\? W1703)
-                                                                                                                                                        (shen/shen\.parse-failure)
-                                                                                                                                                        (shen/let W1704
-                                                                                                                                                                  (shen/shen\.in-> W1703)
-                                                                                                                                                                  (shen/shen\.comb W1697
-                                                                                                                                                                                   (list 'shen\.+m W1700))))))
-                                                                                                                                   (shen/shen\.parse-failure)))))))
-                                                                                         (shen/shen\.parse-failure))))
-                                                                    (shen/shen\.parse-failure))
-                                                                   (shen/if
-                                                                    (shen/shen\.parse-failure\? W1695)
-                                                                    (shen/let W1705
-                                                                              (shen/if
-                                                                               (shen/shen\.ccons\? V1658)
-                                                                               (shen/let W1706
-                                                                                         (shen/head V1658)
-                                                                                         (shen/let W1707
-                                                                                                   (shen/tail V1658)
-                                                                                                   (shen/if
-                                                                                                    (shen/shen\.hds=\? W1706 'mode)
-                                                                                                    (shen/let W1708
-                                                                                                              (shen/tail W1706)
-                                                                                                              (shen/let W1709
-                                                                                                                        (shen/shen\.<hterm> W1708)
-                                                                                                                        (shen/if
-                                                                                                                         (shen/shen\.parse-failure\? W1709)
-                                                                                                                         (shen/shen\.parse-failure)
-                                                                                                                         (shen/let W1710
-                                                                                                                                   (shen/shen\.<-out W1709)
-                                                                                                                                   (shen/let W1711
-                                                                                                                                             (shen/shen\.in-> W1709)
-                                                                                                                                             (shen/if
-                                                                                                                                              (shen/shen\.hds=\? W1711 '-)
-                                                                                                                                              (shen/let W1712
-                                                                                                                                                        (shen/tail W1711)
-                                                                                                                                                        (shen/let W1713
-                                                                                                                                                                  (shen/<end> W1712)
-                                                                                                                                                                  (shen/if
-                                                                                                                                                                   (shen/shen\.parse-failure\? W1713)
-                                                                                                                                                                   (shen/shen\.parse-failure)
-                                                                                                                                                                   (shen/let W1714
-                                                                                                                                                                             (shen/shen\.in-> W1713)
-                                                                                                                                                                             (shen/shen\.comb W1707
-                                                                                                                                                                                              (list 'shen\.-m W1710))))))
-                                                                                                                                              (shen/shen\.parse-failure)))))))
-                                                                                                    (shen/shen\.parse-failure))))
-                                                                               (shen/shen\.parse-failure))
-                                                                              (shen/if
-                                                                               (shen/shen\.parse-failure\? W1705)
-                                                                               (shen/shen\.parse-failure)
-                                                                               W1705))
-                                                                    W1695))
-                                                         W1686))
-                                              W1677))
-                                   W1665))
-                        W1662))
-             W1659)))
-(defun shen/shen\.prolog-keyword\?
-    (V1715)
-  (shen/element\? V1715
-                  (list
-                   (shen/intern ";")
-                   '<--)))
-(defun shen/atom\?
-    (V1716)
-  (shen/or
-   (shen/symbol\? V1716)
-   (shen/or
-    (shen/string\? V1716)
-    (shen/or
-     (shen/boolean\? V1716)
-     (shen/or
-      (shen/number\? V1716)
-      (shen/empty\? V1716))))))
-(defun shen/shen\.<hterm1>
-    (V1717)
-  (shen/let W1718
-            (shen/let W1719
-                      (shen/shen\.<hterm> V1717)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W1719)
-                       (shen/shen\.parse-failure)
-                       (shen/let W1720
-                                 (shen/shen\.<-out W1719)
-                                 (shen/let W1721
-                                           (shen/shen\.in-> W1719)
-                                           (shen/shen\.comb W1721 W1720)))))
-            (shen/if
-             (shen/shen\.parse-failure\? W1718)
-             (shen/shen\.parse-failure)
-             W1718)))
-(defun shen/shen\.<hterm2>
-    (V1722)
-  (shen/let W1723
-            (shen/let W1724
-                      (shen/shen\.<hterm> V1722)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W1724)
-                       (shen/shen\.parse-failure)
-                       (shen/let W1725
-                                 (shen/shen\.<-out W1724)
-                                 (shen/let W1726
-                                           (shen/shen\.in-> W1724)
-                                           (shen/shen\.comb W1726 W1725)))))
-            (shen/if
-             (shen/shen\.parse-failure\? W1723)
-             (shen/shen\.parse-failure)
-             W1723)))
-(defun shen/shen\.<body>
-    (V1727)
-  (shen/let W1728
-            (shen/let W1729
-                      (shen/shen\.<literal> V1727)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W1729)
-                       (shen/shen\.parse-failure)
-                       (shen/let W1730
-                                 (shen/shen\.<-out W1729)
-                                 (shen/let W1731
-                                           (shen/shen\.in-> W1729)
-                                           (shen/let W1732
-                                                     (shen/shen\.<body> W1731)
-                                                     (shen/if
-                                                      (shen/shen\.parse-failure\? W1732)
-                                                      (shen/shen\.parse-failure)
-                                                      (shen/let W1733
-                                                                (shen/shen\.<-out W1732)
-                                                                (shen/let W1734
-                                                                          (shen/shen\.in-> W1732)
-                                                                          (shen/shen\.comb W1734
-                                                                                           (append
-                                                                                            (list W1730)
-                                                                                            W1733))))))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W1728)
-             (shen/let W1735
-                       (shen/let W1736
-                                 (shen/<e> V1727)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W1736)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W1737
-                                            (shen/shen\.in-> W1736)
-                                            (shen/shen\.comb W1737 nil))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W1735)
-                        (shen/shen\.parse-failure)
-                        W1735))
-             W1728)))
-(defun shen/shen\.<literal>
-    (V1738)
-  (shen/let W1739
-            (shen/if
-             (shen/shen\.hds=\? V1738 '!)
-             (shen/let W1740
-                       (shen/tail V1738)
-                       (shen/shen\.comb W1740 '!))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W1739)
-             (shen/let W1741
-                       (shen/if
-                        (shen/shen\.ccons\? V1738)
-                        (shen/let W1742
-                                  (shen/head V1738)
-                                  (shen/let W1743
-                                            (shen/tail V1738)
-                                            (shen/let W1744
-                                                      (shen/shen\.<bterms> W1742)
-                                                      (shen/if
-                                                       (shen/shen\.parse-failure\? W1744)
-                                                       (shen/shen\.parse-failure)
-                                                       (shen/let W1745
-                                                                 (shen/shen\.<-out W1744)
-                                                                 (shen/let W1746
-                                                                           (shen/shen\.in-> W1744)
-                                                                           (shen/let W1747
-                                                                                     (shen/<end> W1746)
-                                                                                     (shen/if
-                                                                                      (shen/shen\.parse-failure\? W1747)
-                                                                                      (shen/shen\.parse-failure)
-                                                                                      (shen/let W1748
-                                                                                                (shen/shen\.in-> W1747)
-                                                                                                (shen/shen\.comb W1743 W1745))))))))))
-                        (shen/shen\.parse-failure))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W1741)
-                        (shen/shen\.parse-failure)
-                        W1741))
-             W1739)))
-(defun shen/shen\.<bterms>
-    (V1749)
-  (shen/let W1750
-            (shen/let W1751
-                      (shen/shen\.<bterm> V1749)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W1751)
-                       (shen/shen\.parse-failure)
-                       (shen/let W1752
-                                 (shen/shen\.<-out W1751)
-                                 (shen/let W1753
-                                           (shen/shen\.in-> W1751)
-                                           (shen/let W1754
-                                                     (shen/shen\.<bterms> W1753)
-                                                     (shen/if
-                                                      (shen/shen\.parse-failure\? W1754)
-                                                      (shen/shen\.parse-failure)
-                                                      (shen/let W1755
-                                                                (shen/shen\.<-out W1754)
-                                                                (shen/let W1756
-                                                                          (shen/shen\.in-> W1754)
-                                                                          (shen/shen\.comb W1756
-                                                                                           (append
-                                                                                            (list W1752)
-                                                                                            W1755))))))))))
-            (shen/if
-             (shen/shen\.parse-failure\? W1750)
-             (shen/let W1757
-                       (shen/let W1758
-                                 (shen/<e> V1749)
-                                 (shen/if
-                                  (shen/shen\.parse-failure\? W1758)
-                                  (shen/shen\.parse-failure)
-                                  (shen/let W1759
-                                            (shen/shen\.in-> W1758)
-                                            (shen/shen\.comb W1759 nil))))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W1757)
-                        (shen/shen\.parse-failure)
-                        W1757))
-             W1750)))
-(defun shen/shen\.<bterm>
-    (V1760)
-  (shen/let W1761
-            (shen/let W1762
-                      (shen/shen\.<wildcard> V1760)
-                      (shen/if
-                       (shen/shen\.parse-failure\? W1762)
-                       (shen/shen\.parse-failure)
-                       (shen/let W1763
-                                 (shen/shen\.<-out W1762)
-                                 (shen/let W1764
-                                           (shen/shen\.in-> W1762)
-                                           (shen/shen\.comb W1764 W1763)))))
-            (shen/if
-             (shen/shen\.parse-failure\? W1761)
-             (shen/let W1765
-                       (shen/if
-                        (shen/cons\? V1760)
-                        (shen/let W1766
-                                  (shen/head V1760)
-                                  (shen/let W1767
-                                            (shen/tail V1760)
-                                            (shen/if
-                                             (shen/atom\? W1766)
-                                             (shen/shen\.comb W1767 W1766)
-                                             (shen/shen\.parse-failure))))
-                        (shen/shen\.parse-failure))
-                       (shen/if
-                        (shen/shen\.parse-failure\? W1765)
-                        (shen/let W1768
-                                  (shen/if
-                                   (shen/shen\.ccons\? V1760)
-                                   (shen/let W1769
-                                             (shen/head V1760)
-                                             (shen/let W1770
-                                                       (shen/tail V1760)
-                                                       (shen/let W1771
-                                                                 (shen/shen\.<bterms> W1769)
-                                                                 (shen/if
-                                                                  (shen/shen\.parse-failure\? W1771)
-                                                                  (shen/shen\.parse-failure)
-                                                                  (shen/let W1772
-                                                                            (shen/shen\.<-out W1771)
-                                                                            (shen/let W1773
-                                                                                      (shen/shen\.in-> W1771)
-                                                                                      (shen/let W1774
-                                                                                                (shen/<end> W1773)
-                                                                                                (shen/if
-                                                                                                 (shen/shen\.parse-failure\? W1774)
-                                                                                                 (shen/shen\.parse-failure)
-                                                                                                 (shen/let W1775
-                                                                                                           (shen/shen\.in-> W1774)
-                                                                                                           (shen/shen\.comb W1770 W1772))))))))))
-                                   (shen/shen\.parse-failure))
-                                  (shen/if
-                                   (shen/shen\.parse-failure\? W1768)
-                                   (shen/shen\.parse-failure)
-                                   W1768))
-                        W1765))
-             W1761)))
-(defun shen/shen\.<wildcard>
-    (V1776)
-  (shen/let W1777
-            (shen/if
-             (shen/cons\? V1776)
-             (shen/let W1778
-                       (shen/head V1776)
-                       (shen/let W1779
-                                 (shen/tail V1776)
-                                 (shen/if
-                                  (shen/= W1778 '_)
-                                  (shen/shen\.comb W1779
-                                                   (shen/gensym 'Y))
-                                  (shen/shen\.parse-failure))))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W1777)
-             (shen/shen\.parse-failure)
-             W1777)))
-(defun shen/shen\.<sc>
-    (V1780)
-  (shen/let W1781
-            (shen/if
-             (shen/cons\? V1780)
-             (shen/let W1782
-                       (shen/head V1780)
-                       (shen/let W1783
-                                 (shen/tail V1780)
-                                 (shen/if
-                                  (shen/shen\.semicolon\? W1782)
-                                  (shen/shen\.comb W1783 W1782)
-                                  (shen/shen\.parse-failure))))
-             (shen/shen\.parse-failure))
-            (shen/if
-             (shen/shen\.parse-failure\? W1781)
-             (shen/shen\.parse-failure)
-             W1781)))
-(defun shen/shen\.horn-clause-procedure
-    (V1784 V1785)
-  (shen/let W1786
-            (shen/gensym 'B)
-            (shen/let W1787
-                      (shen/gensym 'L)
-                      (shen/let W1788
-                                (shen/gensym 'K)
-                                (shen/let W1789
-                                          (shen/gensym 'C)
-                                          (shen/let W1790
-                                                    (shen/shen\.prolog-parameters V1785)
-                                                    (shen/let W1791
-                                                              (shen/shen\.hascut\? V1785)
-                                                              (shen/let W1792
-                                                                        (shen/shen\.prolog-fbody V1785 W1790 W1786 W1787 W1788 W1789 W1791)
-                                                                        (shen/let W1793
-                                                                                  (shen/if W1791
-                                                                                           (list 'let W1788
-                                                                                                 (list '+ W1788 1)
-                                                                                                 W1792)
-                                                                                           W1792)
-                                                                                  (shen/let W1794
-                                                                                            (append
-                                                                                             (list 'define V1784)
-                                                                                             (shen/append W1790
-                                                                                                          (shen/append
-                                                                                                           (list W1786 W1787 W1788 W1789 '->)
-                                                                                                           (list W1793))))
-                                                                                            W1794))))))))))
-(defun shen/shen\.hascut\?
-    (V1797)
-  (shen/cond
-   ((shen/= '! V1797)
-    'true)
-   ((shen/cons\? V1797)
-    (shen/or
-     (shen/shen\.hascut\?
-      (shen/hd V1797))
-     (shen/shen\.hascut\?
-      (nthcdr 1 V1797))))
-   (shen/true 'false)))
-(defun shen/shen\.prolog-parameters
-    (V1802)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V1802)
-     (shen/cons\?
-      (shen/hd V1802)))
-    (shen/shen\.parameters
-     (shen/length
-      (shen/hd
-       (shen/hd V1802)))))
-   (shen/true
-    (shen/shen\.f-error 'shen\.prolog-parameters))))
-(defun shen/shen\.prolog-fbody
-    (V1823 V1824 V1825 V1826 V1827 V1828 V1829)
-  (shen/cond
-   ((shen/and
-     (shen/internal/predicate->shen
-      (null V1823))
-     (shen/= 'true V1829))
-    (list 'shen\.unlock V1826 V1827))
-   ((shen/and
-     (shen/cons\? V1823)
-     (shen/and
-      (shen/cons\?
-       (shen/hd V1823))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1
-                (shen/hd V1823)))
-       (shen/and
-        (shen/internal/predicate->shen
-         (null
-          (nthcdr 2
-                  (shen/hd V1823))))
-        (shen/and
-         (shen/internal/predicate->shen
-          (null
-           (nthcdr 1 V1823)))
-         (shen/= 'false V1829))))))
-    (shen/let W1830
-              (shen/shen\.continue
-               (shen/hd
-                (shen/hd V1823))
-               (shen/hd
-                (nthcdr 1
-                        (shen/hd V1823)))
-               V1825 V1826 V1827 V1828)
-              (list 'if
-                    (list 'shen\.unlocked\? V1826)
-                    (shen/shen\.compile-head 'shen\.+m
-                                             (shen/hd
-                                              (shen/hd V1823))
-                                             V1824 V1825 W1830)
-                    'false)))
-   ((shen/and
-     (shen/cons\? V1823)
-     (shen/and
-      (shen/cons\?
-       (shen/hd V1823))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1
-                (shen/hd V1823)))
-       (shen/internal/predicate->shen
-        (null
-         (nthcdr 2
-                 (shen/hd V1823)))))))
-    (shen/let W1831
-              (shen/gensym 'C)
-              (shen/let W1832
-                        (shen/shen\.continue
-                         (shen/hd
-                          (shen/hd V1823))
-                         (shen/hd
-                          (nthcdr 1
-                                  (shen/hd V1823)))
-                         V1825 V1826 V1827 V1828)
-                        (list 'let W1831
-                              (list 'if
-                                    (list 'shen\.unlocked\? V1826)
-                                    (shen/shen\.compile-head 'shen\.+m
-                                                             (shen/hd
-                                                              (shen/hd V1823))
-                                                             V1824 V1825 W1832)
-                                    'false)
-                              (list 'if
-                                    (list '= W1831 'false)
-                                    (shen/shen\.prolog-fbody
-                                     (nthcdr 1 V1823)
-                                     V1824 V1825 V1826 V1827 V1828 V1829)
-                                    W1831)))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.prolog-fbody"))))
-(defun shen/shen\.unlock
-    (V1833 V1834)
-  (shen/if
-   (shen/and
-    (shen/shen\.locked\? V1833)
-    (shen/shen\.fits\? V1834 V1833))
-   (shen/shen\.openlock V1833)
-   'false))
-(defun shen/shen\.locked\?
-    (V1835)
-  (shen/not
-   (shen/shen\.unlocked\? V1835)))
-(defun shen/shen\.unlocked\?
-    (V1836)
-  (shen/<-address V1836 1))
-(defun shen/shen\.openlock
-    (V1837)
-  (shen/do
-   (shen/address-> V1837 1 'true)
-   'false))
-(defun shen/shen\.fits\?
-    (V1838 V1839)
-  (shen/= V1838
-          (shen/<-address V1839 2)))
-(defun shen/shen\.cut
-    (V1842 V1843 V1844 V1845)
-  (shen/let W1846
-            (shen/thaw V1845)
-            (shen/if
-             (shen/and
-              (shen/= W1846 'false)
-              (shen/shen\.unlocked\? V1843))
-             (shen/shen\.lock V1844 V1843)
-             W1846)))
-(defun shen/shen\.lock
-    (V1847 V1848)
-  (shen/let W1849
-            (shen/address-> V1848 1 'false)
-            (shen/let W1850
-                      (shen/address-> V1848 2 V1847)
-                      'false)))
-(defun shen/shen\.continue
-    (V1851 V1852 V1853 V1854 V1855 V1856)
-  (shen/let W1857
-            (shen/shen\.extract-vars V1851)
-            (shen/let W1858
-                      (shen/shen\.extract-free-vars V1852)
-                      (shen/let W1859
-                                (shen/difference W1858 W1857)
-                                (shen/let W1860
-                                          (list 'do
-                                                (list 'shen\.incinfs)
-                                                (shen/shen\.compile-body V1852 V1853 V1854 V1855 V1856))
-                                          (shen/shen\.stpart W1859 W1860 V1853))))))
-(defun shen/shen\.extract-free-vars
-    (V1863)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V1863)
-     (shen/and
-      (shen/= 'lambda
-              (shen/hd V1863))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V1863))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 2 V1863))
-        (shen/internal/predicate->shen
-         (null
-          (nthcdr 3 V1863)))))))
-    (shen/remove
-     (shen/hd
-      (nthcdr 1 V1863))
-     (shen/shen\.extract-free-vars
-      (shen/hd
-       (nthcdr 2 V1863)))))
-   ((shen/cons\? V1863)
-    (shen/union
-     (shen/shen\.extract-free-vars
-      (shen/hd V1863))
-     (shen/shen\.extract-free-vars
-      (nthcdr 1 V1863))))
-   ((shen/variable\? V1863)
-    (list V1863))
-   (shen/true nil)))
-(defun shen/shen\.compile-body
-    (V1880 V1881 V1882 V1883 V1884)
-  (cl-flet
-      ((tail-trampoline
-        (V1880 V1881 V1882 V1883 V1884)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V1880))
-          (list 'thaw V1884))
-         ((shen/and
-           (shen/cons\? V1880)
-           (shen/= '!
-                   (shen/hd V1880)))
-          (vector
-           (list
-            (append
-             (list
-              (list 'shen\.cut))
-             (nthcdr 1 V1880))
-            V1881 V1882 V1883 V1884)))
-         ((shen/and
-           (shen/cons\? V1880)
-           (shen/internal/predicate->shen
-            (null
-             (nthcdr 1 V1880))))
-          (shen/append
-           (shen/shen\.deref-calls
-            (shen/hd V1880)
-            V1881)
-           (list V1881 V1882 V1883 V1884)))
-         ((shen/cons\? V1880)
-          (shen/let W1885
-                    (shen/shen\.deref-calls
-                     (shen/hd V1880)
-                     V1881)
-                    (shen/append W1885
-                                 (list V1881 V1882 V1883
-                                       (shen/shen\.freeze-literals
-                                        (nthcdr 1 V1880)
-                                        V1881 V1882 V1883 V1884)))))
-         (shen/true
-          (shen/simple-error "implementation error in shen.compile-fbody")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V1880 V1881 V1882 V1883 V1884)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.freeze-literals
-    (V1902 V1903 V1904 V1905 V1906)
-  (cl-flet
-      ((tail-trampoline
-        (V1902 V1903 V1904 V1905 V1906)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V1902))
-          V1906)
-         ((shen/and
-           (shen/cons\? V1902)
-           (shen/= '!
-                   (shen/hd V1902)))
-          (vector
-           (list
-            (append
-             (list
-              (list 'shen\.cut))
-             (nthcdr 1 V1902))
-            V1903 V1904 V1905 V1906)))
-         ((shen/cons\? V1902)
-          (shen/let W1907
-                    (shen/shen\.deref-calls
-                     (shen/hd V1902)
-                     V1903)
-                    (list 'freeze
-                          (shen/append W1907
-                                       (list V1903 V1904 V1905
-                                             (shen/shen\.freeze-literals
-                                              (nthcdr 1 V1902)
-                                              V1903 V1904 V1905 V1906))))))
-         (shen/true
-          (shen/simple-error "implementation error in shen.freeze-literals")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V1902 V1903 V1904 V1905 V1906)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.deref-calls
-    (V1912 V1913)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V1912)
-     (shen/= 'fork
-             (shen/hd V1912)))
-    (list 'fork
-          (shen/shen\.deref-forked-literals
-           (nthcdr 1 V1912)
-           V1913)))
-   ((shen/cons\? V1912)
+        (shen/hd
+         (shen/hd V3919)))
+       V3918))
+     (nthcdr 1 V3919)))
+   ((shen/cons\? V3919)
     (append
      (list
-      (shen/hd V1912))
-     (shen/map
-      (shen/lambda Z1914
-                   (shen/shen\.function-calls Z1914 V1913))
-      (nthcdr 1 V1912))))
+      (shen/hd V3919))
+     (shen/shen\.assoc-set V3917 V3918
+                           (nthcdr 1 V3919))))
    (shen/true
-    (shen/simple-error "implementation error in shen.deref-calls"))))
-(defun shen/shen\.deref-forked-literals
-    (V1921 V1922)
+    (shen/shen\.f-error 'shen\.assoc-set))))
+(defun shen/shen\.assoc-rm
+    (V3923 V3924)
   (shen/cond
    ((shen/internal/predicate->shen
-     (null V1921))
+     (null V3924))
     nil)
-   ((shen/cons\? V1921)
-    (list 'cons
-          (shen/shen\.deref-calls
-           (shen/hd V1921)
-           V1922)
-          (shen/shen\.deref-forked-literals
-           (nthcdr 1 V1921)
-           V1922)))
+   ((shen/and
+     (shen/cons\? V3924)
+     (shen/and
+      (shen/cons\?
+       (shen/hd V3924))
+      (shen/= V3923
+              (shen/hd
+               (shen/hd V3924)))))
+    (nthcdr 1 V3924))
+   ((shen/cons\? V3924)
+    (append
+     (list
+      (shen/hd V3924))
+     (shen/shen\.assoc-rm V3923
+                          (nthcdr 1 V3924))))
    (shen/true
-    (shen/simple-error "fork requires a list of literals\n"))))
-(defun shen/shen\.function-calls
-    (V1925 V1926)
+    (shen/shen\.f-error 'shen\.assoc-rm))))
+(defun shen/boolean\?
+    (V3927)
   (shen/cond
-   ((shen/and
-     (shen/cons\? V1925)
-     (shen/and
-      (shen/= 'cons
-              (shen/hd V1925))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V1925))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 2 V1925))
-        (shen/internal/predicate->shen
-         (null
-          (nthcdr 3 V1925)))))))
-    (list 'cons
-          (shen/shen\.function-calls
-           (shen/hd
-            (nthcdr 1 V1925))
-           V1926)
-          (shen/shen\.function-calls
-           (shen/hd
-            (nthcdr 2 V1925))
-           V1926)))
-   ((shen/cons\? V1925)
-    (shen/shen\.deref-terms V1925 V1926 nil))
-   (shen/true V1925)))
-(defun shen/shen\.deref-terms
-    (V1935 V1936 V1937)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V1935)
-     (shen/and
-      (shen/= 0
-              (shen/hd V1935))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V1935))
-       (shen/internal/predicate->shen
-        (null
-         (nthcdr 2 V1935))))))
-    (shen/if
-     (shen/variable\?
-      (shen/hd
-       (nthcdr 1 V1935)))
-     (shen/hd
-      (nthcdr 1 V1935))
-     (shen/simple-error
-      (shen/cn "attempt to optimise a non-variable "
-               (shen/shen\.app
-                (shen/hd
-                 (nthcdr 1 V1935))
-                "\n" 'shen\.s)))))
-   ((shen/and
-     (shen/cons\? V1935)
-     (shen/and
-      (shen/= 1
-              (shen/hd V1935))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V1935))
-       (shen/internal/predicate->shen
-        (null
-         (nthcdr 2 V1935))))))
-    (shen/if
-     (shen/variable\?
-      (shen/hd
-       (nthcdr 1 V1935)))
-     (list 'shen\.lazyderef
-           (shen/hd
-            (nthcdr 1 V1935))
-           V1936)
-     (shen/simple-error
-      (shen/cn "attempt to optimise a non-variable "
-               (shen/shen\.app
-                (shen/hd
-                 (nthcdr 1 V1935))
-                "\n" 'shen\.s)))))
-   ((shen/and
-     (shen/not
-      (shen/element\? V1935 V1937))
-     (shen/variable\? V1935))
-    (list 'shen\.deref V1935 V1936))
-   ((shen/and
-     (shen/cons\? V1935)
-     (shen/and
-      (shen/= 'lambda
-              (shen/hd V1935))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V1935))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 2 V1935))
-        (shen/internal/predicate->shen
-         (null
-          (nthcdr 3 V1935)))))))
-    (list 'lambda
-          (shen/hd
-           (nthcdr 1 V1935))
-          (shen/shen\.deref-terms
-           (shen/hd
-            (nthcdr 2 V1935))
-           V1936
+   ((shen/= 'true V3927)
+    'true)
+   ((shen/= 'false V3927)
+    'true)
+   (shen/true 'false)))
+(defun shen/nl
+    (V3928)
+  (cl-flet
+      ((tail-trampoline
+        (V3928)
+        (shen/cond
+         ((shen/= 0 V3928)
+          0)
+         (shen/true
+          (shen/do
+           (shen/pr "\n"
+                    (shen/stoutput))
+           (vector
+            (list
+             (shen/- V3928 1))))))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V3928)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/difference
+    (V3935 V3936)
+  (cl-flet
+      ((tail-trampoline
+        (V3935 V3936)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V3935))
+          nil)
+         ((shen/cons\? V3935)
+          (shen/if
+           (shen/element\?
+            (shen/hd V3935)
+            V3936)
+           (vector
+            (list
+             (nthcdr 1 V3935)
+             V3936))
            (append
             (list
-             (shen/hd
-              (nthcdr 1 V1935)))
-            V1937))))
-   ((shen/cons\? V1935)
-    (shen/map
-     (shen/lambda Z1938
-                  (shen/shen\.deref-terms Z1938 V1936 V1937))
-     V1935))
-   (shen/true V1935)))
-(defun shen/shen\.compile-head
-    (V1956 V1957 V1958 V1959 V1960)
-  (cl-flet
-      ((tail-trampoline
-        (V1956 V1957 V1958 V1959 V1960)
-        (shen/cond
-         ((shen/and
-           (shen/internal/predicate->shen
-            (null V1957))
-           (shen/internal/predicate->shen
-            (null V1958)))
-          V1960)
-         ((shen/and
-           (shen/cons\? V1957)
-           (shen/and
-            (shen/cons\?
-             (shen/hd V1957))
-            (shen/and
-             (shen/= 'shen\.+m
-                     (shen/hd
-                      (shen/hd V1957)))
-             (shen/and
-              (shen/cons\?
-               (nthcdr 1
-                       (shen/hd V1957)))
-              (shen/internal/predicate->shen
-               (null
-                (nthcdr 2
-                        (shen/hd V1957))))))))
-          (vector
-           (list V1956
-                 (append
-                  (list 'shen\.+m
-                        (shen/hd
-                         (nthcdr 1
-                                 (shen/hd V1957)))
-                        V1956)
-                  (nthcdr 1 V1957))
-                 V1958 V1959 V1960)))
-         ((shen/and
-           (shen/cons\? V1957)
-           (shen/and
-            (shen/cons\?
-             (shen/hd V1957))
-            (shen/and
-             (shen/= 'shen\.-m
-                     (shen/hd
-                      (shen/hd V1957)))
-             (shen/and
-              (shen/cons\?
-               (nthcdr 1
-                       (shen/hd V1957)))
-              (shen/internal/predicate->shen
-               (null
-                (nthcdr 2
-                        (shen/hd V1957))))))))
-          (vector
-           (list V1956
-                 (append
-                  (list 'shen\.-m
-                        (shen/hd
-                         (nthcdr 1
-                                 (shen/hd V1957)))
-                        V1956)
-                  (nthcdr 1 V1957))
-                 V1958 V1959 V1960)))
-         ((shen/and
-           (shen/cons\? V1957)
-           (shen/= 'shen\.-m
-                   (shen/hd V1957)))
-          (vector
-           (list 'shen\.-m
-                 (nthcdr 1 V1957)
-                 V1958 V1959 V1960)))
-         ((shen/and
-           (shen/cons\? V1957)
-           (shen/= 'shen\.+m
-                   (shen/hd V1957)))
-          (vector
-           (list 'shen\.+m
-                 (nthcdr 1 V1957)
-                 V1958 V1959 V1960)))
-         ((shen/and
-           (shen/cons\? V1957)
-           (shen/and
-            (shen/cons\? V1958)
-            (shen/shen\.wildcard\?
-             (shen/hd V1957))))
-          (vector
-           (list V1956
-                 (nthcdr 1 V1957)
-                 (nthcdr 1 V1958)
-                 V1959 V1960)))
-         ((shen/and
-           (shen/cons\? V1957)
-           (shen/variable\?
-            (shen/hd V1957)))
-          (shen/shen\.variable-case V1956 V1957 V1958 V1959 V1960))
-         ((shen/and
-           (shen/= 'shen\.-m V1956)
-           (shen/and
-            (shen/cons\? V1957)
-            (shen/atom\?
-             (shen/hd V1957))))
-          (shen/shen\.atom-case-minus V1957 V1958 V1959 V1960))
-         ((shen/and
-           (shen/= 'shen\.-m V1956)
-           (shen/and
-            (shen/cons\? V1957)
-            (shen/and
-             (shen/cons\?
-              (shen/hd V1957))
-             (shen/and
-              (shen/= 'cons
-                      (shen/hd
-                       (shen/hd V1957)))
-              (shen/and
-               (shen/cons\?
-                (nthcdr 1
-                        (shen/hd V1957)))
-               (shen/and
-                (shen/cons\?
-                 (nthcdr 2
-                         (shen/hd V1957)))
-                (shen/internal/predicate->shen
-                 (null
-                  (nthcdr 3
-                          (shen/hd V1957))))))))))
-          (shen/shen\.cons-case-minus V1957 V1958 V1959 V1960))
-         ((shen/and
-           (shen/= 'shen\.+m V1956)
-           (shen/and
-            (shen/cons\? V1957)
-            (shen/atom\?
-             (shen/hd V1957))))
-          (shen/shen\.atom-case-plus V1957 V1958 V1959 V1960))
-         ((shen/and
-           (shen/= 'shen\.+m V1956)
-           (shen/and
-            (shen/cons\? V1957)
-            (shen/and
-             (shen/cons\?
-              (shen/hd V1957))
-             (shen/and
-              (shen/= 'cons
-                      (shen/hd
-                       (shen/hd V1957)))
-              (shen/and
-               (shen/cons\?
-                (nthcdr 1
-                        (shen/hd V1957)))
-               (shen/and
-                (shen/cons\?
-                 (nthcdr 2
-                         (shen/hd V1957)))
-                (shen/internal/predicate->shen
-                 (null
-                  (nthcdr 3
-                          (shen/hd V1957))))))))))
-          (shen/shen\.cons-case-plus V1957 V1958 V1959 V1960))
+             (shen/hd V3935))
+            (shen/difference
+             (nthcdr 1 V3935)
+             V3936))))
          (shen/true
-          (shen/simple-error "implementation error in shen.compile-head")))))
+          (shen/simple-error "attempt to find the difference with a non-list\n")))))
     (let
         ((result
-          (funcall #'tail-trampoline V1956 V1957 V1958 V1959 V1960)))
+          (funcall #'tail-trampoline V3935 V3936)))
       (while
           (vectorp result)
         (setq result
               (apply #'tail-trampoline
                      (aref result 0))))
       result)))
-(defun shen/shen\.variable-case
-    (V1971 V1972 V1973 V1974 V1975)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V1972)
-     (shen/cons\? V1973))
-    (shen/if
-     (shen/variable\?
-      (shen/hd V1973))
-     (shen/shen\.compile-head V1971
-                              (nthcdr 1 V1972)
-                              (nthcdr 1 V1973)
-                              V1974
-                              (shen/subst
-                               (shen/hd V1973)
-                               (shen/hd V1972)
-                               V1975))
-     (list 'let
-           (shen/hd V1972)
-           (shen/hd V1973)
-           (shen/shen\.compile-head V1971
-                                    (nthcdr 1 V1972)
-                                    (nthcdr 1 V1973)
-                                    V1974 V1975))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.variable-case"))))
-(defun shen/shen\.atom-case-minus
-    (V1984 V1985 V1986 V1987)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V1984)
-     (shen/cons\? V1985))
-    (shen/let W1988
-              (shen/gensym 'Tm)
-              (list 'let W1988
-                    (list 'shen\.lazyderef
-                          (shen/hd V1985)
-                          V1986)
-                    (list 'if
-                          (list '= W1988
-                                (shen/hd V1984))
-                          (shen/shen\.compile-head 'shen\.-m
-                                                   (nthcdr 1 V1984)
-                                                   (nthcdr 1 V1985)
-                                                   V1986 V1987)
-                          'false))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.atom-case-minus"))))
-(defun shen/shen\.cons-case-minus
-    (V1997 V1998 V1999 V2000)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V1997)
-     (shen/and
-      (shen/cons\?
-       (shen/hd V1997))
-      (shen/and
-       (shen/= 'cons
-               (shen/hd
-                (shen/hd V1997)))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 1
-                 (shen/hd V1997)))
-        (shen/and
-         (shen/cons\?
-          (nthcdr 2
-                  (shen/hd V1997)))
-         (shen/and
-          (shen/internal/predicate->shen
-           (null
-            (nthcdr 3
-                    (shen/hd V1997))))
-          (shen/cons\? V1998)))))))
-    (shen/let W2001
-              (shen/gensym 'Tm)
-              (list 'let W2001
-                    (list 'shen\.lazyderef
-                          (shen/hd V1998)
-                          V1999)
-                    (list 'if
-                          (list 'cons\? W2001)
-                          (shen/shen\.compile-head 'shen\.-m
-                                                   (append
-                                                    (list
-                                                     (shen/hd
-                                                      (nthcdr 1
-                                                              (shen/hd V1997)))
-                                                     (shen/hd
-                                                      (nthcdr 2
-                                                              (shen/hd V1997))))
-                                                    (nthcdr 1 V1997))
-                                                   (append
-                                                    (list
-                                                     (list 'hd W2001)
-                                                     (list 'tl W2001))
-                                                    (nthcdr 1 V1998))
-                                                   V1999 V2000)
-                          'false))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.cons-case-minus"))))
-(defun shen/shen\.atom-case-plus
-    (V2010 V2011 V2012 V2013)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V2010)
-     (shen/cons\? V2011))
-    (shen/let W2014
-              (shen/gensym 'Tm)
-              (shen/let W2015
-                        (shen/gensym 'GoTo)
-                        (list 'let W2014
-                              (list 'shen\.lazyderef
-                                    (shen/hd V2011)
-                                    V2012)
-                              W2015
-                              (list 'freeze
-                                    (shen/shen\.compile-head 'shen\.+m
-                                                             (nthcdr 1 V2010)
-                                                             (nthcdr 1 V2011)
-                                                             V2012 V2013))
-                              (list 'if
-                                    (list '= W2014
-                                          (shen/hd V2010))
-                                    (list 'thaw W2015)
-                                    (list 'if
-                                          (list 'shen\.pvar\? W2014)
-                                          (list 'shen\.bind! W2014
-                                                (shen/shen\.demode
-                                                 (shen/hd V2010))
-                                                V2012 W2015)
-                                          'false))))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.atom-case-plus"))))
-(defun shen/shen\.cons-case-plus
-    (V2024 V2025 V2026 V2027)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V2024)
-     (shen/and
-      (shen/cons\?
-       (shen/hd V2024))
-      (shen/and
-       (shen/= 'cons
-               (shen/hd
-                (shen/hd V2024)))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 1
-                 (shen/hd V2024)))
-        (shen/and
-         (shen/cons\?
-          (nthcdr 2
-                  (shen/hd V2024)))
-         (shen/and
-          (shen/internal/predicate->shen
-           (null
-            (nthcdr 3
-                    (shen/hd V2024))))
-          (shen/cons\? V2025)))))))
-    (shen/let W2028
-              (shen/gensym 'Tm)
-              (shen/let W2029
-                        (shen/gensym 'GoTo)
-                        (shen/let W2030
-                                  (shen/shen\.extract-vars
-                                   (append
-                                    (list
-                                     (shen/hd
-                                      (nthcdr 1
-                                              (shen/hd V2024))))
-                                    (shen/hd
-                                     (nthcdr 2
-                                             (shen/hd V2024)))))
-                                  (shen/let W2031
-                                            (shen/shen\.tame
-                                             (shen/hd V2024))
-                                            (shen/let W2032
-                                                      (shen/shen\.extract-vars W2031)
-                                                      (list 'let W2028
-                                                            (list 'shen\.lazyderef
-                                                                  (shen/hd V2025)
-                                                                  V2026)
-                                                            W2029
-                                                            (shen/shen\.goto W2030
-                                                                             (shen/shen\.compile-head 'shen\.+m
-                                                                                                      (nthcdr 1 V2024)
-                                                                                                      (nthcdr 1 V2025)
-                                                                                                      V2026 V2027))
-                                                            (list 'if
-                                                                  (list 'cons\? W2028)
-                                                                  (shen/shen\.compile-head 'shen\.+m
-                                                                                           (nthcdr 1
-                                                                                                   (shen/hd V2024))
-                                                                                           (list
-                                                                                            (list 'hd W2028)
-                                                                                            (list 'tl W2028))
-                                                                                           V2026
-                                                                                           (shen/shen\.invoke W2029 W2030))
-                                                                  (list 'if
-                                                                        (list 'shen\.pvar\? W2028)
-                                                                        (shen/shen\.stpart W2032
-                                                                                           (list 'shen\.bind! W2028
-                                                                                                 (shen/shen\.demode W2031)
-                                                                                                 V2026
-                                                                                                 (list 'freeze
-                                                                                                       (shen/shen\.invoke W2029 W2030)))
-                                                                                           V2026)
-                                                                        'false)))))))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.cons-case-plus"))))
-(defun shen/shen\.demode
-    (V2033)
-  (cl-flet
-      ((tail-trampoline
-        (V2033)
-        (shen/cond
-         ((shen/and
-           (shen/cons\? V2033)
-           (shen/and
-            (shen/= 'shen\.+m
-                    (shen/hd V2033))
-            (shen/and
-             (shen/cons\?
-              (nthcdr 1 V2033))
-             (shen/internal/predicate->shen
-              (null
-               (nthcdr 2 V2033))))))
-          (vector
-           (list
-            (shen/hd
-             (nthcdr 1 V2033)))))
-         ((shen/and
-           (shen/cons\? V2033)
-           (shen/and
-            (shen/= 'shen\.-m
-                    (shen/hd V2033))
-            (shen/and
-             (shen/cons\?
-              (nthcdr 1 V2033))
-             (shen/internal/predicate->shen
-              (null
-               (nthcdr 2 V2033))))))
-          (vector
-           (list
-            (shen/hd
-             (nthcdr 1 V2033)))))
-         ((shen/cons\? V2033)
-          (shen/map
-           (shen/lambda Z2034
-                        (shen/shen\.demode Z2034))
-           V2033))
-         (shen/true V2033))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V2033)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.tame
-    (V2035)
-  (shen/cond
-   ((shen/shen\.wildcard\? V2035)
-    (shen/gensym 'Y))
-   ((shen/cons\? V2035)
-    (shen/map
-     (shen/lambda Z2036
-                  (shen/shen\.tame Z2036))
-     V2035))
-   (shen/true V2035)))
-(defun shen/shen\.goto
-    (V2037 V2038)
-  (shen/cond
-   ((shen/internal/predicate->shen
-     (null V2037))
-    (list 'freeze V2038))
-   (shen/true
-    (shen/shen\.goto-h V2037 V2038))))
-(defun shen/shen\.goto-h
-    (V2039 V2040)
-  (shen/cond
-   ((shen/internal/predicate->shen
-     (null V2039))
-    V2040)
-   ((shen/cons\? V2039)
-    (list 'lambda
-          (shen/hd V2039)
-          (shen/shen\.goto-h
-           (nthcdr 1 V2039)
-           V2040)))
-   (shen/true
-    (shen/shen\.f-error 'shen\.goto-h))))
-(defun shen/shen\.invoke
-    (V2041 V2042)
-  (shen/cond
-   ((shen/internal/predicate->shen
-     (null V2042))
-    (list 'thaw V2041))
-   (shen/true
-    (append
-     (list V2041)
-     V2042))))
-(defun shen/shen\.wildcard\?
-    (V2043)
-  (shen/= V2043 '_))
-(defun shen/shen\.pvar\?
-    (V2044)
-  (shen/and
-   (shen/absvector\? V2044)
-   (shen/=
-    (shen/trap-error
-     (shen/<-address V2044 0)
-     (shen/lambda Z2045 'shen\.not-pvar))
-    'shen\.pvar)))
-(defun shen/shen\.lazyderef
-    (X ProcessN)
+(defun shen/do
+    (V3937 V3938)
+  V3938)
+(defun shen/element\?
+    (Element Xs)
   (let
-      ((Current X)
-       (KeepLooking t))
-    (while KeepLooking
-      (shen/if
-       (shen/shen\.pvar\? Current)
-       (shen/let Value
-                 (shen/shen\.valvector Current ProcessN)
-                 (shen/if
-                  (shen/= Value 'shen\.-null-)
-                  (setq KeepLooking nil)
-                  (setq Current Value)))
-       (setq KeepLooking nil)))
-    Current))
-(defun shen/shen\.deref
-    (V2049 V2050)
-  (cl-flet
-      ((tail-trampoline
-        (V2049 V2050)
-        (shen/cond
-         ((shen/cons\? V2049)
-          (append
-           (list
-            (shen/shen\.deref
-             (shen/hd V2049)
-             V2050))
-           (shen/shen\.deref
-            (nthcdr 1 V2049)
-            V2050)))
-         (shen/true
-          (shen/if
-           (shen/shen\.pvar\? V2049)
-           (shen/let W2051
-                     (shen/<-address V2050
-                                     (shen/<-address V2049 1))
-                     (shen/if
-                      (shen/= W2051 'shen\.-null-)
-                      V2049
-                      (vector
-                       (list W2051 V2050))))
-           V2049)))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V2049 V2050)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.bind!
-    (V2052 V2053 V2054 V2055)
-  (shen/let W2056
-            (shen/shen\.bindv V2052 V2053 V2054)
-            (shen/let W2057
-                      (shen/thaw V2055)
-                      (shen/if
-                       (shen/= W2057 'false)
-                       (shen/shen\.unwind V2052 V2054 W2057)
-                       W2057))))
-(defun shen/shen\.bindv
-    (V2058 V2059 V2060)
-  (shen/address-> V2060
-                  (shen/<-address V2058 1)
-                  V2059))
-(defun shen/shen\.unwind
-    (V2061 V2062 V2063)
-  (shen/do
-   (shen/address-> V2062
-                   (shen/<-address V2061 1)
-                   'shen\.-null-)
-   V2063))
-(defun shen/shen\.stpart
-    (V2072 V2073 V2074)
+      ((SearchList Xs)
+       (Found nil)
+       (Length
+        (length Xs))
+       (Current 0))
+    (while
+        (and
+         (not Found)
+         SearchList)
+      (setq Found
+            (shen/internal/= Element
+                             (pop SearchList))))
+    (shen/internal/predicate->shen Found)))
+(defun shen/empty\?
+    (V3954)
   (shen/cond
    ((shen/internal/predicate->shen
-     (null V2072))
-    V2073)
-   ((shen/cons\? V2072)
-    (list 'let
-          (shen/hd V2072)
-          (list 'shen\.newpv V2074)
-          (list 'shen\.gc V2074
-                (shen/shen\.stpart
-                 (nthcdr 1 V2072)
-                 V2073 V2074))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.stpart"))))
-(defun shen/shen\.gc
-    (V2075 V2076)
-  (shen/if
-   (shen/= V2076 'false)
-   (shen/let W2077
-             (shen/shen\.ticket-number V2075)
-             (shen/do
-              (shen/shen\.decrement-ticket W2077 V2075)
-              V2076))
-   V2076))
-(defun shen/shen\.decrement-ticket
-    (V2078 V2079)
-  (shen/address-> V2079 1
-                  (shen/- V2078 1)))
-(defun shen/shen\.newpv
-    (V2080)
-  (shen/let W2081
-            (shen/shen\.ticket-number V2080)
-            (shen/let W2082
-                      (shen/shen\.make-prolog-variable W2081)
-                      (shen/let W2083
-                                (shen/shen\.nextticket V2080 W2081)
-                                W2082))))
-(defun shen/shen\.ticket-number
-    (V2084)
-  (shen/<-address V2084 1))
-(defun shen/shen\.nextticket
-    (V2085 V2086)
-  (shen/let W2087
-            (shen/address-> V2085 V2086 'shen\.-null-)
-            (shen/address-> W2087 1
-                            (1+ V2086))))
-(defun shen/shen\.make-prolog-variable
-    (V2088)
-  (shen/address->
-   (shen/address->
-    (shen/absvector 2)
-    0 'shen\.pvar)
-   1 V2088))
-(defun shen/shen\.pvar
-    (V2089)
-  (shen/cn "Var"
-           (shen/shen\.app
-            (shen/<-address V2089 1)
-            "" 'shen\.a)))
-(defun shen/shen\.incinfs nil
-  (shen/set 'shen\.*infs*
-            (1+
-             (shen/value 'shen\.*infs*))))
-(defun shen/shen\.prolog-vector-size
-    (V2090)
-  (shen/if
-   (shen/and
-    (shen/integer\? V2090)
-    (shen/> V2090 0))
-   (shen/set 'shen\.*size-prolog-vector* V2090)
-   (shen/simple-error
-    (shen/cn "prolog vector size: size should be a positive integer; not "
-             (shen/shen\.app V2090 "" 'shen\.a)))))
-(defun shen/shen\.lzy=!
-    (V2102 V2103 V2104 V2105)
-  (cl-flet
-      ((tail-trampoline
-        (V2102 V2103 V2104 V2105)
-        (shen/cond
-         ((shen/= V2102 V2103)
-          (shen/thaw V2105))
-         ((shen/and
-           (shen/shen\.pvar\? V2102)
-           (shen/not
-            (shen/shen\.prolog-occurs\? V2102
-                                        (shen/shen\.deref V2103 V2104))))
-          (shen/shen\.bind! V2102 V2103 V2104 V2105))
-         ((shen/and
-           (shen/shen\.pvar\? V2103)
-           (shen/not
-            (shen/shen\.prolog-occurs\? V2103
-                                        (shen/shen\.deref V2102 V2104))))
-          (shen/shen\.bind! V2103 V2102 V2104 V2105))
-         ((shen/and
-           (shen/cons\? V2102)
-           (shen/cons\? V2103))
-          (vector
-           (list
-            (shen/shen\.lazyderef
-             (shen/hd V2102)
-             V2104)
-            (shen/shen\.lazyderef
-             (shen/hd V2103)
-             V2104)
-            V2104
-            (shen/freeze
-             (shen/shen\.lzy=!
-              (shen/shen\.lazyderef
-               (nthcdr 1 V2102)
-               V2104)
-              (shen/shen\.lazyderef
-               (nthcdr 1 V2103)
-               V2104)
-              V2104 V2105)))))
-         (shen/true 'false))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V2102 V2103 V2104 V2105)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.lzy=
-    (V2117 V2118 V2119 V2120)
-  (cl-flet
-      ((tail-trampoline
-        (V2117 V2118 V2119 V2120)
-        (shen/cond
-         ((shen/= V2117 V2118)
-          (shen/thaw V2120))
-         ((shen/shen\.pvar\? V2117)
-          (shen/shen\.bind! V2117 V2118 V2119 V2120))
-         ((shen/shen\.pvar\? V2118)
-          (shen/shen\.bind! V2118 V2117 V2119 V2120))
-         ((shen/and
-           (shen/cons\? V2117)
-           (shen/cons\? V2118))
-          (vector
-           (list
-            (shen/shen\.lazyderef
-             (shen/hd V2117)
-             V2119)
-            (shen/shen\.lazyderef
-             (shen/hd V2118)
-             V2119)
-            V2119
-            (shen/freeze
-             (shen/shen\.lzy=
-              (shen/shen\.lazyderef
-               (nthcdr 1 V2117)
-               V2119)
-              (shen/shen\.lazyderef
-               (nthcdr 1 V2118)
-               V2119)
-              V2119 V2120)))))
-         (shen/true 'false))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V2117 V2118 V2119 V2120)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.prolog-occurs\?
-    (V2126 V2127)
-  (shen/cond
-   ((shen/= V2126 V2127)
+     (null V3954))
     'true)
-   ((shen/cons\? V2127)
-    (shen/or
-     (shen/shen\.prolog-occurs\? V2126
-                                 (shen/hd V2127))
-     (shen/shen\.prolog-occurs\? V2126
-                                 (nthcdr 1 V2127))))
    (shen/true 'false)))
-(defun shen/call
-    (V2128 V2129 V2130 V2131 V2132)
-  (shen/internal/apply-function-expression
-   (shen/internal/apply-function-expression
-    (shen/internal/apply-function-expression
-     (shen/internal/apply-higher-order-function V2128
-                                                (list V2129))
-     (list V2130))
-    (list V2131))
-   (list V2132)))
-(defun shen/return
-    (V2139 V2140 V2141 V2142 V2143)
-  (shen/shen\.deref V2139 V2140))
-(defun shen/when
-    (V2150 V2151 V2152 V2153 V2154)
-  (shen/if V2150
-           (shen/thaw V2154)
-           'false))
-(defun shen/is
-    (V2155 V2156 V2157 V2158 V2159 V2160)
-  (shen/shen\.lzy=
-   (shen/shen\.lazyderef V2155 V2157)
-   (shen/shen\.lazyderef V2156 V2157)
-   V2157 V2160))
-(defun shen/is!
-    (V2161 V2162 V2163 V2164 V2165 V2166)
-  (shen/shen\.lzy=!
-   (shen/shen\.lazyderef V2161 V2163)
-   (shen/shen\.lazyderef V2162 V2163)
-   V2163 V2166))
-(defun shen/bind
-    (V2171 V2172 V2173 V2174 V2175 V2176)
-  (shen/shen\.bind! V2171 V2172 V2173 V2176))
-(defun shen/var\?
-    (V2177 V2178 V2179 V2180 V2181)
-  (shen/if
-   (shen/shen\.pvar\?
-    (shen/shen\.lazyderef V2177 V2178))
-   (shen/thaw V2181)
-   'false))
-(defun shen/shen\.print-prolog-vector
-    (V2184)
-  "|prolog vector|")
-(defun shen/fork
-    (V2203 V2204 V2205 V2206 V2207)
+(defun shen/fix
+    (V3955 V3956)
+  (shen/shen\.fix-help V3955 V3956
+                       (shen/internal/apply-higher-order-function V3955
+                                                                  (list V3956))))
+(defun shen/shen\.fix-help
+    (V3962 V3963 V3964)
   (cl-flet
       ((tail-trampoline
-        (V2203 V2204 V2205 V2206 V2207)
+        (V3962 V3963 V3964)
         (shen/cond
-         ((shen/internal/predicate->shen
-           (null V2203))
-          'false)
-         ((shen/cons\? V2203)
-          (shen/let W2208
-                    (shen/internal/apply-function-expression
-                     (shen/internal/apply-function-expression
-                      (shen/internal/apply-function-expression
-                       (shen/internal/apply-function-expression
-                        (shen/hd V2203)
-                        (list V2204))
-                       (list V2205))
-                      (list V2206))
-                     (list V2207))
-                    (shen/if
-                     (shen/= W2208 'false)
-                     (vector
-                      (list
-                       (nthcdr 1 V2203)
-                       V2204 V2205 V2206 V2207))
-                     W2208)))
+         ((shen/= V3963 V3964)
+          V3964)
          (shen/true
-          (shen/simple-error "fork expects a list of literals\n")))))
+          (vector
+           (list V3962 V3964
+                 (shen/internal/apply-higher-order-function V3962
+                                                            (list V3964))))))))
     (let
         ((result
-          (funcall #'tail-trampoline V2203 V2204 V2205 V2206 V2207)))
+          (funcall #'tail-trampoline V3962 V3963 V3964)))
       (while
           (vectorp result)
         (setq result
               (apply #'tail-trampoline
                      (aref result 0))))
       result)))
-(defun shen/findall
-    (V2209 V2210 V2211 V2212 V2213 V2214 V2215)
-  (shen/if
-   (shen/shen\.unlocked\? V2213)
-   (shen/let W2216
-             (shen/shen\.newpv V2212)
-             (shen/shen\.gc V2212
-                            (shen/do
-                             (shen/shen\.incinfs)
-                             (shen/is W2216 nil V2212 V2213 V2214
-                                      (shen/freeze
-                                       (shen/shen\.findall-h V2209 V2210 V2211 W2216 V2212 V2213 V2214 V2215))))))
-   'false))
-(defun shen/shen\.findall-h
-    (V2217 V2218 V2219 V2220 V2221 V2222 V2223 V2224)
-  (shen/let W2225
-            (shen/if
-             (shen/shen\.unlocked\? V2222)
-             (shen/do
-              (shen/shen\.incinfs)
-              (shen/call V2218 V2221 V2222 V2223
-                         (shen/freeze
-                          (shen/shen\.overbind V2217 V2220 V2221 V2222 V2223 V2224))))
-             'false)
-            (shen/if
-             (shen/= W2225 'false)
-             (shen/if
-              (shen/shen\.unlocked\? V2222)
-              (shen/do
-               (shen/shen\.incinfs)
-               (shen/is! V2219 V2220 V2221 V2222 V2223 V2224))
-              'false)
-             W2225)))
-(defun shen/shen\.overbind
-    (V2232 V2233 V2234 V2235 V2236 V2237)
-  (shen/do
-   (shen/shen\.bindv V2233
-                     (append
-                      (list
-                       (shen/shen\.deref V2232 V2234))
-                      (shen/shen\.lazyderef V2233 V2234))
-                     V2234)
-   'false))
-(defun shen/occurs-check
-    (V2240)
-  (shen/cond
-   ((shen/= '+ V2240)
-    (shen/set 'shen\.*occurs* 'true))
-   ((shen/= '- V2240)
-    (shen/set 'shen\.*occurs* 'false))
-   (shen/true
-    (shen/simple-error "occurs-check expects a + or a -.\n"))))
-(defun shen/shen\.f-error
-    (V5830)
-  (shen/do
-   (shen/pr
-    (shen/cn "partial function "
-             (shen/shen\.app V5830 ";\n" 'shen\.a))
-    (shen/stoutput))
-   (shen/do
-    (shen/if
-     (shen/and
-      (shen/not
-       (shen/shen\.tracked\? V5830))
-      (shen/y-or-n\?
-       (shen/cn "track "
-                (shen/shen\.app V5830 "? " 'shen\.a))))
-     (shen/shen\.track-function
-      (shen/ps V5830))
-     'shen\.ok)
-    (shen/simple-error "aborted"))))
-(defun shen/shen\.tracked\?
-    (V5831)
-  (shen/element\? V5831
-                  (shen/value 'shen\.*tracking*)))
-(defun shen/track
-    (V5832)
-  (shen/let W5833
-            (shen/ps V5832)
-            (shen/shen\.track-function W5833)))
-(defun shen/shen\.track-function
-    (V5836)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V5836)
-     (shen/and
-      (shen/= 'defun
-              (shen/hd V5836))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V5836))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 2 V5836))
-        (shen/and
-         (shen/cons\?
-          (nthcdr 3 V5836))
-         (shen/internal/predicate->shen
-          (null
-           (nthcdr 4 V5836))))))))
-    (shen/let W5837
-              (list 'defun
-                    (shen/hd
-                     (nthcdr 1 V5836))
-                    (shen/hd
-                     (nthcdr 2 V5836))
-                    (shen/shen\.insert-tracking-code
-                     (shen/hd
-                      (nthcdr 1 V5836))
-                     (shen/hd
-                      (nthcdr 2 V5836))
-                     (shen/hd
-                      (nthcdr 3 V5836))))
-              (shen/let W5838
-                        (shen/eval-kl W5837)
-                        (shen/let W5839
-                                  (shen/set 'shen\.*tracking*
-                                            (shen/adjoin
-                                             (shen/hd
-                                              (nthcdr 1 V5836))
-                                             (shen/value 'shen\.*tracking*)))
-                                  (shen/hd
-                                   (nthcdr 1 V5836))))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.track-function"))))
-(defun shen/shen\.insert-tracking-code
-    (V5840 V5841 V5842)
-  (list 'do
-        (list 'set 'shen\.*call*
-              (list '+
-                    (list 'value 'shen\.*call*)
-                    1))
-        (list 'do
-              (list 'shen\.input-track
-                    (list 'value 'shen\.*call*)
-                    V5840
-                    (shen/shen\.cons-form
-                     (shen/shen\.prolog-track V5842 V5841)))
-              (list 'do
-                    (list 'shen\.terpri-or-read-char)
-                    (list 'let 'Result V5842
-                          (list 'do
-                                (list 'shen\.output-track
-                                      (list 'value 'shen\.*call*)
-                                      V5840 'Result)
-                                (list 'do
-                                      (list 'set 'shen\.*call*
-                                            (list '-
-                                                  (list 'value 'shen\.*call*)
-                                                  1))
-                                      (list 'do
-                                            (list 'shen\.terpri-or-read-char)
-                                            'Result))))))))
-(defun shen/shen\.prolog-track
-    (V5843 V5844)
-  (shen/cond
-   ((shen/=
-     (shen/occurrences 'shen\.incinfs V5843)
-     0)
-    V5844)
-   (shen/true
-    (shen/shen\.vector-dereference V5844
-                                   (shen/shen\.vector-parameter V5844)))))
-(defun shen/shen\.vector-parameter
-    (V5847)
+(defun shen/put
+    (X Pointer Y Dict)
+  (let*
+      ((Contents
+        (shen/<-address Dict 3))
+       (X-Contents
+        (shen/<-address Contents X)))
+    (if X-Contents
+        (progn
+          (puthash Pointer Y X-Contents)
+          Y)
+      (progn
+        (setq X-Contents
+              (shen/absvector 100))
+        (puthash X X-Contents Contents)
+        (puthash Pointer Y X-Contents)
+        Y))))
+(defun shen/unput
+    (X Pointer Dict)
+  (let*
+      ((Contents
+        (shen/<-address Dict 3))
+       (X-Contents
+        (shen/<-address Contents X)))
+    (progn
+      (if X-Contents
+          (remhash Pointer X-Contents))
+      X)))
+(defun shen/get
+    (X Pointer Dict)
+  (let*
+      ((Contents
+        (shen/<-address Dict 3))
+       (X-Contents
+        (shen/<-address Contents X))
+       (Pointer-Contents
+        (if X-Contents
+            (shen/<-address X-Contents Pointer))))
+    (if
+        (not Pointer-Contents)
+        (shen/simple-error "value not found")
+      Pointer-Contents)))
+(defun shen/hash
+    (N Div)
+  (sxhash N))
+(defun shen/shen\.hashkey
+    (V3989)
+  (shen/let W3990
+            (shen/map
+             (shen/lambda Z3991
+                          (shen/string->n Z3991))
+             (shen/explode V3989))
+            (shen/shen\.prodbutzero W3990 1)))
+(defun shen/shen\.prodbutzero
+    (V3992 V3993)
   (cl-flet
       ((tail-trampoline
-        (V5847)
+        (V3992 V3993)
         (shen/cond
          ((shen/internal/predicate->shen
-           (null V5847))
-          nil)
+           (null V3992))
+          V3993)
          ((shen/and
-           (shen/cons\? V5847)
-           (shen/and
-            (shen/cons\?
-             (nthcdr 1 V5847))
-            (shen/and
-             (shen/cons\?
-              (nthcdr 2 V5847))
-             (shen/and
-              (shen/cons\?
-               (nthcdr 3 V5847))
-              (shen/internal/predicate->shen
-               (null
-                (nthcdr 4 V5847)))))))
-          (shen/hd V5847))
-         ((shen/cons\? V5847)
+           (shen/cons\? V3992)
+           (shen/= 0
+                   (shen/hd V3992)))
           (vector
            (list
-            (nthcdr 1 V5847))))
-         (shen/true
-          (shen/shen\.f-error 'shen\.vector-parameter)))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V5847)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.vector-dereference
-    (V5850 V5851)
-  (shen/cond
-   ((shen/internal/predicate->shen
-     (null V5851))
-    V5850)
-   ((shen/and
-     (shen/cons\? V5850)
-     (shen/and
-      (shen/cons\?
-       (nthcdr 1 V5850))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 2 V5850))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 3 V5850))
-        (shen/internal/predicate->shen
-         (null
-          (nthcdr 4 V5850)))))))
-    V5850)
-   ((shen/cons\? V5850)
-    (append
-     (list
-      (list 'shen\.deref
-            (shen/hd V5850)
-            V5851))
-     (shen/shen\.vector-dereference
-      (nthcdr 1 V5850)
-      V5851)))
-   (shen/true
-    (shen/shen\.f-error 'shen\.vector-dereference))))
-(defun shen/step
-    (V5854)
-  (shen/cond
-   ((shen/= '+ V5854)
-    (shen/set 'shen\.*step* 'true))
-   ((shen/= '- V5854)
-    (shen/set 'shen\.*step* 'false))
-   (shen/true
-    (shen/simple-error "step expects a + or a -.\n"))))
-(defun shen/shen\.step\? nil
-  (shen/value 'shen\.*step*))
-(defun shen/spy
-    (V5857)
-  (shen/cond
-   ((shen/= '+ V5857)
-    (shen/set 'shen\.*spy* 'true))
-   ((shen/= '- V5857)
-    (shen/set 'shen\.*spy* 'false))
-   (shen/true
-    (shen/simple-error "spy expects a + or a -.\n"))))
-(defun shen/shen\.spy\? nil
-  (shen/value 'shen\.*spy*))
-(defun shen/shen\.terpri-or-read-char nil
-  (shen/if
-   (shen/value 'shen\.*step*)
-   (shen/shen\.check-byte
-    (shen/read-byte
-     (shen/value '*stinput*)))
-   (shen/nl 1)))
-(defun shen/shen\.check-byte
-    (V5860)
-  (shen/cond
-   ((shen/= 94 V5860)
-    (shen/simple-error "aborted"))
-   (shen/true 'true)))
-(defun shen/shen\.input-track
-    (V5861 V5862 V5863)
-  (shen/do
-   (shen/pr
-    (shen/cn "\n"
-             (shen/shen\.app
-              (shen/shen\.spaces V5861)
-              (shen/cn "<"
-                       (shen/shen\.app V5861
-                                       (shen/cn "> Inputs to "
-                                                (shen/shen\.app V5862
-                                                                (shen/cn " \n"
-                                                                         (shen/shen\.app
-                                                                          (shen/shen\.spaces V5861)
-                                                                          "" 'shen\.a))
-                                                                'shen\.a))
-                                       'shen\.a))
-              'shen\.a))
-    (shen/stoutput))
-   (shen/shen\.recursively-print V5863)))
-(defun shen/shen\.recursively-print
-    (V5866)
-  (cl-flet
-      ((tail-trampoline
-        (V5866)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V5866))
-          (shen/pr " ==>"
-                   (shen/stoutput)))
-         ((shen/cons\? V5866)
-          (shen/do
-           (shen/print
-            (shen/hd V5866))
-           (shen/do
-            (shen/pr ", "
-                     (shen/stoutput))
-            (vector
-             (list
-              (nthcdr 1 V5866))))))
-         (shen/true
-          (shen/simple-error "implementation error in shen.recursively-print")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V5866)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.spaces
-    (V5867)
-  (shen/cond
-   ((shen/= 0 V5867)
-    "")
-   (shen/true
-    (shen/cn " "
-             (shen/shen\.spaces
-              (shen/- V5867 1))))))
-(defun shen/shen\.output-track
-    (V5868 V5869 V5870)
-  (shen/pr
-   (shen/cn "\n"
-            (shen/shen\.app
-             (shen/shen\.spaces V5868)
-             (shen/cn "<"
-                      (shen/shen\.app V5868
-                                      (shen/cn "> Output from "
-                                               (shen/shen\.app V5869
-                                                               (shen/cn " \n"
-                                                                        (shen/shen\.app
-                                                                         (shen/shen\.spaces V5868)
-                                                                         (shen/cn "==> "
-                                                                                  (shen/shen\.app V5870 "" 'shen\.s))
-                                                                         'shen\.a))
-                                                               'shen\.a))
-                                      'shen\.a))
-             'shen\.a))
-   (shen/stoutput)))
-(defun shen/untrack
-    (F)
-  (progn
-    (shen/set shen\.*tracking*
-              (shen/internal/delete-first-eq F
-                                             (shen/value shen\.*tracking*)))
-    (shen/eval
-     (shen/ps F))))
-(defun shen/remove
-    (V5873 V5874)
-  (shen/shen\.remove-h V5873 V5874 nil))
-(defun shen/shen\.remove-h
-    (V5884 V5885 V5886)
-  (cl-flet
-      ((tail-trampoline
-        (V5884 V5885 V5886)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V5885))
-          (shen/reverse V5886))
-         ((shen/and
-           (shen/cons\? V5885)
-           (shen/= V5884
-                   (shen/hd V5885)))
-          (vector
-           (list
-            (shen/hd V5885)
-            (nthcdr 1 V5885)
-            V5886)))
-         ((shen/cons\? V5885)
-          (vector
-           (list V5884
-                 (nthcdr 1 V5885)
-                 (append
-                  (list
-                   (shen/hd V5885))
-                  V5886))))
-         (shen/true
-          (shen/simple-error "implementation error in shen.remove-h")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V5884 V5885 V5886)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/profile
-    (V5887)
-  (shen/do
-   (shen/set 'shen\.*profiled*
-             (append
-              (list V5887)
-              (shen/value 'shen\.*profiled*)))
-   (shen/shen\.profile-help
-    (shen/ps V5887))))
-(defun shen/shen\.profile-help
-    (V5890)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V5890)
-     (shen/and
-      (shen/= 'defun
-              (shen/hd V5890))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V5890))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 2 V5890))
-        (shen/and
-         (shen/cons\?
-          (nthcdr 3 V5890))
-         (shen/internal/predicate->shen
-          (null
-           (nthcdr 4 V5890))))))))
-    (shen/let W5891
-              (shen/gensym 'shen\.f)
-              (shen/let W5892
-                        (list 'defun
-                              (shen/hd
-                               (nthcdr 1 V5890))
-                              (shen/hd
-                               (nthcdr 2 V5890))
-                              (shen/shen\.profile-func
-                               (shen/hd
-                                (nthcdr 1 V5890))
-                               (shen/hd
-                                (nthcdr 2 V5890))
-                               (append
-                                (list W5891)
-                                (shen/hd
-                                 (nthcdr 2 V5890)))))
-                        (shen/let W5893
-                                  (list 'defun W5891
-                                        (shen/hd
-                                         (nthcdr 2 V5890))
-                                        (shen/subst W5891
-                                                    (shen/hd
-                                                     (nthcdr 1 V5890))
-                                                    (shen/hd
-                                                     (nthcdr 3 V5890))))
-                                  (shen/let W5894
-                                            (shen/eval-kl W5892)
-                                            (shen/let W5895
-                                                      (shen/eval-kl W5893)
-                                                      (shen/hd
-                                                       (nthcdr 1 V5890))))))))
-   (shen/true
-    (shen/simple-error "Cannot profile.\n"))))
-(defun shen/unprofile
-    (V5896)
-  (shen/do
-   (shen/set 'shen\.*profiled*
-             (shen/remove V5896
-                          (shen/value 'shen\.*profiled*)))
-   (shen/trap-error
-    (shen/eval
-     (shen/ps V5896))
-    (shen/lambda Z5897 V5896))))
-(defun shen/shen\.profiled\?
-    (V5898)
-  (shen/element\? V5898
-                  (shen/value 'shen\.*profiled*)))
-(defun shen/shen\.profile-func
-    (V5899 V5900 V5901)
-  (list 'let 'Start
-        (list 'get-time 'run)
-        (list 'let 'Result V5901
-              (list 'let 'Finish
-                    (list '-
-                          (list 'get-time 'run)
-                          'Start)
-                    (list 'let 'Record
-                          (list 'shen\.put-profile V5899
-                                (list '+
-                                      (list 'shen\.get-profile V5899)
-                                      'Finish))
-                          'Result)))))
-(defun shen/profile-results
-    (V5902)
-  (shen/let W5903
-            (shen/shen\.get-profile V5902)
-            (shen/let W5904
-                      (shen/shen\.put-profile V5902 0)
-                      (shen/@p V5902 W5903))))
-(defun shen/shen\.get-profile
-    (V5905)
-  (shen/trap-error
-   (shen/get V5905 'profile
-             (shen/value '*property-vector*))
-   (shen/lambda Z5906 0)))
-(defun shen/shen\.put-profile
-    (V5907 V5908)
-  (shen/put V5907 'profile V5908
-            (shen/value '*property-vector*)))
-(defun shen/load
-    (V1196)
-  (shen/let W1197
-            (shen/value 'shen\.*tc*)
-            (shen/let W1198
-                      (shen/let W1199
-                                (shen/get-time 'run)
-                                (shen/let W1200
-                                          (shen/shen\.load-help W1197
-                                                                (shen/read-file V1196))
-                                          (shen/let W1201
-                                                    (shen/get-time 'run)
-                                                    (shen/let W1202
-                                                              (shen/- W1201 W1199)
-                                                              (shen/let W1203
-                                                                        (shen/pr
-                                                                         (shen/cn "\nrun time: "
-                                                                                  (shen/cn
-                                                                                   (shen/str W1202)
-                                                                                   " secs\n"))
-                                                                         (shen/stoutput))
-                                                                        W1200)))))
-                      (shen/let W1204
-                                (shen/if W1197
-                                         (shen/pr
-                                          (shen/cn "\ntypechecked in "
-                                                   (shen/shen\.app
-                                                    (shen/inferences)
-                                                    " inferences\n" 'shen\.a))
-                                          (shen/stoutput))
-                                         'shen\.skip)
-                                'loaded))))
-(defun shen/shen\.load-help
-    (V1207 V1208)
-  (shen/cond
-   ((shen/= 'false V1207)
-    (shen/shen\.eval-and-print V1208))
-   (shen/true
-    (shen/shen\.check-eval-and-print V1208))))
-(defun shen/shen\.eval-and-print
-    (V1209)
-  (shen/shen\.for-each
-   (shen/lambda Z1210
-                (shen/pr
-                 (shen/shen\.app
-                  (shen/eval-kl
-                   (shen/shen\.shen->kl Z1210))
-                  "\n" 'shen\.s)
-                 (shen/stoutput)))
-   V1209))
-(defun shen/shen\.check-eval-and-print
-    (V1211)
-  (shen/let W1212
-            (shen/mapcan
-             (shen/lambda Z1213
-                          (shen/shen\.typetable Z1213))
-             V1211)
-            (shen/let W1214
-                      (shen/trap-error
-                       (shen/shen\.assumetypes W1212)
-                       (shen/lambda Z1215
-                                    (shen/shen\.unwind-types Z1215 W1212)))
-                      (shen/trap-error
-                       (shen/shen\.work-through V1211)
-                       (shen/lambda Z1216
-                                    (shen/shen\.unwind-types Z1216 W1212))))))
-(defun shen/shen\.typetable
-    (V1221)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V1221)
-     (shen/and
-      (shen/= 'define
-              (shen/hd V1221))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V1221))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 2 V1221))
-        (shen/= '{
-                (shen/hd
-                 (nthcdr 2 V1221)))))))
-    (list
-     (shen/hd
-      (nthcdr 1 V1221))
-     (shen/shen\.rectify-type
-      (shen/shen\.type-F
-       (shen/hd
-        (nthcdr 1 V1221))
-       (nthcdr 3 V1221)))))
-   ((shen/and
-     (shen/cons\? V1221)
-     (shen/and
-      (shen/= 'define
-              (shen/hd V1221))
-      (shen/cons\?
-       (nthcdr 1 V1221))))
-    (shen/simple-error
-     (shen/cn "missing { in "
-              (shen/shen\.app
-               (shen/hd
-                (nthcdr 1 V1221))
-               "\n" 'shen\.a))))
-   (shen/true nil)))
-(defun shen/shen\.type-F
-    (V1228 V1229)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V1229)
-     (shen/= '}
-             (shen/hd V1229)))
-    nil)
-   ((shen/cons\? V1229)
-    (append
-     (list
-      (shen/hd V1229))
-     (shen/shen\.type-F V1228
-                        (nthcdr 1 V1229))))
-   (shen/true
-    (shen/simple-error
-     (shen/cn "missing } in "
-              (shen/shen\.app V1228 "\n" 'shen\.a))))))
-(defun shen/shen\.assumetypes
-    (V1232)
-  (cl-flet
-      ((tail-trampoline
-        (V1232)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V1232))
-          nil)
-         ((shen/and
-           (shen/cons\? V1232)
-           (shen/cons\?
-            (nthcdr 1 V1232)))
-          (shen/do
-           (shen/declare
-            (shen/hd V1232)
-            (shen/hd
-             (nthcdr 1 V1232)))
+            (nthcdr 1 V3992)
+            V3993)))
+         ((shen/cons\? V3992)
+          (shen/if
+           (shen/> V3993 10000000000)
            (vector
             (list
-             (nthcdr 2 V1232)))))
-         (shen/true
-          (shen/simple-error "implementation error in shen.assumetype")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V1232)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.unwind-types
-    (V1237 V1238)
-  (cl-flet
-      ((tail-trampoline
-        (V1237 V1238)
-        (shen/cond
-         ((shen/and
-           (shen/cons\? V1238)
-           (shen/cons\?
-            (nthcdr 1 V1238)))
-          (shen/do
-           (shen/destroy
-            (shen/hd V1238))
+             (nthcdr 1 V3992)
+             (shen/+ V3993
+                     (shen/hd V3992))))
            (vector
-            (list V1237
-                  (nthcdr 2 V1238)))))
+            (list
+             (nthcdr 1 V3992)
+             (shen/* V3993
+                     (shen/hd V3992))))))
          (shen/true
-          (shen/simple-error
-           (shen/error-to-string V1237))))))
+          (shen/shen\.f-error 'shen\.prodbutzero)))))
     (let
         ((result
-          (funcall #'tail-trampoline V1237 V1238)))
+          (funcall #'tail-trampoline V3992 V3993)))
       (while
           (vectorp result)
         (setq result
               (apply #'tail-trampoline
                      (aref result 0))))
       result)))
-(defun shen/shen\.work-through
-    (V1241)
+(defun shen/shen\.mod
+    (N Div)
+  (mod N Div))
+(defun shen/shen\.multiples
+    (V4000 V4001)
   (cl-flet
       ((tail-trampoline
-        (V1241)
+        (V4000 V4001)
         (shen/cond
-         ((shen/internal/predicate->shen
-           (null V1241))
-          nil)
          ((shen/and
-           (shen/cons\? V1241)
-           (shen/and
-            (shen/cons\?
-             (nthcdr 1 V1241))
-            (shen/and
-             (shen/cons\?
-              (nthcdr 2 V1241))
-             (shen/=
-              (shen/hd
-               (nthcdr 1 V1241))
-              (shen/intern ":")))))
-          (shen/let W1242
-                    (shen/shen\.typecheck
-                     (shen/hd V1241)
-                     (shen/hd
-                      (nthcdr 2 V1241)))
-                    (shen/if
-                     (shen/= W1242 'false)
-                     (shen/shen\.type-error)
-                     (shen/let W1243
-                               (shen/eval-kl
-                                (shen/shen\.shen->kl
-                                 (shen/hd V1241)))
-                               (shen/let W1244
-                                         (shen/pr
-                                          (shen/shen\.app W1243
-                                                          (shen/cn " : "
-                                                                   (shen/shen\.app
-                                                                    (shen/shen\.pretty-type W1242)
-                                                                    "\n" 'shen\.r))
-                                                          'shen\.s)
-                                          (shen/stoutput))
-                                         (vector
-                                          (list
-                                           (nthcdr 3 V1241))))))))
-         ((shen/cons\? V1241)
+           (shen/cons\? V4001)
+           (shen/>
+            (shen/hd V4001)
+            V4000))
+          (nthcdr 1 V4001))
+         ((shen/cons\? V4001)
+          (vector
+           (list V4000
+                 (append
+                  (list
+                   (shen/* 2
+                           (shen/hd V4001)))
+                  V4001))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.multiples")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V4000 V4001)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.modh
+    (V4008 V4009)
+  (cl-flet
+      ((tail-trampoline
+        (V4008 V4009)
+        (shen/cond
+         ((shen/= 0 V4008)
+          0)
+         ((shen/internal/predicate->shen
+           (null V4009))
+          V4008)
+         ((shen/and
+           (shen/cons\? V4009)
+           (shen/>
+            (shen/hd V4009)
+            V4008))
+          (shen/if
+           (shen/empty\?
+            (nthcdr 1 V4009))
+           V4008
+           (vector
+            (list V4008
+                  (nthcdr 1 V4009)))))
+         ((shen/cons\? V4009)
           (vector
            (list
+            (shen/- V4008
+                    (shen/hd V4009))
+            V4009)))
+         (shen/true
+          (shen/simple-error "implementation error in shen.modh")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V4008 V4009)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/sum
+    (Xs)
+  (apply #'+ Xs))
+(defun shen/head
+    (V4017)
+  (shen/cond
+   ((shen/cons\? V4017)
+    (shen/hd V4017))
+   (shen/true
+    (shen/simple-error "head expects a non-empty list\n"))))
+(defun shen/tail
+    (V4022)
+  (shen/cond
+   ((shen/cons\? V4022)
+    (nthcdr 1 V4022))
+   (shen/true
+    (shen/simple-error "tail expects a non-empty list\n"))))
+(defun shen/hdstr
+    (V4023)
+  (shen/pos V4023 0))
+(defun shen/intersection
+    (V4030 V4031)
+  (cl-flet
+      ((tail-trampoline
+        (V4030 V4031)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V4030))
+          nil)
+         ((shen/cons\? V4030)
+          (shen/if
+           (shen/element\?
+            (shen/hd V4030)
+            V4031)
+           (append
+            (list
+             (shen/hd V4030))
+            (shen/intersection
+             (nthcdr 1 V4030)
+             V4031))
+           (vector
+            (list
+             (nthcdr 1 V4030)
+             V4031))))
+         (shen/true
+          (shen/simple-error "attempt to find the intersection with a non-list\n")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V4030 V4031)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/reverse
+    (V4032)
+  (shen/shen\.reverse-help V4032 nil))
+(defun shen/shen\.reverse-help
+    (V4037 V4038)
+  (cl-flet
+      ((tail-trampoline
+        (V4037 V4038)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V4037))
+          V4038)
+         ((shen/cons\? V4037)
+          (vector
+           (list
+            (nthcdr 1 V4037)
             (append
              (list
-              (shen/hd V1241)
-              (shen/intern ":")
-              'A)
-             (nthcdr 1 V1241)))))
+              (shen/hd V4037))
+             V4038))))
          (shen/true
-          (shen/simple-error "implementation error in shen.work-through")))))
+          (shen/simple-error "attempt to reverse a non-list\n")))))
     (let
         ((result
-          (funcall #'tail-trampoline V1241)))
+          (funcall #'tail-trampoline V4037 V4038)))
       (while
           (vectorp result)
         (setq result
               (apply #'tail-trampoline
                      (aref result 0))))
       result)))
-(defun shen/shen\.pretty-type
-    (V1246)
+(defun shen/union
+    (V4043 V4044)
+  (cl-flet
+      ((tail-trampoline
+        (V4043 V4044)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V4043))
+          V4044)
+         ((shen/cons\? V4043)
+          (shen/if
+           (shen/element\?
+            (shen/hd V4043)
+            V4044)
+           (vector
+            (list
+             (nthcdr 1 V4043)
+             V4044))
+           (append
+            (list
+             (shen/hd V4043))
+            (shen/union
+             (nthcdr 1 V4043)
+             V4044))))
+         (shen/true
+          (shen/simple-error "attempt to find the union with a non-list\n")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V4043 V4044)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/y-or-n\?
+    (V4045)
+  (cl-flet
+      ((tail-trampoline
+        (V4045)
+        (shen/let W4046
+                  (shen/pr
+                   (shen/shen\.proc-nl V4045)
+                   (shen/stoutput))
+                  (shen/let W4047
+                            (shen/pr " (y/n) "
+                                     (shen/stoutput))
+                            (shen/let W4048
+                                      (shen/shen\.app
+                                       (shen/read
+                                        (shen/stinput))
+                                       "" 'shen\.s)
+                                      (shen/if
+                                       (shen/= "y" W4048)
+                                       'true
+                                       (shen/if
+                                        (shen/= "n" W4048)
+                                        'false
+                                        (shen/do
+                                         (shen/pr "please answer y or n\n"
+                                                  (shen/stoutput))
+                                         (vector
+                                          (list V4045))))))))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V4045)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/not
+    (V4049)
+  (shen/if V4049 'false 'true))
+(defun shen/abort nil
+  (shen/simple-error ""))
+(defun shen/subst
+    (V4055 V4056 V4057)
   (shen/cond
-   ((shen/and
-     (shen/cons\? V1246)
-     (shen/and
-      (shen/cons\?
-       (shen/hd V1246))
-      (shen/and
-       (shen/= 'list
-               (shen/hd
-                (shen/hd V1246)))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 1
-                 (shen/hd V1246)))
-        (shen/and
-         (shen/internal/predicate->shen
-          (null
-           (nthcdr 2
-                   (shen/hd V1246))))
-         (shen/and
-          (shen/cons\?
-           (nthcdr 1 V1246))
-          (shen/and
-           (shen/= '-->
-                   (shen/hd
-                    (nthcdr 1 V1246)))
-           (shen/and
-            (shen/cons\?
-             (nthcdr 2 V1246))
-            (shen/and
-             (shen/cons\?
-              (shen/hd
-               (nthcdr 2 V1246)))
-             (shen/and
-              (shen/= 'str
-                      (shen/hd
-                       (shen/hd
-                        (nthcdr 2 V1246))))
-              (shen/and
-               (shen/cons\?
-                (nthcdr 1
-                        (shen/hd
-                         (nthcdr 2 V1246))))
-               (shen/and
-                (shen/cons\?
-                 (shen/hd
-                  (nthcdr 1
-                          (shen/hd
-                           (nthcdr 2 V1246)))))
-                (shen/and
-                 (shen/= 'list
-                         (shen/hd
-                          (shen/hd
-                           (nthcdr 1
-                                   (shen/hd
-                                    (nthcdr 2 V1246))))))
-                 (shen/and
-                  (shen/cons\?
-                   (nthcdr 1
-                           (shen/hd
-                            (nthcdr 1
-                                    (shen/hd
-                                     (nthcdr 2 V1246))))))
-                  (shen/and
-                   (shen/internal/predicate->shen
-                    (null
-                     (nthcdr 2
-                             (shen/hd
-                              (nthcdr 1
-                                      (shen/hd
-                                       (nthcdr 2 V1246)))))))
-                   (shen/and
-                    (shen/cons\?
-                     (nthcdr 2
-                             (shen/hd
-                              (nthcdr 2 V1246))))
-                    (shen/and
-                     (shen/internal/predicate->shen
-                      (null
-                       (nthcdr 3
-                               (shen/hd
-                                (nthcdr 2 V1246)))))
-                     (shen/and
-                      (shen/internal/predicate->shen
-                       (null
-                        (nthcdr 3 V1246)))
-                      (shen/=
-                       (shen/hd
-                        (nthcdr 1
-                                (shen/hd V1246)))
-                       (shen/hd
-                        (nthcdr 1
-                                (shen/hd
-                                 (nthcdr 1
-                                         (shen/hd
-                                          (nthcdr 2 V1246)))))))))))))))))))))))))
+   ((shen/= V4056 V4057)
+    V4055)
+   ((shen/cons\? V4057)
     (append
      (list
-      (shen/hd
-       (nthcdr 1
-               (shen/hd
-                (nthcdr 2 V1246))))
-      '==>)
-     (nthcdr 2
-             (shen/hd
-              (nthcdr 2 V1246)))))
-   ((shen/cons\? V1246)
-    (shen/map
-     (shen/lambda Z1247
-                  (shen/shen\.pretty-type Z1247))
-     V1246))
-   (shen/true V1246)))
-(defun shen/shen\.type-error nil
-  (shen/simple-error "type error\n"))
-(defun shen/bootstrap
-    (V1248)
-  (shen/let W1249
-            (shen/shen\.klfile V1248)
-            (shen/let W1250
-                      (shen/read-file V1248)
-                      (shen/let W1251
-                                (shen/open W1249 'out)
-                                (shen/let W1252
-                                          (shen/map
-                                           (shen/lambda Z1253
-                                                        (shen/shen\.partial
-                                                         (shen/shen\.shen->kl-h Z1253)))
-                                           W1250)
-                                          (shen/let W1254
-                                                    (shen/shen\.write-kl W1252 W1251)
-                                                    W1249))))))
-(defun shen/shen\.partial
-    (V1255)
+      (shen/subst V4055 V4056
+                  (shen/hd V4057)))
+     (shen/subst V4055 V4056
+                 (nthcdr 1 V4057))))
+   (shen/true V4057)))
+(defun shen/explode
+    (V4058)
+  (shen/shen\.explode-h
+   (shen/shen\.app V4058 "" 'shen\.a)))
+(defun shen/shen\.explode-h
+    (V4061)
   (shen/cond
-   ((shen/and
-     (shen/cons\? V1255)
-     (shen/and
-      (shen/= 'shen\.f-error
-              (shen/hd V1255))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V1255))
-       (shen/internal/predicate->shen
-        (null
-         (nthcdr 2 V1255))))))
-    (list 'simple-error
-          (shen/cn "partial function "
-                   (shen/str
-                    (shen/hd
-                     (nthcdr 1 V1255))))))
-   ((shen/cons\? V1255)
-    (shen/map
-     (shen/lambda Z1256
-                  (shen/shen\.partial Z1256))
-     V1255))
-   (shen/true V1255)))
-(defun shen/shen\.write-kl
-    (V1259 V1260)
+   ((shen/= "" V4061)
+    nil)
+   ((shen/shen\.+string\? V4061)
+    (append
+     (list
+      (shen/hdstr V4061))
+     (shen/shen\.explode-h
+      (shen/tlstr V4061))))
+   (shen/true
+    (shen/simple-error "implementation error in explode-h"))))
+(defun shen/cd
+    (V4062)
+  (shen/set '*home-directory*
+            (shen/if
+             (shen/= V4062 "")
+             ""
+             (shen/shen\.app V4062 "/" 'shen\.a))))
+(defun shen/shen\.for-each
+    (V4063 V4064)
   (cl-flet
       ((tail-trampoline
-        (V1259 V1260)
+        (V4063 V4064)
         (shen/cond
          ((shen/internal/predicate->shen
-           (null V1259))
-          (shen/close V1260))
-         ((shen/and
-           (shen/cons\? V1259)
-           (shen/cons\?
-            (shen/hd V1259)))
-          (vector
-           (list
-            (nthcdr 1 V1259)
-            (shen/do
-             (shen/shen\.write-kl-h
-              (shen/hd V1259)
-              V1260)
-             V1260))))
-         ((shen/cons\? V1259)
-          (vector
-           (list
-            (nthcdr 1 V1259)
-            V1260)))
+           (null V4064))
+          'true)
+         ((shen/cons\? V4064)
+          (shen/let W4065
+                    (shen/internal/apply-higher-order-function V4063
+                                                               (list
+                                                                (shen/hd V4064)))
+                    (vector
+                     (list V4063
+                           (nthcdr 1 V4064)))))
          (shen/true
-          (shen/shen\.f-error 'shen\.write-kl)))))
+          (shen/shen\.f-error 'shen\.for-each)))))
     (let
         ((result
-          (funcall #'tail-trampoline V1259 V1260)))
+          (funcall #'tail-trampoline V4063 V4064)))
       (while
           (vectorp result)
         (setq result
               (apply #'tail-trampoline
                      (aref result 0))))
       result)))
-(defun shen/shen\.write-kl-h
-    (V1263 V1264)
+(defun shen/map
+    (F Xs)
+  (mapcar
+   (lambda
+     (X)
+     (shen/internal/apply-higher-order-function F
+                                                (list X)))
+   Xs))
+(defun shen/shen\.map-h
+    (V4068 V4069 V4070)
+  (cl-flet
+      ((tail-trampoline
+        (V4068 V4069 V4070)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V4069))
+          (shen/reverse V4070))
+         ((shen/cons\? V4069)
+          (vector
+           (list V4068
+                 (nthcdr 1 V4069)
+                 (append
+                  (list
+                   (shen/internal/apply-higher-order-function V4068
+                                                              (list
+                                                               (shen/hd V4069))))
+                  V4070))))
+         (shen/true
+          (shen/shen\.f-error 'shen\.map-h)))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V4068 V4069 V4070)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/length
+    (V4071)
+  (shen/shen\.length-h V4071 0))
+(defun shen/shen\.length-h
+    (V4076 V4077)
+  (cl-flet
+      ((tail-trampoline
+        (V4076 V4077)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V4076))
+          V4077)
+         (shen/true
+          (vector
+           (list
+            (nthcdr 1 V4076)
+            (1+ V4077)))))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V4076 V4077)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/occurrences
+    (V4083 V4084)
   (shen/cond
-   ((shen/and
-     (shen/cons\? V1263)
-     (shen/and
-      (shen/= 'defun
-              (shen/hd V1263))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V1263))
-       (shen/and
-        (shen/= 'fail
-                (shen/hd
-                 (nthcdr 1 V1263)))
-        (shen/and
-         (shen/cons\?
-          (nthcdr 2 V1263))
-         (shen/and
-          (shen/internal/predicate->shen
-           (null
-            (shen/hd
-             (nthcdr 2 V1263))))
-          (shen/and
-           (shen/cons\?
-            (nthcdr 3 V1263))
-           (shen/internal/predicate->shen
-            (null
-             (nthcdr 4 V1263))))))))))
-    (shen/pr "(defun fail () shen.fail!)" V1264))
-   (shen/true
-    (shen/pr
-     (shen/shen\.app V1263 "\n\n" 'shen\.r)
-     V1264))))
-(defun shen/shen\.klfile
-    (V1265)
-  (shen/cond
-   ((shen/= "" V1265)
-    ".kl")
-   ((shen/= ".shen" V1265)
-    ".kl")
-   ((shen/shen\.+string\? V1265)
-    (concat
-     (concat
-      (shen/hdstr V1265))
-     (shen/shen\.klfile
-      (shen/tlstr V1265))))
-   (shen/true
-    (shen/shen\.f-error 'shen\.klfile))))
-(defun shen/print
-    (V6833)
-  (shen/let W6834
-            (shen/shen\.insert V6833 "~S")
-            (shen/let W6835
-                      (shen/pr W6834
-                               (shen/stoutput))
-                      V6833)))
-(defun shen/pr
-    (V6836 V6837)
+   ((shen/= V4083 V4084)
+    1)
+   ((shen/cons\? V4084)
+    (shen/+
+     (shen/occurrences V4083
+                       (shen/hd V4084))
+     (shen/occurrences V4083
+                       (nthcdr 1 V4084))))
+   (shen/true 0)))
+(defun shen/nth
+    (I Xs)
+  (nth I Xs))
+(defun shen/integer\?
+    (N)
+  (shen/internal/predicate->shen
+   (integerp N)))
+(defun shen/shen\.abs
+    (V4093)
   (shen/if
-   (shen/value '*hush*)
-   V6836
-   (shen/if
-    (shen/shen\.char-stoutput\? V6837)
-    (shen/shen\.write-string V6836 V6837)
-    (shen/shen\.write-chars V6836 V6837
-                            (shen/shen\.string->byte V6836 0)
-                            1))))
-(defun shen/shen\.string->byte
-    (V6838 V6839)
-  (shen/trap-error
-   (shen/string->n
-    (shen/pos V6838 V6839))
-   (shen/lambda Z6840 'shen\.eos)))
-(defun shen/shen\.write-chars
-    (V6841 V6842 V6843 V6844)
+   (shen/> V4093 0)
+   V4093
+   (shen/- 0 V4093)))
+(defun shen/shen\.magless
+    (V4094 V4095)
   (cl-flet
       ((tail-trampoline
-        (V6841 V6842 V6843 V6844)
-        (shen/cond
-         ((shen/= 'shen\.eos V6843)
-          V6841)
-         (shen/true
-          (vector
-           (list V6841 V6842
-                 (shen/do
-                  (shen/write-byte V6843 V6842)
-                  (shen/shen\.string->byte V6841 V6844))
-                 (1+ V6844)))))))
+        (V4094 V4095)
+        (shen/let W4096
+                  (shen/* V4095 2)
+                  (shen/if
+                   (shen/> W4096 V4094)
+                   V4095
+                   (vector
+                    (list V4094 W4096))))))
     (let
         ((result
-          (funcall #'tail-trampoline V6841 V6842 V6843 V6844)))
+          (funcall #'tail-trampoline V4094 V4095)))
       (while
           (vectorp result)
         (setq result
               (apply #'tail-trampoline
                      (aref result 0))))
       result)))
-(defun shen/shen\.mkstr
-    (V6845 V6846)
-  (shen/cond
-   ((shen/string\? V6845)
-    (shen/shen\.mkstr-l
-     (shen/shen\.proc-nl V6845)
-     V6846))
-   (shen/true
-    (shen/shen\.mkstr-r
-     (list 'shen\.proc-nl V6845)
-     V6846))))
-(defun shen/shen\.mkstr-l
-    (V6851 V6852)
+(defun shen/shen\.integer-test\?
+    (V4100 V4101)
   (cl-flet
       ((tail-trampoline
-        (V6851 V6852)
+        (V4100 V4101)
         (shen/cond
-         ((shen/internal/predicate->shen
-           (null V6852))
-          V6851)
-         ((shen/cons\? V6852)
-          (vector
-           (list
-            (shen/shen\.insert-l
-             (shen/hd V6852)
-             V6851)
-            (nthcdr 1 V6852))))
+         ((shen/= 0 V4100)
+          'true)
+         ((shen/> 1 V4100)
+          'false)
          (shen/true
-          (shen/simple-error "implementation error in shen.mkstr-l")))))
+          (shen/let W4102
+                    (shen/- V4100 V4101)
+                    (shen/if
+                     (shen/> 0 W4102)
+                     (shen/integer\? V4100)
+                     (vector
+                      (list W4102 V4101))))))))
     (let
         ((result
-          (funcall #'tail-trampoline V6851 V6852)))
+          (funcall #'tail-trampoline V4100 V4101)))
       (while
           (vectorp result)
         (setq result
               (apply #'tail-trampoline
                      (aref result 0))))
       result)))
-(defun shen/shen\.insert-l
-    (V6859 V6860)
-  (shen/cond
-   ((shen/= "" V6860)
-    "")
-   ((shen/and
-     (shen/shen\.+string\? V6860)
-     (shen/and
-      (shen/= "~"
-              (shen/hdstr V6860))
-      (shen/and
-       (shen/shen\.+string\?
-        (shen/tlstr V6860))
-       (shen/= "A"
-               (shen/hdstr
-                (shen/tlstr V6860))))))
-    (list 'shen\.app V6859
-          (shen/tlstr
-           (shen/tlstr V6860))
-          'shen\.a))
-   ((shen/and
-     (shen/shen\.+string\? V6860)
-     (shen/and
-      (shen/= "~"
-              (shen/hdstr V6860))
-      (shen/and
-       (shen/shen\.+string\?
-        (shen/tlstr V6860))
-       (shen/= "R"
-               (shen/hdstr
-                (shen/tlstr V6860))))))
-    (list 'shen\.app V6859
-          (shen/tlstr
-           (shen/tlstr V6860))
-          'shen\.r))
-   ((shen/and
-     (shen/shen\.+string\? V6860)
-     (shen/and
-      (shen/= "~"
-              (shen/hdstr V6860))
-      (shen/and
-       (shen/shen\.+string\?
-        (shen/tlstr V6860))
-       (shen/= "S"
-               (shen/hdstr
-                (shen/tlstr V6860))))))
-    (list 'shen\.app V6859
-          (shen/tlstr
-           (shen/tlstr V6860))
-          'shen\.s))
-   ((shen/shen\.+string\? V6860)
-    (shen/shen\.factor-cn
-     (list 'cn
-           (shen/hdstr V6860)
-           (shen/shen\.insert-l V6859
-                                (shen/tlstr V6860)))))
-   ((shen/and
-     (shen/cons\? V6860)
-     (shen/and
-      (shen/= 'cn
-              (shen/hd V6860))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V6860))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 2 V6860))
-        (shen/internal/predicate->shen
-         (null
-          (nthcdr 3 V6860)))))))
-    (list 'cn
-          (shen/hd
-           (nthcdr 1 V6860))
-          (shen/shen\.insert-l V6859
-                               (shen/hd
-                                (nthcdr 2 V6860)))))
-   ((shen/and
-     (shen/cons\? V6860)
-     (shen/and
-      (shen/= 'shen\.app
-              (shen/hd V6860))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V6860))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 2 V6860))
-        (shen/and
-         (shen/cons\?
-          (nthcdr 3 V6860))
-         (shen/internal/predicate->shen
-          (null
-           (nthcdr 4 V6860))))))))
-    (append
-     (list 'shen\.app
-           (shen/hd
-            (nthcdr 1 V6860))
-           (shen/shen\.insert-l V6859
-                                (shen/hd
-                                 (nthcdr 2 V6860))))
-     (nthcdr 3 V6860)))
-   (shen/true
-    (shen/simple-error "implementation error in shen.insert-l"))))
-(defun shen/shen\.factor-cn
-    (V6861)
-  (shen/cond
-   ((shen/and
-     (shen/cons\? V6861)
-     (shen/and
-      (shen/= 'cn
-              (shen/hd V6861))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 1 V6861))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 2 V6861))
-        (shen/and
-         (shen/cons\?
-          (shen/hd
-           (nthcdr 2 V6861)))
-         (shen/and
-          (shen/= 'cn
-                  (shen/hd
-                   (shen/hd
-                    (nthcdr 2 V6861))))
-          (shen/and
-           (shen/cons\?
-            (nthcdr 1
-                    (shen/hd
-                     (nthcdr 2 V6861))))
-           (shen/and
-            (shen/cons\?
-             (nthcdr 2
-                     (shen/hd
-                      (nthcdr 2 V6861))))
-            (shen/and
-             (shen/internal/predicate->shen
-              (null
-               (nthcdr 3
-                       (shen/hd
-                        (nthcdr 2 V6861)))))
-             (shen/and
-              (shen/internal/predicate->shen
-               (null
-                (nthcdr 3 V6861)))
-              (shen/and
-               (shen/string\?
-                (shen/hd
-                 (nthcdr 1 V6861)))
-               (shen/string\?
-                (shen/hd
-                 (nthcdr 1
-                         (shen/hd
-                          (nthcdr 2 V6861))))))))))))))))
-    (append
-     (list 'cn
-           (shen/cn
-            (shen/hd
-             (nthcdr 1 V6861))
-            (shen/hd
-             (nthcdr 1
-                     (shen/hd
-                      (nthcdr 2 V6861))))))
-     (nthcdr 2
-             (shen/hd
-              (nthcdr 2 V6861)))))
-   (shen/true V6861)))
-(defun shen/shen\.proc-nl
-    (V6864)
-  (shen/cond
-   ((shen/= "" V6864)
-    "")
-   ((shen/and
-     (shen/shen\.+string\? V6864)
-     (shen/and
-      (shen/= "~"
-              (shen/hdstr V6864))
-      (shen/and
-       (shen/shen\.+string\?
-        (shen/tlstr V6864))
-       (shen/= "%"
-               (shen/hdstr
-                (shen/tlstr V6864))))))
-    (shen/cn
-     (shen/n->string 10)
-     (shen/shen\.proc-nl
-      (shen/tlstr
-       (shen/tlstr V6864)))))
-   ((shen/shen\.+string\? V6864)
-    (shen/cn
-     (shen/hdstr V6864)
-     (shen/shen\.proc-nl
-      (shen/tlstr V6864))))
-   (shen/true
-    (shen/simple-error "implementation error in shen.proc-nl"))))
-(defun shen/shen\.mkstr-r
-    (V6869 V6870)
-  (cl-flet
-      ((tail-trampoline
-        (V6869 V6870)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V6870))
-          V6869)
-         ((shen/cons\? V6870)
-          (vector
-           (list
-            (list 'shen\.insert
-                  (shen/hd V6870)
-                  V6869)
-            (nthcdr 1 V6870))))
-         (shen/true
-          (shen/simple-error "implementation error in shen.mkstr-r")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V6869 V6870)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.insert
-    (V6871 V6872)
-  (shen/shen\.insert-h V6871 V6872 ""))
-(defun shen/shen\.insert-h
-    (V6881 V6882 V6883)
-  (cl-flet
-      ((tail-trampoline
-        (V6881 V6882 V6883)
-        (shen/cond
-         ((shen/= "" V6882)
-          V6883)
-         ((shen/and
-           (shen/shen\.+string\? V6882)
-           (shen/and
-            (shen/= "~"
-                    (shen/hdstr V6882))
-            (shen/and
-             (shen/shen\.+string\?
-              (shen/tlstr V6882))
-             (shen/= "A"
-                     (shen/hdstr
-                      (shen/tlstr V6882))))))
-          (shen/cn V6883
-                   (shen/shen\.app V6881
-                                   (shen/tlstr
-                                    (shen/tlstr V6882))
-                                   'shen\.a)))
-         ((shen/and
-           (shen/shen\.+string\? V6882)
-           (shen/and
-            (shen/= "~"
-                    (shen/hdstr V6882))
-            (shen/and
-             (shen/shen\.+string\?
-              (shen/tlstr V6882))
-             (shen/= "R"
-                     (shen/hdstr
-                      (shen/tlstr V6882))))))
-          (shen/cn V6883
-                   (shen/shen\.app V6881
-                                   (shen/tlstr
-                                    (shen/tlstr V6882))
-                                   'shen\.r)))
-         ((shen/and
-           (shen/shen\.+string\? V6882)
-           (shen/and
-            (shen/= "~"
-                    (shen/hdstr V6882))
-            (shen/and
-             (shen/shen\.+string\?
-              (shen/tlstr V6882))
-             (shen/= "S"
-                     (shen/hdstr
-                      (shen/tlstr V6882))))))
-          (shen/cn V6883
-                   (shen/shen\.app V6881
-                                   (shen/tlstr
-                                    (shen/tlstr V6882))
-                                   'shen\.s)))
-         ((shen/shen\.+string\? V6882)
-          (vector
-           (list V6881
-                 (shen/tlstr V6882)
-                 (shen/cn V6883
-                          (shen/hdstr V6882)))))
-         (shen/true
-          (shen/simple-error "implementation error in shen.insert-h")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V6881 V6882 V6883)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.app
-    (V6884 V6885 V6886)
-  (shen/cn
-   (shen/shen\.arg->str V6884 V6886)
-   V6885))
-(defun shen/shen\.arg->str
-    (V6890 V6891)
-  (shen/cond
-   ((shen/= V6890
-            (shen/fail))
-    "...")
-   ((shen/shen\.list\? V6890)
-    (shen/shen\.list->str V6890 V6891))
-   ((shen/string\? V6890)
-    (shen/shen\.str->str V6890 V6891))
-   ((shen/absvector\? V6890)
-    (shen/shen\.vector->str V6890 V6891))
-   (shen/true
-    (shen/shen\.atom->str V6890))))
-(defun shen/shen\.list->str
-    (V6892 V6893)
-  (shen/cond
-   ((shen/= 'shen\.r V6893)
-    (concat
-     (concat "("
-             (shen/shen\.iter-list V6892 'shen\.r
-                                   (shen/shen\.maxseq)))
-     ")"))
-   (shen/true
-    (concat
-     (concat "["
-             (shen/shen\.iter-list V6892 V6893
-                                   (shen/shen\.maxseq)))
-     "]"))))
-(defun shen/shen\.maxseq nil
-  (shen/value '*maximum-print-sequence-size*))
-(defun shen/shen\.iter-list
-    (V6904 V6905 V6906)
+(defun shen/mapcan
+    (V4109 V4110)
   (shen/cond
    ((shen/internal/predicate->shen
-     (null V6904))
-    "")
-   ((shen/= 0 V6906)
-    "... etc")
-   ((shen/and
-     (shen/cons\? V6904)
-     (shen/internal/predicate->shen
-      (null
-       (nthcdr 1 V6904))))
-    (shen/shen\.arg->str
-     (shen/hd V6904)
-     V6905))
-   ((shen/cons\? V6904)
-    (concat
-     (concat
-      (shen/shen\.arg->str
-       (shen/hd V6904)
-       V6905)
-      " ")
-     (shen/shen\.iter-list
-      (nthcdr 1 V6904)
-      V6905
-      (shen/- V6906 1))))
+     (null V4110))
+    nil)
+   ((shen/cons\? V4110)
+    (shen/append
+     (shen/internal/apply-higher-order-function V4109
+                                                (list
+                                                 (shen/hd V4110)))
+     (shen/mapcan V4109
+                  (nthcdr 1 V4110))))
    (shen/true
-    (concat
-     (concat "|" " ")
-     (shen/shen\.arg->str V6904 V6905)))))
-(defun shen/shen\.str->str
-    (V6909 V6910)
+    (shen/simple-error "attempt to mapcan over a non-list\n"))))
+(defun shen/==
+    (V4116 V4117)
   (shen/cond
-   ((shen/= 'shen\.a V6910)
-    V6909)
-   (shen/true
-    (concat
-     (concat
-      (shen/n->string 34)
-      V6909)
-     (shen/n->string 34)))))
-(defun shen/shen\.vector->str
-    (V6911 V6912)
-  (shen/if
-   (shen/shen\.print-vector\? V6911)
-   (shen/internal/apply-function-expression
-    (shen/fn
-     (shen/<-address V6911 0))
-    (list V6911))
-   (shen/if
-    (shen/vector\? V6911)
-    (concat
-     (concat "<"
-             (shen/shen\.iter-vector V6911 1 V6912
-                                     (shen/shen\.maxseq)))
-     ">")
-    (concat
-     (concat "<" "<"
-             (shen/shen\.iter-vector V6911 0 V6912
-                                     (shen/shen\.maxseq)))
-     ">>"))))
-(defun shen/shen\.empty-absvector\?
-    (V6913)
-  (shen/= V6913
-          (shen/value 'shen\.*empty-absvector*)))
-(defun shen/shen\.print-vector\?
-    (V6914)
+   ((shen/= V4116 V4117)
+    'true)
+   (shen/true 'false)))
+(defun shen/bound\?
+    (V4118)
   (shen/and
-   (shen/not
-    (shen/shen\.empty-absvector\? V6914))
-   (shen/let W6915
-             (shen/<-address V6914 0)
-             (shen/or
-              (shen/= W6915 'shen\.tuple)
-              (shen/or
-               (shen/= W6915 'shen\.pvar)
-               (shen/or
-                (shen/= W6915 'shen\.dictionary)
-                (shen/and
-                 (shen/not
-                  (shen/number\? W6915))
-                 (shen/shen\.fbound\? W6915))))))))
-(defun shen/shen\.fbound\?
-    (V6916)
-  (shen/not
-   (shen/=
-    (shen/arity V6916)
-    -1)))
-(defun shen/shen\.tuple
-    (V6917)
-  (shen/cn "(@p "
-           (shen/shen\.app
-            (shen/<-address V6917 1)
-            (shen/cn " "
-                     (shen/shen\.app
-                      (shen/<-address V6917 2)
-                      ")" 'shen\.s))
-            'shen\.s)))
-(defun shen/shen\.dictionary
-    (V6918)
-  "(dict ...)")
-(defun shen/shen\.iter-vector
-    (V6925 V6926 V6927 V6928)
-  (shen/cond
-   ((shen/= 0 V6928)
-    "... etc")
-   (shen/true
-    (shen/let W6929
-              (shen/trap-error
-               (shen/<-address V6925 V6926)
-               (shen/lambda Z6930 'shen\.out-of-bounds))
-              (shen/let W6931
-                        (shen/trap-error
-                         (shen/<-address V6925
-                                         (1+ V6926))
-                         (shen/lambda Z6932 'shen\.out-of-bounds))
-                        (shen/if
-                         (shen/= W6929 'shen\.out-of-bounds)
-                         ""
-                         (shen/if
-                          (shen/= W6931 'shen\.out-of-bounds)
-                          (shen/shen\.arg->str W6929 V6927)
-                          (concat
-                           (concat
-                            (shen/shen\.arg->str W6929 V6927)
-                            " ")
-                           (shen/shen\.iter-vector V6925
-                                                   (1+ V6926)
-                                                   V6927
-                                                   (shen/- V6928 1))))))))))
-(defun shen/shen\.atom->str
-    (V6933)
-  (shen/trap-error
-   (shen/str V6933)
-   (shen/lambda Z6934
-                (shen/shen\.funexstring))))
-(defun shen/shen\.funexstring nil
-  (concat
-   (concat "" "f" "u" "n" "e"
-           (shen/shen\.arg->str
-            (shen/gensym
-             (shen/intern "x"))
-            'shen\.a))
-   ""))
-(defun shen/shen\.list\?
-    (V6935)
-  (shen/or
-   (shen/empty\? V6935)
-   (shen/cons\? V6935)))
-(defun shen/macroexpand
-    (V6968)
-  (shen/let W6969
-            (shen/map
-             (shen/lambda Z6970
-                          (nthcdr 1 Z6970))
-             (shen/value '*macros*))
-            (shen/shen\.macroexpand-h V6968 W6969 W6969)))
-(defun shen/shen\.macroexpand-h
-    (V6979 V6980 V6981)
-  (cl-flet
-      ((tail-trampoline
-        (V6979 V6980 V6981)
-        (shen/if
-         (shen/internal/predicate->shen
-          (null V6980))
-         V6979
-         (shen/if
-          (shen/cons\? V6980)
-          (shen/let W6982
-                    (shen/shen\.walk
-                     (shen/hd V6980)
-                     V6979)
-                    (shen/if
-                     (shen/= V6979 W6982)
-                     (vector
-                      (list V6979
-                            (nthcdr 1 V6980)
-                            V6981))
-                     (vector
-                      (list W6982 V6981 V6981))))
-          (shen/simple-error "implementation error in shen.macroexpand-h")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V6979 V6980 V6981)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.walk
-    (V6983 V6984)
-  (shen/if
-   (shen/cons\? V6984)
-   (shen/internal/apply-higher-order-function V6983
-                                              (list
-                                               (shen/map
-                                                (shen/lambda Z6985
-                                                             (shen/shen\.walk V6983 Z6985))
-                                                V6984)))
-   (shen/internal/apply-higher-order-function V6983
-                                              (list V6984))))
-(defun shen/shen\.macros
-    (V6986)
-  (shen/let GoTo6987
-            (shen/freeze V6986)
-            (shen/if
-             (shen/cons\? V6986)
-             (shen/let Select6988
-                       (shen/hd V6986)
-                       (shen/let Select6989
-                                 (nthcdr 1 V6986)
-                                 (shen/if
-                                  (shen/and
-                                   (shen/= 'defmacro Select6988)
-                                   (shen/cons\? Select6989))
-                                  (shen/shen\.process-def
-                                   (shen/hd Select6989)
-                                   (nthcdr 1 Select6989))
-                                  (shen/if
-                                   (shen/= 'defcc Select6988)
-                                   (shen/shen\.yacc->shen Select6989)
-                                   (shen/if
-                                    (shen/and
-                                     (shen/= 'u! Select6988)
-                                     (shen/and
-                                      (shen/cons\? Select6989)
-                                      (shen/internal/predicate->shen
-                                       (null
-                                        (nthcdr 1 Select6989)))))
-                                    (list 'protect
-                                          (shen/shen\.make-uppercase
-                                           (shen/hd Select6989)))
-                                    (shen/if
-                                     (shen/and
-                                      (shen/= 'error Select6988)
-                                      (shen/cons\? Select6989))
-                                     (list 'simple-error
-                                           (shen/shen\.mkstr
-                                            (shen/hd Select6989)
-                                            (nthcdr 1 Select6989)))
-                                     (shen/if
-                                      (shen/and
-                                       (shen/= 'output Select6988)
-                                       (shen/cons\? Select6989))
-                                      (list 'pr
-                                            (shen/shen\.mkstr
-                                             (shen/hd Select6989)
-                                             (nthcdr 1 Select6989))
-                                            (list 'stoutput))
-                                      (shen/if
-                                       (shen/and
-                                        (shen/= 'pr Select6988)
-                                        (shen/and
-                                         (shen/cons\? Select6989)
-                                         (shen/internal/predicate->shen
-                                          (null
-                                           (nthcdr 1 Select6989)))))
-                                       (list 'pr
-                                             (shen/hd Select6989)
-                                             (list 'stoutput))
-                                       (shen/if
-                                        (shen/and
-                                         (shen/= 'make-string Select6988)
-                                         (shen/cons\? Select6989))
-                                        (shen/shen\.mkstr
-                                         (shen/hd Select6989)
-                                         (nthcdr 1 Select6989))
-                                        (shen/if
-                                         (shen/and
-                                          (shen/= 'lineread Select6988)
-                                          (shen/internal/predicate->shen
-                                           (null Select6989)))
-                                         (list 'lineread
-                                               (list 'stinput))
-                                         (shen/if
-                                          (shen/and
-                                           (shen/= 'input Select6988)
-                                           (shen/internal/predicate->shen
-                                            (null Select6989)))
-                                          (list 'input
-                                                (list 'stinput))
-                                          (shen/if
-                                           (shen/and
-                                            (shen/= 'read Select6988)
-                                            (shen/internal/predicate->shen
-                                             (null Select6989)))
-                                           (list 'read
-                                                 (list 'stinput))
-                                           (shen/if
-                                            (shen/and
-                                             (shen/= 'input+ Select6988)
-                                             (shen/and
-                                              (shen/cons\? Select6989)
-                                              (shen/internal/predicate->shen
-                                               (null
-                                                (nthcdr 1 Select6989)))))
-                                            (list 'input+
-                                                  (shen/hd Select6989)
-                                                  (list 'stinput))
-                                            (shen/if
-                                             (shen/and
-                                              (shen/= 'read-byte Select6988)
-                                              (shen/internal/predicate->shen
-                                               (null Select6989)))
-                                             (shen/shen\.process-read-byte)
-                                             (shen/if
-                                              (shen/= 'prolog\? Select6988)
-                                              (shen/shen\.call-prolog Select6989)
-                                              (shen/if
-                                               (shen/and
-                                                (shen/= 'defprolog Select6988)
-                                                (shen/cons\? Select6989))
-                                               (shen/shen\.compile-prolog
-                                                (shen/hd Select6989)
-                                                (nthcdr 1 Select6989))
-                                               (shen/if
-                                                (shen/and
-                                                 (shen/= 'datatype Select6988)
-                                                 (shen/cons\? Select6989))
-                                                (shen/shen\.process-datatype
-                                                 (shen/hd Select6989)
-                                                 (nthcdr 1 Select6989))
-                                                (shen/if
-                                                 (shen/= '@s Select6988)
-                                                 (shen/shen\.process-@s V6986)
-                                                 (shen/if
-                                                  (shen/= 'synonyms Select6988)
-                                                  (shen/shen\.process-synonyms Select6989)
-                                                  (shen/if
-                                                   (shen/and
-                                                    (shen/= 'nl Select6988)
-                                                    (shen/internal/predicate->shen
-                                                     (null Select6989)))
-                                                   (list 'nl 1)
-                                                   (shen/if
-                                                    (shen/= 'let Select6988)
-                                                    (shen/shen\.process-let V6986)
-                                                    (shen/if
-                                                     (shen/= '/\. Select6988)
-                                                     (shen/shen\.process-lambda V6986)
-                                                     (shen/if
-                                                      (shen/= 'cases Select6988)
-                                                      (shen/shen\.process-cases V6986)
-                                                      (shen/if
-                                                       (shen/and
-                                                        (shen/= 'time Select6988)
-                                                        (shen/and
-                                                         (shen/cons\? Select6989)
-                                                         (shen/internal/predicate->shen
-                                                          (null
-                                                           (nthcdr 1 Select6989)))))
-                                                       (shen/shen\.process-time
-                                                        (shen/hd Select6989))
-                                                       (shen/if
-                                                        (shen/and
-                                                         (shen/= 'put Select6988)
-                                                         (shen/and
-                                                          (shen/cons\? Select6989)
-                                                          (shen/and
-                                                           (shen/cons\?
-                                                            (nthcdr 1 Select6989))
-                                                           (shen/and
-                                                            (shen/cons\?
-                                                             (nthcdr 2 Select6989))
-                                                            (shen/internal/predicate->shen
-                                                             (null
-                                                              (nthcdr 3 Select6989)))))))
-                                                        (list 'put
-                                                              (shen/hd Select6989)
-                                                              (shen/hd
-                                                               (nthcdr 1 Select6989))
-                                                              (shen/hd
-                                                               (nthcdr 2 Select6989))
-                                                              (list 'value '*property-vector*))
-                                                        (shen/if
-                                                         (shen/and
-                                                          (shen/= 'get Select6988)
-                                                          (shen/and
-                                                           (shen/cons\? Select6989)
-                                                           (shen/and
-                                                            (shen/cons\?
-                                                             (nthcdr 1 Select6989))
-                                                            (shen/internal/predicate->shen
-                                                             (null
-                                                              (nthcdr 2 Select6989))))))
-                                                         (list 'get
-                                                               (shen/hd Select6989)
-                                                               (shen/hd
-                                                                (nthcdr 1 Select6989))
-                                                               (list 'value '*property-vector*))
-                                                         (shen/if
-                                                          (shen/and
-                                                           (shen/= 'unput Select6988)
-                                                           (shen/and
-                                                            (shen/cons\? Select6989)
-                                                            (shen/and
-                                                             (shen/cons\?
-                                                              (nthcdr 1 Select6989))
-                                                             (shen/internal/predicate->shen
-                                                              (null
-                                                               (nthcdr 2 Select6989))))))
-                                                          (list 'unput
-                                                                (shen/hd Select6989)
-                                                                (shen/hd
-                                                                 (nthcdr 1 Select6989))
-                                                                (list 'value '*property-vector*))
-                                                          (shen/if
-                                                           (shen/and
-                                                            (shen/cons\? Select6989)
-                                                            (shen/and
-                                                             (shen/cons\?
-                                                              (nthcdr 1 Select6989))
-                                                             (shen/and
-                                                              (shen/cons\?
-                                                               (nthcdr 2 Select6989))
-                                                              (shen/element\? Select6988
-                                                                              (list '@p '@v 'append 'and 'or '+ '* 'do)))))
-                                                           (list Select6988
-                                                                 (shen/hd Select6989)
-                                                                 (shen/shen\.process-assoc
-                                                                  (append
-                                                                   (list Select6988)
-                                                                   (nthcdr 1 Select6989))))
-                                                           (shen/thaw GoTo6987)))))))))))))))))))))))))))))
-             (shen/thaw GoTo6987))))
-(defun shen/shen\.process-def
-    (V6990 V6991)
-  (shen/let W6992
-            (list 'X '-> 'X)
-            (shen/let W6993
-                      (shen/eval
-                       (append
-                        (list 'define V6990)
-                        (shen/append V6991 W6992)))
-                      (shen/let W6994
-                                (shen/shen\.record-macro V6990
-                                                         (shen/fn V6990))
-                                V6990))))
-(defun shen/shen\.process-let
-    (V6995)
-  (shen/if
-   (shen/and
-    (shen/cons\? V6995)
-    (shen/and
-     (shen/= 'let
-             (shen/hd V6995))
-     (shen/and
-      (shen/cons\?
-       (nthcdr 1 V6995))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 2 V6995))
-       (shen/and
-        (shen/cons\?
-         (nthcdr 3 V6995))
-        (shen/cons\?
-         (nthcdr 4 V6995)))))))
-   (list 'let
-         (shen/hd
-          (nthcdr 1 V6995))
-         (shen/hd
-          (nthcdr 2 V6995))
-         (append
-          (list 'let)
-          (nthcdr 3 V6995)))
-   V6995))
-(defun shen/shen\.process-@s
-    (V6996)
-  (cl-flet
-      ((tail-trampoline
-        (V6996)
-        (shen/let GoTo6998
-                  (shen/freeze V6996)
-                  (shen/if
-                   (shen/cons\? V6996)
-                   (shen/let Select7005
-                             (nthcdr 1 V6996)
-                             (shen/if
-                              (shen/= '@s
-                                      (shen/hd V6996))
-                              (shen/if
-                               (shen/cons\? Select7005)
-                               (shen/let Select7003
-                                         (shen/hd Select7005)
-                                         (shen/let Select7004
-                                                   (nthcdr 1 Select7005)
-                                                   (shen/if
-                                                    (shen/cons\? Select7004)
-                                                    (shen/let Select7002
-                                                              (nthcdr 1 Select7004)
-                                                              (shen/if
-                                                               (shen/cons\? Select7002)
-                                                               (list '@s Select7003
-                                                                     (shen/shen\.process-@s
-                                                                      (append
-                                                                       (list '@s)
-                                                                       Select7004)))
-                                                               (shen/if
-                                                                (shen/and
-                                                                 (shen/internal/predicate->shen
-                                                                  (null Select7002))
-                                                                 (shen/string\? Select7003))
-                                                                (shen/let W6997
-                                                                          (shen/explode Select7003)
-                                                                          (shen/if
-                                                                           (shen/>
-                                                                            (shen/length W6997)
-                                                                            1)
-                                                                           (vector
-                                                                            (list
-                                                                             (append
-                                                                              (list '@s)
-                                                                              (shen/append W6997 Select7004))))
-                                                                           V6996))
-                                                                (shen/thaw GoTo6998))))
-                                                    (shen/thaw GoTo6998))))
-                               (shen/thaw GoTo6998))
-                              (shen/thaw GoTo6998)))
-                   (shen/thaw GoTo6998)))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V6996)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/shen\.process-datatype
-    (V7006 V7007)
-  (shen/let W7008
-            (shen/shen\.intern-type V7006)
-            (shen/let W7009
-                      (shen/compile
-                       (shen/lambda Z7010
-                                    (shen/shen\.<datatype> Z7010))
-                       (append
-                        (list W7008)
-                        V7007))
-                      W7008)))
-(defun shen/shen\.intern-type
-    (V7011)
-  (shen/intern
-   (shen/cn
-    (shen/str V7011)
-    "#type")))
-(defun shen/shen\.process-synonyms
-    (V7012)
-  (shen/shen\.synonyms-h
-   (shen/set 'shen\.*synonyms*
-             (shen/append V7012
-                          (shen/value 'shen\.*synonyms*)))))
-(defun shen/shen\.lambda-of-defun
-    (V7015)
-  (shen/if
-   (shen/and
-    (shen/cons\? V7015)
-    (shen/and
-     (shen/= 'defun
-             (shen/hd V7015))
-     (shen/and
-      (shen/cons\?
-       (nthcdr 1 V7015))
-      (shen/and
-       (shen/cons\?
-        (nthcdr 2 V7015))
-       (shen/and
-        (shen/cons\?
-         (shen/hd
-          (nthcdr 2 V7015)))
-        (shen/and
-         (shen/internal/predicate->shen
-          (null
-           (nthcdr 1
-                   (shen/hd
-                    (nthcdr 2 V7015)))))
-         (shen/and
-          (shen/cons\?
-           (nthcdr 3 V7015))
-          (shen/internal/predicate->shen
-           (null
-            (nthcdr 4 V7015))))))))))
-   (shen/eval
-    (append
-     (list '/\.
-           (shen/hd
-            (shen/hd
-             (nthcdr 2 V7015))))
-     (nthcdr 3 V7015)))
-   (shen/shen\.f-error 'shen\.lambda-of-defun)))
-(defun shen/shen\.synonyms-h
-    (V7016)
-  (shen/let W7017
-            (shen/map
-             (shen/lambda Z7018
-                          (shen/shen\.curry-type Z7018))
-             V7016)
-            (shen/let W7019
-                      (shen/shen\.lambda-of-defun
-                       (shen/shen\.shendef->kldef 'shen\.demod
-                                                  (shen/shen\.compile-synonyms W7017)))
-                      (shen/let W7020
-                                (shen/set 'shen\.*demodulation-function* W7019)
-                                'synonyms))))
-(defun shen/shen\.compile-synonyms
-    (V7023)
-  (shen/if
-   (shen/internal/predicate->shen
-    (null V7023))
-   (shen/let W7024
-             (shen/gensym 'X)
-             (list W7024 '-> W7024))
-   (shen/if
-    (shen/and
-     (shen/cons\? V7023)
-     (shen/cons\?
-      (nthcdr 1 V7023)))
-    (append
-     (list
-      (shen/shen\.rcons_form
-       (shen/hd V7023))
-      '->
-      (shen/shen\.rcons_form
-       (shen/hd
-        (nthcdr 1 V7023))))
-     (shen/shen\.compile-synonyms
-      (nthcdr 2 V7023)))
-    (shen/simple-error "synonyms requires an even number of arguments\n"))))
-(defun shen/shen\.process-lambda
-    (V7025)
-  (shen/let GoTo7026
-            (shen/freeze V7025)
-            (shen/if
-             (shen/cons\? V7025)
-             (shen/let Select7033
-                       (nthcdr 1 V7025)
-                       (shen/if
-                        (shen/= '/\.
-                                (shen/hd V7025))
-                        (shen/if
-                         (shen/cons\? Select7033)
-                         (shen/let Select7031
-                                   (shen/hd Select7033)
-                                   (shen/let Select7032
-                                             (nthcdr 1 Select7033)
-                                             (shen/if
-                                              (shen/cons\? Select7032)
-                                              (shen/let Select7030
-                                                        (nthcdr 1 Select7032)
-                                                        (shen/if
-                                                         (shen/cons\? Select7030)
-                                                         (list 'lambda Select7031
-                                                               (shen/shen\.process-lambda
-                                                                (append
-                                                                 (list '/\.)
-                                                                 Select7032)))
-                                                         (shen/if
-                                                          (shen/internal/predicate->shen
-                                                           (null Select7030))
-                                                          (shen/if
-                                                           (shen/variable\? Select7031)
-                                                           (append
-                                                            (list 'lambda)
-                                                            Select7033)
-                                                           (shen/simple-error
-                                                            (shen/shen\.app Select7031 " is not a variable\n" 'shen\.s)))
-                                                          (shen/thaw GoTo7026))))
-                                              (shen/thaw GoTo7026))))
-                         (shen/thaw GoTo7026))
-                        (shen/thaw GoTo7026)))
-             (shen/thaw GoTo7026))))
-(defun shen/shen\.process-cases
-    (V7036)
-  (shen/let GoTo7037
-            (shen/freeze V7036)
-            (shen/if
-             (shen/cons\? V7036)
-             (shen/let Select7045
-                       (nthcdr 1 V7036)
-                       (shen/if
-                        (shen/= 'cases
-                                (shen/hd V7036))
-                        (shen/if
-                         (shen/cons\? Select7045)
-                         (shen/let Select7043
-                                   (shen/hd Select7045)
-                                   (shen/let Select7044
-                                             (nthcdr 1 Select7045)
-                                             (shen/if
-                                              (shen/and
-                                               (shen/= 'true Select7043)
-                                               (shen/cons\? Select7044))
-                                              (shen/hd Select7044)
-                                              (shen/let GoTo7040
-                                                        (shen/freeze
-                                                         (shen/if
-                                                          (shen/internal/predicate->shen
-                                                           (null Select7044))
-                                                          (shen/simple-error "error: odd number of case elements\n")
-                                                          (shen/thaw GoTo7037)))
-                                                        (shen/if
-                                                         (shen/cons\? Select7044)
-                                                         (shen/let Select7041
-                                                                   (shen/hd Select7044)
-                                                                   (shen/let Select7042
-                                                                             (nthcdr 1 Select7044)
-                                                                             (shen/if
-                                                                              (shen/internal/predicate->shen
-                                                                               (null Select7042))
-                                                                              (list 'if Select7043 Select7041
-                                                                                    (list 'simple-error "error: cases exhausted"))
-                                                                              (list 'if Select7043 Select7041
-                                                                                    (shen/shen\.process-cases
-                                                                                     (append
-                                                                                      (list 'cases)
-                                                                                      Select7042))))))
-                                                         (shen/thaw GoTo7040))))))
-                         (shen/thaw GoTo7037))
-                        (shen/thaw GoTo7037)))
-             (shen/thaw GoTo7037))))
-(defun shen/shen\.process-time
-    (V7046)
-  (list 'let 'Start
-        (list 'get-time 'run)
-        'Result V7046 'Finish
-        (list 'get-time 'run)
-        'Time
-        (list '- 'Finish 'Start)
-        'Message
-        (list 'pr
-              (list 'cn "\nrun time: "
-                    (list 'cn
-                          (list 'str 'Time)
-                          " secs\n"))
-              (list 'stoutput))
-        'Result))
-(defun shen/shen\.process-assoc
-    (V7047)
-  (shen/if
-   (shen/and
-    (shen/cons\? V7047)
-    (shen/and
-     (shen/cons\?
-      (nthcdr 1 V7047))
-     (shen/and
-      (shen/cons\?
-       (nthcdr 2 V7047))
-      (shen/cons\?
-       (nthcdr 3 V7047)))))
-   (list
-    (shen/hd V7047)
-    (shen/hd
-     (nthcdr 1 V7047))
-    (append
-     (list
-      (shen/hd V7047))
-     (nthcdr 2 V7047)))
-   V7047))
-(defun shen/shen\.make-uppercase
-    (V7048)
-  (shen/intern
-   (shen/shen\.mu-h
-    (shen/str V7048))))
-(defun shen/shen\.mu-h
-    (V7049)
-  (shen/if
-   (shen/= "" V7049)
-   ""
-   (shen/if
-    (shen/shen\.+string\? V7049)
-    (shen/let W7050
-              (shen/string->n
-               (shen/hdstr V7049))
-              (shen/let W7051
-                        (shen/- W7050 32)
-                        (shen/let W7052
-                                  (shen/if
-                                   (shen/and
-                                    (shen/>= W7050 97)
-                                    (shen/<= W7050 122))
-                                   (shen/n->string W7051)
-                                   (shen/hdstr V7049))
-                                  (concat
-                                   (concat W7052)
-                                   (shen/shen\.mu-h
-                                    (shen/tlstr V7049))))))
-    (shen/shen\.f-error 'shen\.mu-h))))
-(defun shen/shen\.record-macro
-    (V7053 V7054)
-  (shen/set '*macros*
-            (shen/shen\.update-assoc V7053 V7054
-                                     (shen/value '*macros*))))
-(defun shen/shen\.update-assoc
-    (V7064 V7065 V7066)
-  (shen/if
-   (shen/internal/predicate->shen
-    (null V7066))
-   (list
-    (append
-     (list V7064)
-     V7065))
-   (shen/let GoTo7067
-             (shen/freeze
-              (shen/simple-error "implementation error in shen.update-assoc"))
+   (shen/symbol\? V4118)
+   (shen/let W4119
+             (shen/trap-error
+              (shen/value V4118)
+              (shen/lambda Z4120 'shen\.this-symbol-is-unbound))
              (shen/if
-              (shen/cons\? V7066)
-              (shen/let Select7068
-                        (shen/hd V7066)
-                        (shen/let Select7069
-                                  (nthcdr 1 V7066)
-                                  (shen/if
-                                   (shen/and
-                                    (shen/cons\? Select7068)
-                                    (shen/= V7064
-                                            (shen/hd Select7068)))
-                                   (append
-                                    (list
-                                     (append
-                                      (list
-                                       (shen/hd Select7068))
-                                      V7065))
-                                    Select7069)
-                                   (append
-                                    (list Select7068)
-                                    (shen/shen\.update-assoc V7064 V7065 Select7069)))))
-              (shen/thaw GoTo7067)))))
-(defun shen/shen\.process-read-byte nil
+              (shen/= W4119 'shen\.this-symbol-is-unbound)
+              'false 'true))))
+(defun shen/shen\.string->bytes
+    (S)
+  (string-to-list S))
+(defun shen/maxinferences
+    (V4122)
   (shen/if
-   (shen/shen\.char-stinput\?
-    (shen/stinput))
-   (list 'string->n
-         (list 'shen\.read-unit-string
-               (list 'stinput)))
-   (list 'read-byte
-         (list 'stinput))))
-(defun shen/shen\.call-prolog
-    (V7070)
-  (shen/let W7071
-            (list 'shen\.prolog-vector)
-            (shen/let W7072
-                      (list '@v 'true 0
-                            (list 'vector 0))
-                      (shen/let W7073 0
-                                (shen/let W7074
-                                          (list 'freeze 'true)
-                                          (shen/let W7075
-                                                    (shen/compile
-                                                     (shen/lambda Z7076
-                                                                  (shen/shen\.<body> Z7076))
-                                                     V7070)
-                                                    (shen/let W7077
-                                                              (shen/shen\.received V7070)
-                                                              (shen/let W7078
-                                                                        (shen/gensym 'V)
-                                                                        (shen/let W7079
-                                                                                  (shen/gensym 'L)
-                                                                                  (shen/let W7080
-                                                                                            (shen/gensym 'K)
-                                                                                            (shen/let W7081
-                                                                                                      (shen/gensym 'C)
-                                                                                                      (shen/let W7082
-                                                                                                                (list 'lambda W7078
-                                                                                                                      (list 'lambda W7079
-                                                                                                                            (list 'lambda W7080
-                                                                                                                                  (list 'lambda W7081
-                                                                                                                                        (shen/shen\.continue W7077 W7075 W7078 W7079 W7080 W7081)))))
-                                                                                                                (list W7082 W7071 W7072 W7073 W7074)))))))))))))
-(defun shen/shen\.received
-    (V7085)
-  (shen/let GoTo7086
-            (shen/freeze nil)
-            (shen/if
-             (shen/cons\? V7085)
-             (shen/let Select7087
-                       (shen/hd V7085)
-                       (shen/let Select7088
-                                 (nthcdr 1 V7085)
-                                 (shen/if
-                                  (shen/and
-                                   (shen/= 'receive Select7087)
-                                   (shen/and
-                                    (shen/cons\? Select7088)
-                                    (shen/internal/predicate->shen
-                                     (null
-                                      (nthcdr 1 Select7088)))))
-                                  Select7088
-                                  (shen/union
-                                   (shen/shen\.received Select7087)
-                                   (shen/shen\.received Select7088)))))
-             (shen/thaw GoTo7086))))
-(defun shen/shen\.prolog-vector nil
-  (shen/let W7089
-            (shen/absvector
-             (shen/value 'shen\.*prolog-memory*))
-            (shen/let W7090
-                      (shen/address-> W7089 0 'shen\.print-prolog-vector)
-                      (shen/let W7091
-                                (shen/address-> W7089 1 2)
-                                W7091))))
-(defun shen/receive
-    (V7092)
-  V7092)
-(defun shen/shen\.rcons_form
-    (V7093)
-  (shen/if
-   (shen/cons\? V7093)
-   (list 'cons
-         (shen/shen\.rcons_form
-          (shen/hd V7093))
-         (shen/shen\.rcons_form
-          (nthcdr 1 V7093)))
-   V7093))
-(defun shen/shen\.tuple-up
-    (V7094)
-  (shen/if
-   (shen/cons\? V7094)
-   (list '@p
-         (shen/hd V7094)
-         (shen/shen\.tuple-up
-          (nthcdr 1 V7094)))
-   V7094))
-(defun shen/undefmacro
-    (V7095)
-  (shen/do
-   (shen/set '*macros*
-             (shen/remove
-              (shen/assoc V7095
-                          (shen/value '*macros*))
-              (shen/value '*macros*)))
-   V7095))
-(defun shen/datatypes nil
-  (shen/map
-   (shen/lambda Z863
-                (shen/shen\.typename Z863))
-   (shen/value 'shen\.*alldatatypes*)))
-(defun shen/shen\.included nil
-  (shen/map
-   (shen/lambda Z864
-                (shen/shen\.typename Z864))
-   (shen/value 'shen\.*datatypes*)))
-(defun shen/shen\.typename
-    (V867)
-  (shen/cond
-   ((shen/cons\? V867)
-    (shen/intern
-     (shen/shen\.typename-h
-      (shen/str
-       (shen/hd V867)))))
-   (shen/true
-    (shen/shen\.f-error 'shen\.typename))))
-(defun shen/shen\.typename-h
-    (V868)
-  (shen/cond
-   ((shen/= "#type" V868)
-    "")
-   ((shen/shen\.+string\? V868)
-    (shen/cn
-     (shen/hdstr V868)
-     (shen/shen\.typename-h
-      (shen/tlstr V868))))
-   (shen/true
-    (shen/shen\.f-error 'shen\.typename-h))))
-(defun shen/prolog-memory
-    (V869)
-  (shen/if
-   (shen/< V869 0)
-   (shen/value 'shen\.*prolog-memory*)
+   (shen/< V4122 0)
+   (shen/value 'shen\.*maxinferences*)
    (shen/if
-    (shen/integer\? V869)
-    (shen/set 'shen\.*prolog-memory* V869)
-    (shen/simple-error "prolog memory expects an integer value\n"))))
-(defun shen/arity
-    (V870)
-  (shen/trap-error
-   (shen/get V870 'arity
-             (shen/value '*property-vector*))
-   (shen/lambda Z871 -1)))
-(defun shen/shen\.initialise-arity-table
-    (V874)
-  (cl-flet
-      ((tail-trampoline
-        (V874)
-        (shen/cond
-         ((shen/internal/predicate->shen
-           (null V874))
-          nil)
-         ((shen/and
-           (shen/cons\? V874)
-           (shen/cons\?
-            (nthcdr 1 V874)))
-          (shen/let W875
-                    (shen/put
-                     (shen/hd V874)
-                     'arity
-                     (shen/hd
-                      (nthcdr 1 V874))
-                     (shen/value '*property-vector*))
-                    (vector
-                     (list
-                      (nthcdr 2 V874)))))
-         (shen/true
-          (shen/simple-error "implementation error in shen.initialise-arity-table")))))
-    (let
-        ((result
-          (funcall #'tail-trampoline V874)))
-      (while
-          (vectorp result)
-        (setq result
-              (apply #'tail-trampoline
-                     (aref result 0))))
-      result)))
-(defun shen/systemf
-    (V876)
-  (shen/let W877
-            (shen/get 'shen 'shen\.external-symbols
-                      (shen/value '*property-vector*))
-            (shen/let W878
-                      (shen/put 'shen 'shen\.external-symbols
-                                (shen/adjoin V876 W877)
-                                (shen/value '*property-vector*))
-                      V876)))
-(defun shen/adjoin
-    (V879 V880)
-  (shen/if
-   (shen/element\? V879 V880)
-   V880
-   (append
-    (list V879)
-    V880)))
-(defun shen/shen\.lambda-entry
-    (V881)
-  (shen/let W882
-            (shen/arity V881)
+    (shen/integer\? V4122)
+    (shen/set 'shen\.*maxinferences* V4122)
+    (shen/simple-error "maxinferences expects an integer value\n"))))
+(defun shen/inferences nil
+  (shen/value 'shen\.*infs*))
+(defun shen/protect
+    (V4123)
+  V4123)
+(defun shen/sterror nil
+  (shen/value '*sterror*))
+(defun shen/stoutput nil
+  (shen/value '*stoutput*))
+(defun shen/string->symbol
+    (V4124)
+  (shen/let W4125
+            (shen/intern V4124)
             (shen/if
-             (shen/or
-              (shen/= W882 -1)
-              (shen/= W882 0))
-             nil
-             (append
-              (list V881)
-              (shen/eval-kl
-               (shen/shen\.lambda-function
-                (list V881)
-                W882))))))
-(defun shen/shen\.set-lambda-form-entry
-    (V883)
+             (shen/symbol\? W4125)
+             W4125
+             (shen/simple-error
+              (shen/cn "cannot intern "
+                       (shen/shen\.app V4124 " to a symbol" 'shen\.s))))))
+(defun shen/optimise
+    (V4128)
   (shen/cond
-   ((shen/cons\? V883)
-    (shen/put
-     (shen/hd V883)
-     'shen\.lambda-form
-     (nthcdr 1 V883)
-     (shen/value '*property-vector*)))
+   ((shen/= '+ V4128)
+    (shen/set 'shen\.*optimise* 'true))
+   ((shen/= '- V4128)
+    (shen/set 'shen\.*optimise* 'false))
    (shen/true
-    (shen/shen\.f-error 'shen\.set-lambda-form-entry))))
-(defun shen/shen\.build-lambda-table
-    (V884)
-  (shen/let W885
-            (shen/map
-             (shen/lambda Z886
-                          (shen/shen\.lambda-entry Z886))
-             V884)
-            (shen/shen\.for-each
-             (shen/lambda Z887
-                          (shen/shen\.set-lambda-form-entry Z887))
-             (append
-              (list
-               (append
-                (list 'shen\.tuple)
-                (shen/lambda Z888
-                             (shen/shen\.tuple Z888)))
-               (append
-                (list 'shen\.pvar)
-                (shen/lambda Z889
-                             (shen/shen\.pvar Z889)))
-               (append
-                (list 'shen\.dictionary)
-                (shen/lambda Z890
-                             (shen/shen\.dictionary Z890)))
-               (append
-                (list 'shen\.print-prolog-vector)
-                (shen/lambda Z891
-                             (shen/shen\.print-prolog-vector Z891)))
-               (append
-                (list 'shen\.print-freshterm)
-                (shen/lambda Z892
-                             (shen/shen\.print-freshterm Z892)))
-               (append
-                (list 'shen\.printF)
-                (shen/lambda Z893
-                             (shen/shen\.printF Z893))))
-              W885))))
+    (shen/simple-error "optimise expects a + or a -.\n"))))
+(defun shen/os nil
+  (shen/value '*os*))
+(defun shen/language nil
+  (shen/value '*language*))
+(defun shen/version nil
+  (shen/value '*version*))
+(defun shen/port nil
+  (shen/value '*port*))
+(defun shen/porters nil
+  (shen/value '*porters*))
+(defun shen/implementation nil
+  (shen/value '*implementation*))
+(defun shen/release nil
+  (shen/value '*release*))
+(defun shen/package\?
+    (V4129)
+  (shen/cond
+   ((shen/= 'null V4129)
+    'true)
+   (shen/true
+    (shen/trap-error
+     (shen/do
+      (shen/external V4129)
+      'true)
+     (shen/lambda Z4130 'false)))))
+(defun shen/fail nil 'shen\.fail!)
+(defun shen/userdefs nil
+  (shen/value 'shen\.*userdefs*))
+(defun shen/optimise\? nil
+  (shen/value 'shen\.*optimise*))
+(defun shen/hush\? nil
+  (shen/value '*hush*))
+(defun shen/system-S\? nil
+  (shen/value 'shen\.*shen-type-theory-enabled\?*))
+(defun shen/enable-type-theory
+    (V4133)
+  (shen/cond
+   ((shen/= '+ V4133)
+    (shen/set 'shen\.*shen-type-theory-enabled\?* 'true))
+   ((shen/= '- V4133)
+    (shen/set 'shen\.*shen-type-theory-enabled\?* 'false))
+   (shen/true
+    (shen/simple-error "enable-type-theory expects a + or a -\n"))))
+(defun shen/hush
+    (V4136)
+  (shen/cond
+   ((shen/= '+ V4136)
+    (shen/set '*hush* 'true))
+   ((shen/= '- V4136)
+    (shen/set '*hush* 'false))
+   (shen/true
+    (shen/simple-error "hush expects a + or a -\n"))))
+(defun shen/tc
+    (V4139)
+  (shen/cond
+   ((shen/= '+ V4139)
+    (shen/set 'shen\.*tc* 'true))
+   ((shen/= '- V4139)
+    (shen/set 'shen\.*tc* 'false))
+   (shen/true
+    (shen/simple-error "tc expects a + or -"))))
+(defun shen/destroy
+    (V4140)
+  (shen/do
+   (shen/set 'shen\.*sigf*
+             (shen/shen\.unassoc V4140
+                                 (shen/value 'shen\.*sigf*)))
+   V4140))
+(defun shen/shen\.unassoc
+    (V4150 V4151)
+  (shen/cond
+   ((shen/internal/predicate->shen
+     (null V4151))
+    nil)
+   ((shen/and
+     (shen/cons\? V4151)
+     (shen/and
+      (shen/cons\?
+       (shen/hd V4151))
+      (shen/= V4150
+              (shen/hd
+               (shen/hd V4151)))))
+    (nthcdr 1 V4151))
+   ((shen/cons\? V4151)
+    (append
+     (list
+      (shen/hd V4151))
+     (shen/shen\.unassoc V4150
+                         (nthcdr 1 V4151))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.unassoc"))))
+(defun shen/in-package
+    (V4152)
+  (shen/if
+   (shen/package\? V4152)
+   (shen/set 'shen\.*package* V4152)
+   (shen/simple-error
+    (shen/cn "package "
+             (shen/shen\.app V4152 " does not exist\n" 'shen\.a)))))
+(defun shen/write-to-file
+    (V4153 V4154)
+  (shen/let W4155
+            (shen/open V4153 'out)
+            (shen/let W4156
+                      (shen/if
+                       (shen/string\? V4154)
+                       V4154
+                       (shen/shen\.app V4154 "" 'shen\.s))
+                      (shen/let W4157
+                                (shen/pr W4156 W4155)
+                                (shen/let W4158
+                                          (shen/close W4155)
+                                          V4154)))))
+(defun shen/fresh nil
+  (shen/shen\.freshterm
+   (shen/gensym 'shen\.t)))
+(defun shen/update-lambda-table
+    (V4159 V4160)
+  (shen/let W4161
+            (shen/put V4159 'arity V4160
+                      (shen/value '*property-vector*))
+            (shen/let W4162
+                      (shen/shen\.lambda-entry V4159)
+                      (shen/let W4163
+                                (shen/shen\.set-lambda-form-entry
+                                 (append
+                                  (list V4159)
+                                  W4162))
+                                V4159))))
+(defun shen/specialise
+    (V4166 V4167)
+  (shen/cond
+   ((shen/= 0 V4167)
+    (shen/do
+     (shen/set 'shen\.*special*
+               (shen/remove V4166
+                            (shen/value 'shen\.*special*)))
+     (shen/do
+      (shen/set 'shen\.*extraspecial*
+                (shen/remove V4166
+                             (shen/value 'shen\.*extraspecial*)))
+      V4166)))
+   ((shen/= 1 V4167)
+    (shen/do
+     (shen/set 'shen\.*special*
+               (shen/adjoin V4166
+                            (shen/value 'shen\.*special*)))
+     (shen/do
+      (shen/set 'shen\.*extraspecial*
+                (shen/remove V4166
+                             (shen/value 'shen\.*extraspecial*)))
+      V4166)))
+   ((shen/= 2 V4167)
+    (shen/do
+     (shen/set 'shen\.*special*
+               (shen/remove V4166
+                            (shen/value 'shen\.*special*)))
+     (shen/do
+      (shen/set 'shen\.*extraspecial*
+                (shen/adjoin V4166
+                             (shen/value 'shen\.*extraspecial*)))
+      V4166)))
+   (shen/true
+    (shen/simple-error "specialise requires values of 0, 1 or 2\n"))))
 (defun shen/shen\.typecheck
     (V4893 V4894)
   (shen/let W4895
@@ -19496,6 +16851,951 @@
     (shen/=
      (shen/<-address V5683 0)
      'shen\.print-freshterm))))
+(defun shen/shen\.repl nil
+  (shen/do
+   (shen/shen\.credits)
+   (shen/shen\.loop)))
+(defun shen/shen\.loop nil
+  (cl-flet
+      ((tail-trampoline nil
+                        (shen/do
+                         (shen/shen\.initialise_environment)
+                         (shen/do
+                          (shen/shen\.prompt)
+                          (shen/do
+                           (shen/trap-error
+                            (shen/shen\.read-evaluate-print)
+                            (shen/lambda Z5707
+                                         (shen/shen\.toplevel-display-exception Z5707)))
+                           (vector
+                            (list)))))))
+    (let
+        ((result
+          (funcall #'tail-trampoline)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.toplevel-display-exception
+    (V5708)
+  (shen/do
+   (shen/pr
+    (shen/error-to-string V5708)
+    (shen/stoutput))
+   (shen/nl 0)))
+(defun shen/shen\.credits nil
+  (shen/do
+   (shen/pr "\nShen, www.shenlanguage.org, copyright (C) 2010-2024, Mark Tarver\n"
+            (shen/stoutput))
+   (shen/do
+    (shen/pr
+     (shen/cn "version: S"
+              (shen/shen\.app
+               (shen/value '*version*)
+               (shen/cn ", language: "
+                        (shen/shen\.app
+                         (shen/value '*language*)
+                         (shen/cn ", platform: "
+                                  (shen/shen\.app
+                                   (shen/value '*implementation*)
+                                   (shen/cn " "
+                                            (shen/shen\.app
+                                             (shen/value '*release*)
+                                             "\n" 'shen\.a))
+                                   'shen\.a))
+                         'shen\.a))
+               'shen\.a))
+     (shen/stoutput))
+    (shen/pr
+     (shen/cn "port "
+              (shen/shen\.app
+               (shen/value '*port*)
+               (shen/cn ", ported by "
+                        (shen/shen\.app
+                         (shen/value '*porters*)
+                         "\n\n" 'shen\.a))
+               'shen\.a))
+     (shen/stoutput)))))
+(defun shen/shen\.initialise_environment nil
+  (shen/do
+   (shen/set 'shen\.*call* 0)
+   (shen/set 'shen\.*infs* 0)))
+(defun shen/shen\.prompt nil
+  (shen/if
+   (shen/value 'shen\.*tc*)
+   (shen/pr
+    (shen/cn "\n("
+             (shen/shen\.app
+              (shen/length
+               (shen/value 'shen\.*history*))
+              "+) " 'shen\.a))
+    (shen/stoutput))
+   (shen/pr
+    (shen/cn "\n("
+             (shen/shen\.app
+              (shen/length
+               (shen/value 'shen\.*history*))
+              "-) " 'shen\.a))
+    (shen/stoutput))))
+(defun shen/shen\.read-evaluate-print nil
+  (shen/let W5709
+            (shen/value 'shen\.*package*)
+            (shen/let W5710
+                      (shen/shen\.package-user-input W5709
+                                                     (shen/lineread
+                                                      (shen/stinput)))
+                      (shen/let W5711
+                                (shen/shen\.update-history)
+                                (shen/shen\.evaluate-lineread W5710 W5711
+                                                              (shen/value 'shen\.*tc*))))))
+(defun shen/shen\.package-user-input
+    (V5712 V5713)
+  (shen/cond
+   ((shen/= 'null V5712)
+    V5713)
+   (shen/true
+    (shen/let W5714
+              (shen/str V5712)
+              (shen/let W5715
+                        (shen/external V5712)
+                        (shen/map
+                         (shen/lambda Z5716
+                                      (shen/shen\.pui-h W5714 W5715 Z5716))
+                         V5713))))))
+(defun shen/shen\.pui-h
+    (V5721 V5722 V5723)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V5723)
+     (shen/and
+      (shen/= 'fn
+              (shen/hd V5723))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V5723))
+       (shen/internal/predicate->shen
+        (null
+         (nthcdr 2 V5723))))))
+    (shen/if
+     (shen/shen\.internal\?
+      (shen/hd
+       (nthcdr 1 V5723))
+      V5721 V5722)
+     (list 'fn
+           (shen/shen\.intern-in-package V5721
+                                         (shen/hd
+                                          (nthcdr 1 V5723))))
+     V5723))
+   ((shen/cons\? V5723)
+    (shen/if
+     (shen/shen\.internal\?
+      (shen/hd V5723)
+      V5721 V5722)
+     (append
+      (list
+       (shen/shen\.intern-in-package V5721
+                                     (shen/hd V5723)))
+      (shen/map
+       (shen/lambda Z5724
+                    (shen/shen\.pui-h V5721 V5722 Z5724))
+       (nthcdr 1 V5723)))
+     (shen/if
+      (shen/cons\?
+       (shen/hd V5723))
+      (shen/map
+       (shen/lambda Z5725
+                    (shen/shen\.pui-h V5721 V5722 Z5725))
+       V5723)
+      (append
+       (list
+        (shen/hd V5723))
+       (shen/map
+        (shen/lambda Z5726
+                     (shen/shen\.pui-h V5721 V5722 Z5726))
+        (nthcdr 1 V5723))))))
+   (shen/true V5723)))
+(defun shen/shen\.update-history nil
+  (shen/set 'shen\.*history*
+            (append
+             (list
+              (shen/shen\.trim-it
+               (shen/it)))
+             (shen/value 'shen\.*history*))))
+(defun shen/shen\.trim-it
+    (V5727)
+  (cl-flet
+      ((tail-trampoline
+        (V5727)
+        (shen/cond
+         ((shen/and
+           (shen/shen\.+string\? V5727)
+           (shen/shen\.whitespace\?
+            (shen/string->n
+             (shen/hdstr V5727))))
+          (vector
+           (list
+            (shen/tlstr V5727))))
+         (shen/true V5727))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V5727)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.evaluate-lineread
+    (V5746 V5747 V5748)
+  (cl-flet
+      ((tail-trampoline
+        (V5746 V5747 V5748)
+        (shen/cond
+         ((shen/and
+           (shen/cons\? V5746)
+           (shen/and
+            (shen/internal/predicate->shen
+             (null
+              (nthcdr 1 V5746)))
+            (shen/and
+             (shen/cons\? V5747)
+             (shen/and
+              (shen/shen\.+string\?
+               (shen/hd V5747))
+              (shen/and
+               (shen/= "!"
+                       (shen/hdstr
+                        (shen/hd V5747)))
+               (shen/and
+                (shen/shen\.+string\?
+                 (shen/tlstr
+                  (shen/hd V5747)))
+                (shen/and
+                 (shen/= "!"
+                         (shen/hdstr
+                          (shen/tlstr
+                           (shen/hd V5747))))
+                 (shen/cons\?
+                  (nthcdr 1 V5747)))))))))
+          (shen/let W5749
+                    (shen/read-from-string
+                     (shen/hd
+                      (nthcdr 1 V5747)))
+                    (shen/let W5750
+                              (shen/set 'shen\.*history*
+                                        (append
+                                         (list
+                                          (shen/hd
+                                           (nthcdr 1 V5747)))
+                                         (nthcdr 1 V5747)))
+                              (shen/let W5751
+                                        (shen/pr
+                                         (shen/shen\.app
+                                          (shen/hd
+                                           (nthcdr 1 V5747))
+                                          "\n" 'shen\.a)
+                                         (shen/stoutput))
+                                        (vector
+                                         (list W5749 W5750 V5748))))))
+         ((shen/and
+           (shen/cons\? V5746)
+           (shen/and
+            (shen/internal/predicate->shen
+             (null
+              (nthcdr 1 V5746)))
+            (shen/and
+             (shen/cons\? V5747)
+             (shen/and
+              (shen/shen\.+string\?
+               (shen/hd V5747))
+              (shen/= "!"
+                      (shen/hdstr
+                       (shen/hd V5747)))))))
+          (shen/let W5752
+                    (shen/if
+                     (shen/=
+                      (shen/tlstr
+                       (shen/hd V5747))
+                      "")
+                     nil
+                     (shen/hd
+                      (shen/read-from-string
+                       (shen/tlstr
+                        (shen/hd V5747)))))
+                    (shen/let W5753
+                              (shen/shen\.use-history W5752
+                                                      (shen/tlstr
+                                                       (shen/hd V5747))
+                                                      (nthcdr 1 V5747))
+                              (shen/let W5754
+                                        (shen/pr
+                                         (shen/shen\.app W5753 "\n" 'shen\.a)
+                                         (shen/stoutput))
+                                        (shen/let W5755
+                                                  (shen/read-from-string W5753)
+                                                  (shen/let W5756
+                                                            (shen/set 'shen\.*history*
+                                                                      (append
+                                                                       (list W5753)
+                                                                       (nthcdr 1 V5747)))
+                                                            (vector
+                                                             (list W5755 W5756 V5748))))))))
+         ((shen/and
+           (shen/cons\? V5746)
+           (shen/and
+            (shen/internal/predicate->shen
+             (null
+              (nthcdr 1 V5746)))
+            (shen/and
+             (shen/cons\? V5747)
+             (shen/and
+              (shen/shen\.+string\?
+               (shen/hd V5747))
+              (shen/= "%"
+                      (shen/hdstr
+                       (shen/hd V5747)))))))
+          (shen/let W5757
+                    (shen/if
+                     (shen/=
+                      (shen/tlstr
+                       (shen/hd V5747))
+                      "")
+                     nil
+                     (shen/hd
+                      (shen/read-from-string
+                       (shen/tlstr
+                        (shen/hd V5747)))))
+                    (shen/let W5758
+                              (shen/shen\.peek-history W5757
+                                                       (shen/tlstr
+                                                        (shen/hd V5747))
+                                                       (nthcdr 1 V5747))
+                              (shen/let W5759
+                                        (shen/set 'shen\.*history*
+                                                  (nthcdr 1 V5747))
+                                        (shen/abort)))))
+         ((shen/= 'true V5748)
+          (shen/shen\.check-eval-and-print V5746))
+         ((shen/= 'false V5748)
+          (shen/shen\.eval-and-print V5746))
+         (shen/true
+          (shen/simple-error "implementation error in shen.evaluate-lineread")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V5746 V5747 V5748)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.use-history
+    (V5760 V5761 V5762)
+  (shen/if
+   (shen/integer\? V5760)
+   (shen/nth
+    (1+ V5760)
+    (shen/reverse V5762))
+   (shen/if
+    (shen/symbol\? V5760)
+    (shen/shen\.string-match V5761 V5762)
+    (shen/simple-error "! expects a number or a symbol\n"))))
+(defun shen/shen\.peek-history
+    (V5763 V5764 V5765)
+  (shen/if
+   (shen/integer\? V5763)
+   (shen/pr
+    (shen/cn "\n"
+             (shen/shen\.app
+              (shen/nth
+               (1+ V5763)
+               (shen/reverse V5765))
+              "" 'shen\.a))
+    (shen/stoutput))
+   (shen/if
+    (shen/or
+     (shen/= V5764 "")
+     (shen/symbol\? V5763))
+    (shen/shen\.recursive-string-match 0 V5764
+                                       (shen/reverse V5765))
+    (shen/simple-error "% expects a number or a symbol\n"))))
+(defun shen/shen\.string-match
+    (V5775 V5776)
+  (cl-flet
+      ((tail-trampoline
+        (V5775 V5776)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V5776))
+          (shen/simple-error "\ninput not found"))
+         ((shen/and
+           (shen/cons\? V5776)
+           (shen/shen\.string-prefix\? V5775
+                                       (shen/hd V5776)))
+          (shen/hd V5776))
+         ((shen/cons\? V5776)
+          (vector
+           (list V5775
+                 (nthcdr 1 V5776))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.string-match")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V5775 V5776)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.string-prefix\?
+    (V5784 V5785)
+  (cl-flet
+      ((tail-trampoline
+        (V5784 V5785)
+        (shen/cond
+         ((shen/= "" V5784)
+          'true)
+         ((shen/and
+           (shen/shen\.+string\? V5784)
+           (shen/shen\.whitespace\?
+            (shen/string->n
+             (shen/hdstr V5784))))
+          (vector
+           (list
+            (shen/tlstr V5784)
+            V5785)))
+         ((shen/and
+           (shen/shen\.+string\? V5785)
+           (shen/shen\.whitespace\?
+            (shen/string->n
+             (shen/hdstr V5785))))
+          (vector
+           (list V5784
+                 (shen/tlstr V5785))))
+         ((shen/and
+           (shen/shen\.+string\? V5785)
+           (shen/= "("
+                   (shen/hdstr V5785)))
+          (vector
+           (list V5784
+                 (shen/tlstr V5785))))
+         ((shen/and
+           (shen/shen\.+string\? V5784)
+           (shen/and
+            (shen/shen\.+string\? V5785)
+            (shen/=
+             (shen/hdstr V5784)
+             (shen/hdstr V5785))))
+          (vector
+           (list
+            (shen/tlstr V5784)
+            (shen/tlstr V5785))))
+         (shen/true 'false))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V5784 V5785)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.recursive-string-match
+    (V5796 V5797 V5798)
+  (cl-flet
+      ((tail-trampoline
+        (V5796 V5797 V5798)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V5798))
+          'shen\.skip)
+         ((shen/cons\? V5798)
+          (shen/do
+           (shen/if
+            (shen/shen\.string-prefix\? V5797
+                                        (shen/hd V5798))
+            (shen/pr
+             (shen/shen\.app V5796
+                             (shen/cn ". "
+                                      (shen/shen\.app
+                                       (shen/hd V5798)
+                                       "\n" 'shen\.a))
+                             'shen\.a)
+             (shen/stoutput))
+            'shen\.skip)
+           (vector
+            (list
+             (1+ V5796)
+             V5797
+             (nthcdr 1 V5798)))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.recursive-string-match")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V5796 V5797 V5798)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.f-error
+    (V5830)
+  (shen/do
+   (shen/pr
+    (shen/cn "partial function "
+             (shen/shen\.app V5830 ";\n" 'shen\.a))
+    (shen/stoutput))
+   (shen/do
+    (shen/if
+     (shen/and
+      (shen/not
+       (shen/shen\.tracked\? V5830))
+      (shen/y-or-n\?
+       (shen/cn "track "
+                (shen/shen\.app V5830 "? " 'shen\.a))))
+     (shen/shen\.track-function
+      (shen/ps V5830))
+     'shen\.ok)
+    (shen/simple-error "aborted"))))
+(defun shen/shen\.tracked\?
+    (V5831)
+  (shen/element\? V5831
+                  (shen/value 'shen\.*tracking*)))
+(defun shen/track
+    (V5832)
+  (shen/let W5833
+            (shen/ps V5832)
+            (shen/shen\.track-function W5833)))
+(defun shen/shen\.track-function
+    (V5836)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V5836)
+     (shen/and
+      (shen/= 'defun
+              (shen/hd V5836))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V5836))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 2 V5836))
+        (shen/and
+         (shen/cons\?
+          (nthcdr 3 V5836))
+         (shen/internal/predicate->shen
+          (null
+           (nthcdr 4 V5836))))))))
+    (shen/let W5837
+              (list 'defun
+                    (shen/hd
+                     (nthcdr 1 V5836))
+                    (shen/hd
+                     (nthcdr 2 V5836))
+                    (shen/shen\.insert-tracking-code
+                     (shen/hd
+                      (nthcdr 1 V5836))
+                     (shen/hd
+                      (nthcdr 2 V5836))
+                     (shen/hd
+                      (nthcdr 3 V5836))))
+              (shen/let W5838
+                        (shen/eval-kl W5837)
+                        (shen/let W5839
+                                  (shen/set 'shen\.*tracking*
+                                            (shen/adjoin
+                                             (shen/hd
+                                              (nthcdr 1 V5836))
+                                             (shen/value 'shen\.*tracking*)))
+                                  (shen/hd
+                                   (nthcdr 1 V5836))))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.track-function"))))
+(defun shen/shen\.insert-tracking-code
+    (V5840 V5841 V5842)
+  (list 'do
+        (list 'set 'shen\.*call*
+              (list '+
+                    (list 'value 'shen\.*call*)
+                    1))
+        (list 'do
+              (list 'shen\.input-track
+                    (list 'value 'shen\.*call*)
+                    V5840
+                    (shen/shen\.cons-form
+                     (shen/shen\.prolog-track V5842 V5841)))
+              (list 'do
+                    (list 'shen\.terpri-or-read-char)
+                    (list 'let 'Result V5842
+                          (list 'do
+                                (list 'shen\.output-track
+                                      (list 'value 'shen\.*call*)
+                                      V5840 'Result)
+                                (list 'do
+                                      (list 'set 'shen\.*call*
+                                            (list '-
+                                                  (list 'value 'shen\.*call*)
+                                                  1))
+                                      (list 'do
+                                            (list 'shen\.terpri-or-read-char)
+                                            'Result))))))))
+(defun shen/shen\.prolog-track
+    (V5843 V5844)
+  (shen/cond
+   ((shen/=
+     (shen/occurrences 'shen\.incinfs V5843)
+     0)
+    V5844)
+   (shen/true
+    (shen/shen\.vector-dereference V5844
+                                   (shen/shen\.vector-parameter V5844)))))
+(defun shen/shen\.vector-parameter
+    (V5847)
+  (cl-flet
+      ((tail-trampoline
+        (V5847)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V5847))
+          nil)
+         ((shen/and
+           (shen/cons\? V5847)
+           (shen/and
+            (shen/cons\?
+             (nthcdr 1 V5847))
+            (shen/and
+             (shen/cons\?
+              (nthcdr 2 V5847))
+             (shen/and
+              (shen/cons\?
+               (nthcdr 3 V5847))
+              (shen/internal/predicate->shen
+               (null
+                (nthcdr 4 V5847)))))))
+          (shen/hd V5847))
+         ((shen/cons\? V5847)
+          (vector
+           (list
+            (nthcdr 1 V5847))))
+         (shen/true
+          (shen/shen\.f-error 'shen\.vector-parameter)))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V5847)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.vector-dereference
+    (V5850 V5851)
+  (shen/cond
+   ((shen/internal/predicate->shen
+     (null V5851))
+    V5850)
+   ((shen/and
+     (shen/cons\? V5850)
+     (shen/and
+      (shen/cons\?
+       (nthcdr 1 V5850))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 2 V5850))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 3 V5850))
+        (shen/internal/predicate->shen
+         (null
+          (nthcdr 4 V5850)))))))
+    V5850)
+   ((shen/cons\? V5850)
+    (append
+     (list
+      (list 'shen\.deref
+            (shen/hd V5850)
+            V5851))
+     (shen/shen\.vector-dereference
+      (nthcdr 1 V5850)
+      V5851)))
+   (shen/true
+    (shen/shen\.f-error 'shen\.vector-dereference))))
+(defun shen/step
+    (V5854)
+  (shen/cond
+   ((shen/= '+ V5854)
+    (shen/set 'shen\.*step* 'true))
+   ((shen/= '- V5854)
+    (shen/set 'shen\.*step* 'false))
+   (shen/true
+    (shen/simple-error "step expects a + or a -.\n"))))
+(defun shen/shen\.step\? nil
+  (shen/value 'shen\.*step*))
+(defun shen/spy
+    (V5857)
+  (shen/cond
+   ((shen/= '+ V5857)
+    (shen/set 'shen\.*spy* 'true))
+   ((shen/= '- V5857)
+    (shen/set 'shen\.*spy* 'false))
+   (shen/true
+    (shen/simple-error "spy expects a + or a -.\n"))))
+(defun shen/shen\.spy\? nil
+  (shen/value 'shen\.*spy*))
+(defun shen/shen\.terpri-or-read-char nil
+  (shen/if
+   (shen/value 'shen\.*step*)
+   (shen/shen\.check-byte
+    (shen/read-byte
+     (shen/value '*stinput*)))
+   (shen/nl 1)))
+(defun shen/shen\.check-byte
+    (V5860)
+  (shen/cond
+   ((shen/= 94 V5860)
+    (shen/simple-error "aborted"))
+   (shen/true 'true)))
+(defun shen/shen\.input-track
+    (V5861 V5862 V5863)
+  (shen/do
+   (shen/pr
+    (shen/cn "\n"
+             (shen/shen\.app
+              (shen/shen\.spaces V5861)
+              (shen/cn "<"
+                       (shen/shen\.app V5861
+                                       (shen/cn "> Inputs to "
+                                                (shen/shen\.app V5862
+                                                                (shen/cn " \n"
+                                                                         (shen/shen\.app
+                                                                          (shen/shen\.spaces V5861)
+                                                                          "" 'shen\.a))
+                                                                'shen\.a))
+                                       'shen\.a))
+              'shen\.a))
+    (shen/stoutput))
+   (shen/shen\.recursively-print V5863)))
+(defun shen/shen\.recursively-print
+    (V5866)
+  (cl-flet
+      ((tail-trampoline
+        (V5866)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V5866))
+          (shen/pr " ==>"
+                   (shen/stoutput)))
+         ((shen/cons\? V5866)
+          (shen/do
+           (shen/print
+            (shen/hd V5866))
+           (shen/do
+            (shen/pr ", "
+                     (shen/stoutput))
+            (vector
+             (list
+              (nthcdr 1 V5866))))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.recursively-print")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V5866)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.spaces
+    (V5867)
+  (shen/cond
+   ((shen/= 0 V5867)
+    "")
+   (shen/true
+    (shen/cn " "
+             (shen/shen\.spaces
+              (shen/- V5867 1))))))
+(defun shen/shen\.output-track
+    (V5868 V5869 V5870)
+  (shen/pr
+   (shen/cn "\n"
+            (shen/shen\.app
+             (shen/shen\.spaces V5868)
+             (shen/cn "<"
+                      (shen/shen\.app V5868
+                                      (shen/cn "> Output from "
+                                               (shen/shen\.app V5869
+                                                               (shen/cn " \n"
+                                                                        (shen/shen\.app
+                                                                         (shen/shen\.spaces V5868)
+                                                                         (shen/cn "==> "
+                                                                                  (shen/shen\.app V5870 "" 'shen\.s))
+                                                                         'shen\.a))
+                                                               'shen\.a))
+                                      'shen\.a))
+             'shen\.a))
+   (shen/stoutput)))
+(defun shen/untrack
+    (F)
+  (progn
+    (shen/set shen\.*tracking*
+              (shen/internal/delete-first-eq F
+                                             (shen/value shen\.*tracking*)))
+    (shen/eval
+     (shen/ps F))))
+(defun shen/remove
+    (V5873 V5874)
+  (shen/shen\.remove-h V5873 V5874 nil))
+(defun shen/shen\.remove-h
+    (V5884 V5885 V5886)
+  (cl-flet
+      ((tail-trampoline
+        (V5884 V5885 V5886)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V5885))
+          (shen/reverse V5886))
+         ((shen/and
+           (shen/cons\? V5885)
+           (shen/= V5884
+                   (shen/hd V5885)))
+          (vector
+           (list
+            (shen/hd V5885)
+            (nthcdr 1 V5885)
+            V5886)))
+         ((shen/cons\? V5885)
+          (vector
+           (list V5884
+                 (nthcdr 1 V5885)
+                 (append
+                  (list
+                   (shen/hd V5885))
+                  V5886))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.remove-h")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V5884 V5885 V5886)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/profile
+    (V5887)
+  (shen/do
+   (shen/set 'shen\.*profiled*
+             (append
+              (list V5887)
+              (shen/value 'shen\.*profiled*)))
+   (shen/shen\.profile-help
+    (shen/ps V5887))))
+(defun shen/shen\.profile-help
+    (V5890)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V5890)
+     (shen/and
+      (shen/= 'defun
+              (shen/hd V5890))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V5890))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 2 V5890))
+        (shen/and
+         (shen/cons\?
+          (nthcdr 3 V5890))
+         (shen/internal/predicate->shen
+          (null
+           (nthcdr 4 V5890))))))))
+    (shen/let W5891
+              (shen/gensym 'shen\.f)
+              (shen/let W5892
+                        (list 'defun
+                              (shen/hd
+                               (nthcdr 1 V5890))
+                              (shen/hd
+                               (nthcdr 2 V5890))
+                              (shen/shen\.profile-func
+                               (shen/hd
+                                (nthcdr 1 V5890))
+                               (shen/hd
+                                (nthcdr 2 V5890))
+                               (append
+                                (list W5891)
+                                (shen/hd
+                                 (nthcdr 2 V5890)))))
+                        (shen/let W5893
+                                  (list 'defun W5891
+                                        (shen/hd
+                                         (nthcdr 2 V5890))
+                                        (shen/subst W5891
+                                                    (shen/hd
+                                                     (nthcdr 1 V5890))
+                                                    (shen/hd
+                                                     (nthcdr 3 V5890))))
+                                  (shen/let W5894
+                                            (shen/eval-kl W5892)
+                                            (shen/let W5895
+                                                      (shen/eval-kl W5893)
+                                                      (shen/hd
+                                                       (nthcdr 1 V5890))))))))
+   (shen/true
+    (shen/simple-error "Cannot profile.\n"))))
+(defun shen/unprofile
+    (V5896)
+  (shen/do
+   (shen/set 'shen\.*profiled*
+             (shen/remove V5896
+                          (shen/value 'shen\.*profiled*)))
+   (shen/trap-error
+    (shen/eval
+     (shen/ps V5896))
+    (shen/lambda Z5897 V5896))))
+(defun shen/shen\.profiled\?
+    (V5898)
+  (shen/element\? V5898
+                  (shen/value 'shen\.*profiled*)))
+(defun shen/shen\.profile-func
+    (V5899 V5900 V5901)
+  (list 'let 'Start
+        (list 'get-time 'run)
+        (list 'let 'Result V5901
+              (list 'let 'Finish
+                    (list '-
+                          (list 'get-time 'run)
+                          'Start)
+                    (list 'let 'Record
+                          (list 'shen\.put-profile V5899
+                                (list '+
+                                      (list 'shen\.get-profile V5899)
+                                      'Finish))
+                          'Result)))))
+(defun shen/profile-results
+    (V5902)
+  (shen/let W5903
+            (shen/shen\.get-profile V5902)
+            (shen/let W5904
+                      (shen/shen\.put-profile V5902 0)
+                      (shen/@p V5902 W5903))))
+(defun shen/shen\.get-profile
+    (V5905)
+  (shen/trap-error
+   (shen/get V5905 'profile
+             (shen/value '*property-vector*))
+   (shen/lambda Z5906 0)))
+(defun shen/shen\.put-profile
+    (V5907 V5908)
+  (shen/put V5907 'profile V5908
+            (shen/value '*property-vector*)))
 (defun shen/declare
     (V5947 V5948)
   (shen/let W5949
@@ -19633,4 +17933,738 @@
             (shen/value 'shen\.*demodulation-function*)
             (shen/internal/apply-higher-order-function W5986
                                                        (list V5985))))
+(defun shen/print
+    (V6833)
+  (shen/let W6834
+            (shen/shen\.insert V6833 "~S")
+            (shen/let W6835
+                      (shen/pr W6834
+                               (shen/stoutput))
+                      V6833)))
+(defun shen/pr
+    (V6836 V6837)
+  (shen/if
+   (shen/value '*hush*)
+   V6836
+   (shen/if
+    (shen/shen\.char-stoutput\? V6837)
+    (shen/shen\.write-string V6836 V6837)
+    (shen/shen\.write-chars V6836 V6837
+                            (shen/shen\.string->byte V6836 0)
+                            1))))
+(defun shen/shen\.string->byte
+    (V6838 V6839)
+  (shen/trap-error
+   (shen/string->n
+    (shen/pos V6838 V6839))
+   (shen/lambda Z6840 'shen\.eos)))
+(defun shen/shen\.write-chars
+    (V6841 V6842 V6843 V6844)
+  (cl-flet
+      ((tail-trampoline
+        (V6841 V6842 V6843 V6844)
+        (shen/cond
+         ((shen/= 'shen\.eos V6843)
+          V6841)
+         (shen/true
+          (vector
+           (list V6841 V6842
+                 (shen/do
+                  (shen/write-byte V6843 V6842)
+                  (shen/shen\.string->byte V6841 V6844))
+                 (1+ V6844)))))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V6841 V6842 V6843 V6844)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.mkstr
+    (V6845 V6846)
+  (shen/cond
+   ((shen/string\? V6845)
+    (shen/shen\.mkstr-l
+     (shen/shen\.proc-nl V6845)
+     V6846))
+   (shen/true
+    (shen/shen\.mkstr-r
+     (list 'shen\.proc-nl V6845)
+     V6846))))
+(defun shen/shen\.mkstr-l
+    (V6851 V6852)
+  (cl-flet
+      ((tail-trampoline
+        (V6851 V6852)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V6852))
+          V6851)
+         ((shen/cons\? V6852)
+          (vector
+           (list
+            (shen/shen\.insert-l
+             (shen/hd V6852)
+             V6851)
+            (nthcdr 1 V6852))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.mkstr-l")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V6851 V6852)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.insert-l
+    (V6859 V6860)
+  (shen/cond
+   ((shen/= "" V6860)
+    "")
+   ((shen/and
+     (shen/shen\.+string\? V6860)
+     (shen/and
+      (shen/= "~"
+              (shen/hdstr V6860))
+      (shen/and
+       (shen/shen\.+string\?
+        (shen/tlstr V6860))
+       (shen/= "A"
+               (shen/hdstr
+                (shen/tlstr V6860))))))
+    (list 'shen\.app V6859
+          (shen/tlstr
+           (shen/tlstr V6860))
+          'shen\.a))
+   ((shen/and
+     (shen/shen\.+string\? V6860)
+     (shen/and
+      (shen/= "~"
+              (shen/hdstr V6860))
+      (shen/and
+       (shen/shen\.+string\?
+        (shen/tlstr V6860))
+       (shen/= "R"
+               (shen/hdstr
+                (shen/tlstr V6860))))))
+    (list 'shen\.app V6859
+          (shen/tlstr
+           (shen/tlstr V6860))
+          'shen\.r))
+   ((shen/and
+     (shen/shen\.+string\? V6860)
+     (shen/and
+      (shen/= "~"
+              (shen/hdstr V6860))
+      (shen/and
+       (shen/shen\.+string\?
+        (shen/tlstr V6860))
+       (shen/= "S"
+               (shen/hdstr
+                (shen/tlstr V6860))))))
+    (list 'shen\.app V6859
+          (shen/tlstr
+           (shen/tlstr V6860))
+          'shen\.s))
+   ((shen/shen\.+string\? V6860)
+    (shen/shen\.factor-cn
+     (list 'cn
+           (shen/hdstr V6860)
+           (shen/shen\.insert-l V6859
+                                (shen/tlstr V6860)))))
+   ((shen/and
+     (shen/cons\? V6860)
+     (shen/and
+      (shen/= 'cn
+              (shen/hd V6860))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V6860))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 2 V6860))
+        (shen/internal/predicate->shen
+         (null
+          (nthcdr 3 V6860)))))))
+    (list 'cn
+          (shen/hd
+           (nthcdr 1 V6860))
+          (shen/shen\.insert-l V6859
+                               (shen/hd
+                                (nthcdr 2 V6860)))))
+   ((shen/and
+     (shen/cons\? V6860)
+     (shen/and
+      (shen/= 'shen\.app
+              (shen/hd V6860))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V6860))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 2 V6860))
+        (shen/and
+         (shen/cons\?
+          (nthcdr 3 V6860))
+         (shen/internal/predicate->shen
+          (null
+           (nthcdr 4 V6860))))))))
+    (append
+     (list 'shen\.app
+           (shen/hd
+            (nthcdr 1 V6860))
+           (shen/shen\.insert-l V6859
+                                (shen/hd
+                                 (nthcdr 2 V6860))))
+     (nthcdr 3 V6860)))
+   (shen/true
+    (shen/simple-error "implementation error in shen.insert-l"))))
+(defun shen/shen\.factor-cn
+    (V6861)
+  (shen/cond
+   ((shen/and
+     (shen/cons\? V6861)
+     (shen/and
+      (shen/= 'cn
+              (shen/hd V6861))
+      (shen/and
+       (shen/cons\?
+        (nthcdr 1 V6861))
+       (shen/and
+        (shen/cons\?
+         (nthcdr 2 V6861))
+        (shen/and
+         (shen/cons\?
+          (shen/hd
+           (nthcdr 2 V6861)))
+         (shen/and
+          (shen/= 'cn
+                  (shen/hd
+                   (shen/hd
+                    (nthcdr 2 V6861))))
+          (shen/and
+           (shen/cons\?
+            (nthcdr 1
+                    (shen/hd
+                     (nthcdr 2 V6861))))
+           (shen/and
+            (shen/cons\?
+             (nthcdr 2
+                     (shen/hd
+                      (nthcdr 2 V6861))))
+            (shen/and
+             (shen/internal/predicate->shen
+              (null
+               (nthcdr 3
+                       (shen/hd
+                        (nthcdr 2 V6861)))))
+             (shen/and
+              (shen/internal/predicate->shen
+               (null
+                (nthcdr 3 V6861)))
+              (shen/and
+               (shen/string\?
+                (shen/hd
+                 (nthcdr 1 V6861)))
+               (shen/string\?
+                (shen/hd
+                 (nthcdr 1
+                         (shen/hd
+                          (nthcdr 2 V6861))))))))))))))))
+    (append
+     (list 'cn
+           (shen/cn
+            (shen/hd
+             (nthcdr 1 V6861))
+            (shen/hd
+             (nthcdr 1
+                     (shen/hd
+                      (nthcdr 2 V6861))))))
+     (nthcdr 2
+             (shen/hd
+              (nthcdr 2 V6861)))))
+   (shen/true V6861)))
+(defun shen/shen\.proc-nl
+    (V6864)
+  (shen/cond
+   ((shen/= "" V6864)
+    "")
+   ((shen/and
+     (shen/shen\.+string\? V6864)
+     (shen/and
+      (shen/= "~"
+              (shen/hdstr V6864))
+      (shen/and
+       (shen/shen\.+string\?
+        (shen/tlstr V6864))
+       (shen/= "%"
+               (shen/hdstr
+                (shen/tlstr V6864))))))
+    (shen/cn
+     (shen/n->string 10)
+     (shen/shen\.proc-nl
+      (shen/tlstr
+       (shen/tlstr V6864)))))
+   ((shen/shen\.+string\? V6864)
+    (shen/cn
+     (shen/hdstr V6864)
+     (shen/shen\.proc-nl
+      (shen/tlstr V6864))))
+   (shen/true
+    (shen/simple-error "implementation error in shen.proc-nl"))))
+(defun shen/shen\.mkstr-r
+    (V6869 V6870)
+  (cl-flet
+      ((tail-trampoline
+        (V6869 V6870)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V6870))
+          V6869)
+         ((shen/cons\? V6870)
+          (vector
+           (list
+            (list 'shen\.insert
+                  (shen/hd V6870)
+                  V6869)
+            (nthcdr 1 V6870))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.mkstr-r")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V6869 V6870)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.insert
+    (V6871 V6872)
+  (shen/shen\.insert-h V6871 V6872 ""))
+(defun shen/shen\.insert-h
+    (V6881 V6882 V6883)
+  (cl-flet
+      ((tail-trampoline
+        (V6881 V6882 V6883)
+        (shen/cond
+         ((shen/= "" V6882)
+          V6883)
+         ((shen/and
+           (shen/shen\.+string\? V6882)
+           (shen/and
+            (shen/= "~"
+                    (shen/hdstr V6882))
+            (shen/and
+             (shen/shen\.+string\?
+              (shen/tlstr V6882))
+             (shen/= "A"
+                     (shen/hdstr
+                      (shen/tlstr V6882))))))
+          (shen/cn V6883
+                   (shen/shen\.app V6881
+                                   (shen/tlstr
+                                    (shen/tlstr V6882))
+                                   'shen\.a)))
+         ((shen/and
+           (shen/shen\.+string\? V6882)
+           (shen/and
+            (shen/= "~"
+                    (shen/hdstr V6882))
+            (shen/and
+             (shen/shen\.+string\?
+              (shen/tlstr V6882))
+             (shen/= "R"
+                     (shen/hdstr
+                      (shen/tlstr V6882))))))
+          (shen/cn V6883
+                   (shen/shen\.app V6881
+                                   (shen/tlstr
+                                    (shen/tlstr V6882))
+                                   'shen\.r)))
+         ((shen/and
+           (shen/shen\.+string\? V6882)
+           (shen/and
+            (shen/= "~"
+                    (shen/hdstr V6882))
+            (shen/and
+             (shen/shen\.+string\?
+              (shen/tlstr V6882))
+             (shen/= "S"
+                     (shen/hdstr
+                      (shen/tlstr V6882))))))
+          (shen/cn V6883
+                   (shen/shen\.app V6881
+                                   (shen/tlstr
+                                    (shen/tlstr V6882))
+                                   'shen\.s)))
+         ((shen/shen\.+string\? V6882)
+          (vector
+           (list V6881
+                 (shen/tlstr V6882)
+                 (shen/cn V6883
+                          (shen/hdstr V6882)))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.insert-h")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V6881 V6882 V6883)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/shen\.app
+    (V6884 V6885 V6886)
+  (shen/cn
+   (shen/shen\.arg->str V6884 V6886)
+   V6885))
+(defun shen/shen\.arg->str
+    (V6890 V6891)
+  (shen/cond
+   ((shen/= V6890
+            (shen/fail))
+    "...")
+   ((shen/shen\.list\? V6890)
+    (shen/shen\.list->str V6890 V6891))
+   ((shen/string\? V6890)
+    (shen/shen\.str->str V6890 V6891))
+   ((shen/absvector\? V6890)
+    (shen/shen\.vector->str V6890 V6891))
+   (shen/true
+    (shen/shen\.atom->str V6890))))
+(defun shen/shen\.list->str
+    (V6892 V6893)
+  (shen/cond
+   ((shen/= 'shen\.r V6893)
+    (concat
+     (concat "("
+             (shen/shen\.iter-list V6892 'shen\.r
+                                   (shen/shen\.maxseq)))
+     ")"))
+   (shen/true
+    (concat
+     (concat "["
+             (shen/shen\.iter-list V6892 V6893
+                                   (shen/shen\.maxseq)))
+     "]"))))
+(defun shen/shen\.maxseq nil
+  (shen/value '*maximum-print-sequence-size*))
+(defun shen/shen\.iter-list
+    (V6904 V6905 V6906)
+  (shen/cond
+   ((shen/internal/predicate->shen
+     (null V6904))
+    "")
+   ((shen/= 0 V6906)
+    "... etc")
+   ((shen/and
+     (shen/cons\? V6904)
+     (shen/internal/predicate->shen
+      (null
+       (nthcdr 1 V6904))))
+    (shen/shen\.arg->str
+     (shen/hd V6904)
+     V6905))
+   ((shen/cons\? V6904)
+    (concat
+     (concat
+      (shen/shen\.arg->str
+       (shen/hd V6904)
+       V6905)
+      " ")
+     (shen/shen\.iter-list
+      (nthcdr 1 V6904)
+      V6905
+      (shen/- V6906 1))))
+   (shen/true
+    (concat
+     (concat "|" " ")
+     (shen/shen\.arg->str V6904 V6905)))))
+(defun shen/shen\.str->str
+    (V6909 V6910)
+  (shen/cond
+   ((shen/= 'shen\.a V6910)
+    V6909)
+   (shen/true
+    (concat
+     (concat
+      (shen/n->string 34)
+      V6909)
+     (shen/n->string 34)))))
+(defun shen/shen\.vector->str
+    (V6911 V6912)
+  (shen/if
+   (shen/shen\.print-vector\? V6911)
+   (shen/internal/apply-function-expression
+    (shen/fn
+     (shen/<-address V6911 0))
+    (list V6911))
+   (shen/if
+    (shen/vector\? V6911)
+    (concat
+     (concat "<"
+             (shen/shen\.iter-vector V6911 1 V6912
+                                     (shen/shen\.maxseq)))
+     ">")
+    (concat
+     (concat "<" "<"
+             (shen/shen\.iter-vector V6911 0 V6912
+                                     (shen/shen\.maxseq)))
+     ">>"))))
+(defun shen/shen\.empty-absvector\?
+    (V6913)
+  (shen/= V6913
+          (shen/value 'shen\.*empty-absvector*)))
+(defun shen/shen\.print-vector\?
+    (V6914)
+  (shen/and
+   (shen/not
+    (shen/shen\.empty-absvector\? V6914))
+   (shen/let W6915
+             (shen/<-address V6914 0)
+             (shen/or
+              (shen/= W6915 'shen\.tuple)
+              (shen/or
+               (shen/= W6915 'shen\.pvar)
+               (shen/or
+                (shen/= W6915 'shen\.dictionary)
+                (shen/and
+                 (shen/not
+                  (shen/number\? W6915))
+                 (shen/shen\.fbound\? W6915))))))))
+(defun shen/shen\.fbound\?
+    (V6916)
+  (shen/not
+   (shen/=
+    (shen/arity V6916)
+    -1)))
+(defun shen/shen\.tuple
+    (V6917)
+  (shen/cn "(@p "
+           (shen/shen\.app
+            (shen/<-address V6917 1)
+            (shen/cn " "
+                     (shen/shen\.app
+                      (shen/<-address V6917 2)
+                      ")" 'shen\.s))
+            'shen\.s)))
+(defun shen/shen\.dictionary
+    (V6918)
+  "(dict ...)")
+(defun shen/shen\.iter-vector
+    (V6925 V6926 V6927 V6928)
+  (shen/cond
+   ((shen/= 0 V6928)
+    "... etc")
+   (shen/true
+    (shen/let W6929
+              (shen/trap-error
+               (shen/<-address V6925 V6926)
+               (shen/lambda Z6930 'shen\.out-of-bounds))
+              (shen/let W6931
+                        (shen/trap-error
+                         (shen/<-address V6925
+                                         (1+ V6926))
+                         (shen/lambda Z6932 'shen\.out-of-bounds))
+                        (shen/if
+                         (shen/= W6929 'shen\.out-of-bounds)
+                         ""
+                         (shen/if
+                          (shen/= W6931 'shen\.out-of-bounds)
+                          (shen/shen\.arg->str W6929 V6927)
+                          (concat
+                           (concat
+                            (shen/shen\.arg->str W6929 V6927)
+                            " ")
+                           (shen/shen\.iter-vector V6925
+                                                   (1+ V6926)
+                                                   V6927
+                                                   (shen/- V6928 1))))))))))
+(defun shen/shen\.atom->str
+    (V6933)
+  (shen/trap-error
+   (shen/str V6933)
+   (shen/lambda Z6934
+                (shen/shen\.funexstring))))
+(defun shen/shen\.funexstring nil
+  (concat
+   (concat "" "f" "u" "n" "e"
+           (shen/shen\.arg->str
+            (shen/gensym
+             (shen/intern "x"))
+            'shen\.a))
+   ""))
+(defun shen/shen\.list\?
+    (V6935)
+  (shen/or
+   (shen/empty\? V6935)
+   (shen/cons\? V6935)))
+(defun shen/datatypes nil
+  (shen/map
+   (shen/lambda Z863
+                (shen/shen\.typename Z863))
+   (shen/value 'shen\.*alldatatypes*)))
+(defun shen/shen\.included nil
+  (shen/map
+   (shen/lambda Z864
+                (shen/shen\.typename Z864))
+   (shen/value 'shen\.*datatypes*)))
+(defun shen/shen\.typename
+    (V867)
+  (shen/cond
+   ((shen/cons\? V867)
+    (shen/intern
+     (shen/shen\.typename-h
+      (shen/str
+       (shen/hd V867)))))
+   (shen/true
+    (shen/shen\.f-error 'shen\.typename))))
+(defun shen/shen\.typename-h
+    (V868)
+  (shen/cond
+   ((shen/= "#type" V868)
+    "")
+   ((shen/shen\.+string\? V868)
+    (shen/cn
+     (shen/hdstr V868)
+     (shen/shen\.typename-h
+      (shen/tlstr V868))))
+   (shen/true
+    (shen/shen\.f-error 'shen\.typename-h))))
+(defun shen/prolog-memory
+    (V869)
+  (shen/if
+   (shen/< V869 0)
+   (shen/value 'shen\.*prolog-memory*)
+   (shen/if
+    (shen/integer\? V869)
+    (shen/set 'shen\.*prolog-memory* V869)
+    (shen/simple-error "prolog memory expects an integer value\n"))))
+(defun shen/arity
+    (V870)
+  (shen/trap-error
+   (shen/get V870 'arity
+             (shen/value '*property-vector*))
+   (shen/lambda Z871 -1)))
+(defun shen/shen\.initialise-arity-table
+    (V874)
+  (cl-flet
+      ((tail-trampoline
+        (V874)
+        (shen/cond
+         ((shen/internal/predicate->shen
+           (null V874))
+          nil)
+         ((shen/and
+           (shen/cons\? V874)
+           (shen/cons\?
+            (nthcdr 1 V874)))
+          (shen/let W875
+                    (shen/put
+                     (shen/hd V874)
+                     'arity
+                     (shen/hd
+                      (nthcdr 1 V874))
+                     (shen/value '*property-vector*))
+                    (vector
+                     (list
+                      (nthcdr 2 V874)))))
+         (shen/true
+          (shen/simple-error "implementation error in shen.initialise-arity-table")))))
+    (let
+        ((result
+          (funcall #'tail-trampoline V874)))
+      (while
+          (vectorp result)
+        (setq result
+              (apply #'tail-trampoline
+                     (aref result 0))))
+      result)))
+(defun shen/systemf
+    (V876)
+  (shen/let W877
+            (shen/get 'shen 'shen\.external-symbols
+                      (shen/value '*property-vector*))
+            (shen/let W878
+                      (shen/put 'shen 'shen\.external-symbols
+                                (shen/adjoin V876 W877)
+                                (shen/value '*property-vector*))
+                      V876)))
+(defun shen/adjoin
+    (V879 V880)
+  (shen/if
+   (shen/element\? V879 V880)
+   V880
+   (append
+    (list V879)
+    V880)))
+(defun shen/shen\.lambda-entry
+    (V881)
+  (shen/let W882
+            (shen/arity V881)
+            (shen/if
+             (shen/or
+              (shen/= W882 -1)
+              (shen/= W882 0))
+             nil
+             (append
+              (list V881)
+              (shen/eval-kl
+               (shen/shen\.lambda-function
+                (list V881)
+                W882))))))
+(defun shen/shen\.set-lambda-form-entry
+    (V883)
+  (shen/cond
+   ((shen/cons\? V883)
+    (shen/put
+     (shen/hd V883)
+     'shen\.lambda-form
+     (nthcdr 1 V883)
+     (shen/value '*property-vector*)))
+   (shen/true
+    (shen/shen\.f-error 'shen\.set-lambda-form-entry))))
+(defun shen/shen\.build-lambda-table
+    (V884)
+  (shen/let W885
+            (shen/map
+             (shen/lambda Z886
+                          (shen/shen\.lambda-entry Z886))
+             V884)
+            (shen/shen\.for-each
+             (shen/lambda Z887
+                          (shen/shen\.set-lambda-form-entry Z887))
+             (append
+              (list
+               (append
+                (list 'shen\.tuple)
+                (shen/lambda Z888
+                             (shen/shen\.tuple Z888)))
+               (append
+                (list 'shen\.pvar)
+                (shen/lambda Z889
+                             (shen/shen\.pvar Z889)))
+               (append
+                (list 'shen\.dictionary)
+                (shen/lambda Z890
+                             (shen/shen\.dictionary Z890)))
+               (append
+                (list 'shen\.print-prolog-vector)
+                (shen/lambda Z891
+                             (shen/shen\.print-prolog-vector Z891)))
+               (append
+                (list 'shen\.print-freshterm)
+                (shen/lambda Z892
+                             (shen/shen\.print-freshterm Z892)))
+               (append
+                (list 'shen\.printF)
+                (shen/lambda Z893
+                             (shen/shen\.printF Z893))))
+              W885))))
 (provide 'shen-elisp)

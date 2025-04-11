@@ -16,6 +16,7 @@
       (org-babel-tangle-file "shen-elisp.org")
       (load-file "shen-primitives.el")
       (load-file "install.el")
-      (runner))))
+      ;; (runner)
+      )))
 
 (update "39.0")

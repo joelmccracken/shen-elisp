@@ -995,7 +995,7 @@ only deal with errors if they occur.
 
 In the case of a [[(higher-order function)]] if normal application fails because the
 function cannot be found try again with the ~shen/~ prefix. If the function has
-known ~arity~, build  [[(curried lambda)][curried]] version and apply [[(incremental application)][incrementally]] and barring that just
+known ~arity~, build [[(curried lambda)][curried]] version and apply [[(incremental application)][incrementally]] and barring that just
 feed the function arguments one-by-one and hope for the best.
 
 If it is [[(a list)]] (which presumably evaluates to a function) since there is no
@@ -1036,7 +1036,9 @@ instead of:
   (defun shen/internal/apply-higher-order-function (f args)
     (condition-case apply-ex (apply f args)
       ('void-function
-       (shen/internal/apply-higher-order-function (shen/internal/prefix-symbol f) args))
+       (if (shen/internal/symbol-prefixed-p f)
+           (signal 'void-function)
+         (shen/internal/apply-higher-order-function (shen/internal/prefix-symbol f) args)))
       ('wrong-number-of-arguments
        (condition-case ex
            (let ((arity (shen/internal/check-partial-application f (length args))))
@@ -1972,13 +1974,14 @@ copies ~elisp-completion-at-point~.
     (interactive)
     (progn
       (comint-send-input)
-      (condition-case ex
-          (progn
+      (progn
             (shen/shen.initialise_environment)
             (shen/repl-eval (string-to-list shen/repl-input)))
-        ('error
-         (comint-output-filter (shen/repl-process) (format "%s\n%s" ex  (shen/make-prompt)))
-         (signal (car ex) (cdr ex))))
+      ;; (condition-case ex
+
+      ;;   ('error
+      ;;    (comint-output-filter (shen/repl-process) (format "%s\n%s" ex  (shen/make-prompt)))
+      ;;    (signal (car ex) (cdr ex))))
       (with-current-buffer *shen-repl*
         (goto-char (point-max)))))
 #+END_SRC
@@ -2033,9 +2036,17 @@ It periodically writes to the REPL.
           (progn
             (shen/set '*stoutput* (shen/repl-standard-output-impl active-process))
             (set-buffer (get-buffer *shen-repl*))
-            (let* ((Lineread
-                    (shen/compile #'shen/shen.<st_input> input-string
-                                  (lambda (Err) (signal (car Err) (cdr Err)))))
+            (let* ( (Package (shen/value 'shen.*package*))
+                    (Lineread (shen/shen.package-user-input Package ;; (lineread)
+                                                            input-string))
+
+
+
+
+                    ;; (Lineread
+                    ;; (shen/compile #'shen/shen.<st_input> input-string
+                    ;;               (lambda (Err) (signal (car Err) (cdr Err)))))
+
                    (It (shen/shen.record-it input-string))
                    (History (shen/value 'shen.*history*))
                    (NewLineread (shen/shen.retrieve-from-history-if-needed
@@ -2140,9 +2151,10 @@ package.
   (setq *klambda-directory* (file-name-as-directory (concat (file-name-directory load-file-name) *klambda-directory-name*)))
   (setq *klambda-files*
         (mapcar (lambda (klFile) (concat *klambda-directory* klFile))
-                '("toplevel.kl" "core.kl" "sys.kl" "dict.kl" "sequent.kl"
-                  "yacc.kl" "reader.kl" "prolog.kl" "track.kl" "load.kl"
-                  "writer.kl" "macros.kl" "declarations.kl" "t-star.kl" "types.kl")))
+                '( "yacc.kl" "core.kl" "load.kl"
+                   "prolog.kl" "reader.kl" "sequent.kl" "sys.kl" "t-star.kl"
+                   "toplevel.kl" "track.kl" "types.kl" "writer.kl" ;; "backend.kl"
+                   "declarations.kl")))
 #+END_SRC
 
 In order to read in the KLambda s-expressions using the Elisp reader we need to

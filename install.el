@@ -4,9 +4,10 @@
 (setq *klambda-directory* (file-name-as-directory (concat (file-name-directory load-file-name) *klambda-directory-name*)))
 (setq *klambda-files*
       (mapcar (lambda (klFile) (concat *klambda-directory* klFile))
-              '("toplevel.kl" "core.kl" "sys.kl" "dict.kl" "sequent.kl"
-                "yacc.kl" "reader.kl" "prolog.kl" "track.kl" "load.kl"
-                "writer.kl" "macros.kl" "declarations.kl" "t-star.kl" "types.kl")))
+              '( "yacc.kl" "core.kl" "load.kl"
+                 "prolog.kl" "reader.kl" "sequent.kl" "sys.kl" "t-star.kl"
+                 "toplevel.kl" "track.kl" "types.kl" "writer.kl" ;; "backend.kl"
+                 "declarations.kl")))
 ;; Collecting KLambda files:1 ends here
 
 ;; [[file:shen-elisp.org::*Modifying The Elisp Reader For KLambda][Modifying The Elisp Reader For KLambda:1]]
