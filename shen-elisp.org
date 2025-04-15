@@ -1783,17 +1783,13 @@ incoming code with overrides before parsing the AST:
 When saving the seed KLambda code to a file, first patch, then optimize and then append
 to the end of the buffer.
 #+BEGIN_SRC elisp :tangle shen-primitives.el
-  (defun shen/kl-to-buffer (X B)
-    (with-current-buffer B
-      (save-excursion
-        (goto-char (point-max))
-        (insert (pp-to-string
-                 (shen/internal/nil-to-null
-                  (shen/internal/add-1+
-                   (shen/internal/consolidate-tl
-                    (shen/internal/consolidate-@s
-                     (shen/internal/consolidate-cons
-                      (shen/patch-klambda X)))))))))))
+  (defun shen/klambda-to-elisp-object (X)
+    (shen/internal/nil-to-null
+     (shen/internal/add-1+
+      (shen/internal/consolidate-tl
+       (shen/internal/consolidate-@s
+        (shen/internal/consolidate-cons
+         (shen/patch-klambda X)))))))
 #+END_SRC
 
 * Providing The Primitives
@@ -2331,12 +2327,10 @@ Now we can finally collect, and parse all the s-expressions in the
 KLambda files and then pass the result to ~shen/eval-kl~ to transform
 KLambda code into Elisp.
 #+BEGIN_SRC elisp :tangle install.el
-  (setq *temp-shen-buffer*
-        (find-file-noselect
-         (concat (file-name-as-directory default-directory)
-                 (file-relative-name "shen-elisp.el"))))
-  (defun eval-klambda-files (klambda-files)
-    (with-current-buffer *temp-shen-buffer*
+  (defun build-shen-elisp-file ()
+    (with-temp-file
+      (concat (file-name-as-directory default-directory)
+              (file-relative-name "shen-elisp.el"))
       (progn
         (erase-buffer)
         (insert "\
@@ -2368,29 +2362,47 @@ KLambda code into Elisp.
   (setq max-lisp-eval-depth 60000)
   (setq max-specpdl-size 13000)\n\n")
         (goto-char (point-max))
-        (dolist (klambda-file klambda-files nil)
-          (eval-klambda-file klambda-file))
+        (insert-file
+         (concat (file-name-as-directory default-directory)
+                 (file-relative-name "shen-primitives.el")))
         (goto-char (point-max))
-        (insert (format "%s\n" "(provide 'shen-elisp)"))
-        (save-buffer))))
-  (defun eval-klambda-file (klambda-file)
+        (insert-file
+         (concat (file-name-as-directory default-directory)
+                 (file-relative-name "shen-klambda-all.el")))
+        (goto-char (point-max))
+        (insert (format "%s\n" "(provide 'shen-elisp)")))))
+
+  (defun build-elisp-klambda-all-file ()
+    (with-temp-file
+       (concat (file-name-as-directory default-directory)
+               (file-relative-name "shen-klambda-all.el"))
+       (message "klambda files are %s" *klambda-files*)
+       (dolist (klambda-file *klambda-files* nil)
+          (message "klambda file is %s" klambda-file)
+          (insert-klambda-file klambda-file))))
+
+  (defun insert-klambda-file (klambda-file)
     (dolist (klambda-sexp-string (shen/get-klambda-sexp-strings klambda-file) nil)
-      (eval-klambda-sexp-string klambda-sexp-string)))
-  (defun eval-klambda-sexp-string (klambda-sexp-string)
+      (insert-klambda-sexp-string klambda-sexp-string)))
+
+  (defun insert-klambda-sexp-string (klambda-sexp-string)
     (let ((ast (shen/put-reserved-elisp-chars-back
                 (read
                  (shen/remove-reserved-elisp-characters
                   klambda-sexp-string)))))
-      (shen/kl-to-buffer ast *temp-shen-buffer*)))
+      (save-excursion
+        (goto-char (point-max))
+        (insert (pp-to-string (shen/klambda-to-elisp-object ast))))))
+
 #+END_SRC
 * The Runner
-#+BEGIN_SRC elisp :tangle install.el
+#+BEGIN_SRC elisp :tangle devel.el
   (defun compile-and-load (F)
     (byte-compile-file
      (concat (file-name-as-directory default-directory)
              (file-relative-name F))
      't))
-  (defun load-klambda () (eval-klambda-files *klambda-files*))
+  (defun load-klambda () (insert-klambda-files *klambda-files*))
   (defun load-only ()
     (progn
       (compile-and-load "shen-primitives.el")
@@ -2399,7 +2411,7 @@ KLambda code into Elisp.
     (progn
       (compile-and-load "shen-primitives.el")
       (compile-and-load "install.el")
-      (eval-klambda-files *klambda-files*)
+      (insert-klambda-files *klambda-files*)
       (compile-and-load "shen-elisp.el")
       (compile-and-load "shen-overlays.el")
       (compile-and-load "shen-repl.el")

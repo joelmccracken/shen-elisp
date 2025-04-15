@@ -1332,17 +1332,13 @@
 ;; Evaluating Bootstrapped KLambda:1 ends here
 
 ;; [[file:shen-elisp.org::*Evaluating Bootstrapped KLambda][Evaluating Bootstrapped KLambda:2]]
-(defun shen/kl-to-buffer (X B)
-  (with-current-buffer B
-    (save-excursion
-      (goto-char (point-max))
-      (insert (pp-to-string
-               (shen/internal/nil-to-null
-                (shen/internal/add-1+
-                 (shen/internal/consolidate-tl
-                  (shen/internal/consolidate-@s
-                   (shen/internal/consolidate-cons
-                    (shen/patch-klambda X)))))))))))
+(defun shen/klambda-to-elisp-object (X)
+  (shen/internal/nil-to-null
+   (shen/internal/add-1+
+    (shen/internal/consolidate-tl
+     (shen/internal/consolidate-@s
+      (shen/internal/consolidate-cons
+       (shen/patch-klambda X)))))))
 ;; Evaluating Bootstrapped KLambda:2 ends here
 
 ;; [[file:shen-elisp.org::*Providing The Primitives][Providing The Primitives:1]]

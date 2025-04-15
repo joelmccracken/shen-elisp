@@ -155,12 +155,10 @@
 ;; Modifying The Elisp Reader For KLambda:6 ends here
 
 ;; [[file:shen-elisp.org::*Iterating over KLambda Files][Iterating over KLambda Files:1]]
-(setq *temp-shen-buffer*
-      (find-file-noselect
-       (concat (file-name-as-directory default-directory)
-               (file-relative-name "shen-elisp.el"))))
-(defun eval-klambda-files (klambda-files)
-  (with-current-buffer *temp-shen-buffer*
+(defun build-shen-elisp-file ()
+  (with-temp-file
+    (concat (file-name-as-directory default-directory)
+            (file-relative-name "shen-elisp.el"))
     (progn
       (erase-buffer)
       (insert "\
@@ -192,41 +190,35 @@
 (setq max-lisp-eval-depth 60000)
 (setq max-specpdl-size 13000)\n\n")
       (goto-char (point-max))
-      (dolist (klambda-file klambda-files nil)
-        (eval-klambda-file klambda-file))
+      (insert-file
+       (concat (file-name-as-directory default-directory)
+               (file-relative-name "shen-primitives.el")))
       (goto-char (point-max))
-      (insert (format "%s\n" "(provide 'shen-elisp)"))
-      (save-buffer))))
-(defun eval-klambda-file (klambda-file)
+      (insert-file
+       (concat (file-name-as-directory default-directory)
+               (file-relative-name "shen-klambda-all.el")))
+      (goto-char (point-max))
+      (insert (format "%s\n" "(provide 'shen-elisp)")))))
+
+(defun build-elisp-klambda-all-file ()
+  (with-temp-file
+     (concat (file-name-as-directory default-directory)
+             (file-relative-name "shen-klambda-all.el"))
+     (message "klambda files are %s" *klambda-files*)
+     (dolist (klambda-file *klambda-files* nil)
+        (message "klambda file is %s" klambda-file)
+        (insert-klambda-file klambda-file))))
+
+(defun insert-klambda-file (klambda-file)
   (dolist (klambda-sexp-string (shen/get-klambda-sexp-strings klambda-file) nil)
-    (eval-klambda-sexp-string klambda-sexp-string)))
-(defun eval-klambda-sexp-string (klambda-sexp-string)
+    (insert-klambda-sexp-string klambda-sexp-string)))
+
+(defun insert-klambda-sexp-string (klambda-sexp-string)
   (let ((ast (shen/put-reserved-elisp-chars-back
               (read
                (shen/remove-reserved-elisp-characters
                 klambda-sexp-string)))))
-    (shen/kl-to-buffer ast *temp-shen-buffer*)))
+    (save-excursion
+      (goto-char (point-max))
+      (insert (pp-to-string (shen/klambda-to-elisp-object ast))))))
 ;; Iterating over KLambda Files:1 ends here
-
-;; [[file:shen-elisp.org::*The Runner][The Runner:1]]
-(defun compile-and-load (F)
-  (byte-compile-file
-   (concat (file-name-as-directory default-directory)
-           (file-relative-name F))
-   't))
-(defun load-klambda () (eval-klambda-files *klambda-files*))
-(defun load-only ()
-  (progn
-    (compile-and-load "shen-primitives.el")
-    (compile-and-load "install.el")))
-(defun runner ()
-  (progn
-    (compile-and-load "shen-primitives.el")
-    (compile-and-load "install.el")
-    (eval-klambda-files *klambda-files*)
-    (compile-and-load "shen-elisp.el")
-    (compile-and-load "shen-overlays.el")
-    (compile-and-load "shen-repl.el")
-    (add-to-list 'load-path default-directory)
-    (shen/repl)))
-;; The Runner:1 ends here
