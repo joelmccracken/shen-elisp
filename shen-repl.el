@@ -4,9 +4,9 @@
 
 ;; [[file:shen-elisp.org::*Shen REPL][Shen REPL:2]]
 (require 'comint)
-(require 'shen-primitives)
-(require 'shen-elisp)
-(require 'shen-overlays)
+;; (require 'shen-primitives)
+;; (require 'shen-elisp)
+;; (require 'shen-overlays)
 ;; Shen REPL:2 ends here
 
 ;; [[file:shen-elisp.org::*Credits][Credits:1]]

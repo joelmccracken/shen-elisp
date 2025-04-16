@@ -155,6 +155,14 @@
 ;; Modifying The Elisp Reader For KLambda:6 ends here
 
 ;; [[file:shen-elisp.org::*Iterating over KLambda Files][Iterating over KLambda Files:1]]
+(defun find-shen-file (file)
+  (concat (file-name-as-directory default-directory)
+          (file-relative-name file)))
+
+(defun insert-shen-file (file)
+  (goto-char (point-max))
+  (insert-file (find-shen-file file)))
+
 (defun build-shen-elisp-file ()
   (with-temp-file
     (concat (file-name-as-directory default-directory)
@@ -189,36 +197,32 @@
 (require 'shen-primitives)
 (setq max-lisp-eval-depth 60000)
 (setq max-specpdl-size 13000)\n\n")
-      (goto-char (point-max))
-      (insert-file
-       (concat (file-name-as-directory default-directory)
-               (file-relative-name "shen-primitives.el")))
-      (goto-char (point-max))
-      (insert-file
-       (concat (file-name-as-directory default-directory)
-               (file-relative-name "shen-klambda-all.el")))
+      (insert-shen-file "shen-primitives.el")
+      (insert-shen-file "shen-klambda.el")
+      (insert-shen-file "shen-overlays.el")
+      (insert-shen-file "shen-repl.el")
       (goto-char (point-max))
       (insert (format "%s\n" "(provide 'shen-elisp)")))))
 
-(defun build-elisp-klambda-all-file ()
+(defun build-elisp-klambda-file ()
   (with-temp-file
-     (concat (file-name-as-directory default-directory)
-             (file-relative-name "shen-klambda-all.el"))
-     (message "klambda files are %s" *klambda-files*)
+     (find-shen-file "shen-klambda.el")
+     ;; (message "klambda files are %s" *klambda-files*)
      (dolist (klambda-file *klambda-files* nil)
-        (message "klambda file is %s" klambda-file)
+        ;;(message "klambda file is %s" klambda-file)
         (insert-klambda-file klambda-file))))
 
 (defun insert-klambda-file (klambda-file)
   (dolist (klambda-sexp-string (shen/get-klambda-sexp-strings klambda-file) nil)
-    (insert-klambda-sexp-string klambda-sexp-string)))
+    (save-excursion
+      (goto-char (point-max))
+      (insert
+       (klambda-sexp-string klambda-sexp-string)))))
 
-(defun insert-klambda-sexp-string (klambda-sexp-string)
+(defun klambda-sexp-string (klambda-sexp-string)
   (let ((ast (shen/put-reserved-elisp-chars-back
               (read
                (shen/remove-reserved-elisp-characters
                 klambda-sexp-string)))))
-    (save-excursion
-      (goto-char (point-max))
-      (insert (pp-to-string (shen/klambda-to-elisp-object ast))))))
+    (pp-to-string (shen/klambda-to-elisp-object ast))))
 ;; Iterating over KLambda Files:1 ends here
