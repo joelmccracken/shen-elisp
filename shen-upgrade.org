@@ -1,0 +1,163 @@
+#+title: Shen upgrade
+
+#+begin_src tcl
+#!/usr/bin/env expect -d
+
+spawn ./sbcl-shen.exe
+
+expect "(0-) "
+
+send "(do (cd \"Sources\") (load \"make.shen\") (make))\r"
+
+expect "(1-) "
+#+end_src
+
+* junk
+
+#+begin_src emacs-lisp
+(let ((shen-dir "~/Projects/shen-elisp"))
+  (add-to-list 'load-path shen-dir)
+  (require 'shen-elisp)
+  ;; (require 'shen-repl)
+  ;; (byte-recompile-directory shen-dir 0 t)
+  )
+
+(defun shen-eval-string (codestr)
+  (with-current-buffer "*shen-repl*"
+    (goto-char (point-max))
+    (let ((response
+           (let ((before (point-max)))
+             (insert codestr)
+             (shen/repl-send-input)
+             (buffer-substring before (point-max)))))
+        (message response))))
+
+(defun shen/shen.emacs-eval (code)
+  (eval code))
+#+end_src
+
+#+RESULTS:
+: shen/shen\.emacs-eval
+
+#+begin_src emacs-lisp
+(shen-eval-string "(tc -)")
+
+(shen-eval-string "
+(define emacs.point
+  -> (shen.emacs-eval [point]))
+")
+(shen-eval-string "(declare emacs.point [--> number])")
+(shen-eval-string "(tc +)")
+(shen-eval-string "(emacs.point)")
+#+end_src
+
+* stuff to do
+** try the new components e.g. shen/eval
+** get tests running
+** script to run shen tests from CLI
+** other stuff?
+* loading, beginnings
+
+
+#+begin_src emacs-lisp
+(let ((shen-dir "~/Projects/shen-elisp-upgrade"))
+  (add-to-list 'load-path shen-dir)
+  ;; (load "install.el")
+  (load "shen-elisp.el")
+  (load "shen-repl.el")
+
+  ;; (require 'shen-elisp)
+  ;; (require 'shen-repl)
+  ;; (byte-recompile-directory shen-dir 0 t)
+  )
+
+#+end_src
+
+#+RESULTS:
+: t
+
+
+#+begin_src emacs-lisp
+(org-babel-tangle-file "shen-elisp.org")
+(load-file "shen-primitives.el")
+(load-file "install.el")
+(runner)
+#+end_src
+
+#+RESULTS:
+* describing the problem
+started tweaking the code so that i would get errors
+current literal error from apply higher order function
+
+seems that the issue is that
+
+notes
+
+- commit of repo with upgraded kernel klambda files
+- commit of my shen upgrade file (this file) so can feel free to mess with it.
+- commit of tweaks I am making as I work
+  - dont' catch errors, so i can use debugger
+
+- issue with infinite recursion trying to invoke function ~shen/shen/shen/....whatever~
+
+  #+begin_quote
+  .....
+  shen/internal/apply-higher-order-function(shen/shen/shen/shen/shen/shen/shen\.<st_input> (nil))
+  shen/internal/apply-higher-order-function(shen/shen/shen/shen/shen/shen\.<st_input> (nil))
+  shen/internal/apply-higher-order-function(shen/shen/shen/shen/shen\.<st_input> (nil))
+  shen/internal/apply-higher-order-function(shen/shen/shen/shen\.<st_input> (nil))
+  shen/internal/apply-higher-order-function(shen/shen/shen\.<st_input> (nil))
+  shen/internal/apply-higher-order-function(shen/shen\.<st_input> (nil))
+  shen/compile(shen/shen\.<st_input> nil)
+  ....
+  #+end_quote
+
+- reread most of shen-elisp.org last night, realize what the shen/shen... thing
+  is, apply higher order func tries to prefix fn with shen/ apparently (probably
+  because someone doing ~(map foo [1 2 3])~ needs to account for ~shen/foo~
+  naming, but how did it work before, what happens if someone tries this but
+  doesn't define foo, did the previous verison just do this funky shen/shen/shen thing?
+
+- need to fix that, also probabloy can remove the partial applicaiton stuff, not
+  necessary anymore
+
+- also reread the source for `(lineread)` and now comprehend its ordeal, I think
+  can just try to parse input as sexpr
+
+issues having
+- how do pieces all fit together?
+  - install installs stuff into environment, this was weird to me until I noted
+    how the primary one uses install script to sset up shen in a common lisp
+    image
+  - "files"
+    - primitives - the primitives required by shen
+- I wish there were tests for all of these functions
+* next
+#+begin_src emacs-lisp
+(let ((shen-dir "~/Projects/shen-elisp"))
+  (add-to-list 'load-path shen-dir)
+  (load "install.el")
+  ;;(require 'shen-elisp)
+  ;; (require 'shen-repl)
+  ;; (byte-recompile-directory shen-dir 0 t)
+  )
+#+end_src
+
+#+RESULTS:
+: t
+
+
+
+ok, I think I may have fixed the issue I'd described above; check for prefix
+before recursing infinitely
+
+
+actually next step would be just to remove that code, its dealing with partial
+function application. don't need it.
+
+
+next want to build a better build system
+
+- embed shen primitives
+- embed the other stuff install.el already does
+- move the other helpers out of install.el to like develop.el

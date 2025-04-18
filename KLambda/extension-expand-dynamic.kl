@@ -1,0 +1,23 @@
+"Copyright (c) 2019 Bruno Deferrari.
+BSD 3-Clause License: http://opensource.org/licenses/BSD-3-Clause"
+
+(defun shen.x.expand-dynamic.initialise () (set shen.x.expand-dynamic.*arities* ()))
+
+(defun shen.x.expand-dynamic.expand-dynamic (V7149) (cond ((= () V7149) ()) ((and (cons? V7149) (and (cons? (hd V7149)) (and (= declare (hd (hd V7149))) (and (cons? (tl (hd V7149))) (and (cons? (tl (tl (hd V7149)))) (= () (tl (tl (tl (hd V7149)))))))))) (cons (shen.x.expand-dynamic.expand-declare (hd V7149)) (shen.x.expand-dynamic.expand-dynamic (tl V7149)))) ((and (cons? V7149) (and (cons? (hd V7149)) (and (= shen.initialise-arity-table (hd (hd V7149))) (and (cons? (tl (hd V7149))) (= () (tl (tl (hd V7149)))))))) (do (set shen.x.expand-dynamic.*arities* (eval-kl (hd (tl (hd V7149))))) (cons (hd V7149) (shen.x.expand-dynamic.expand-dynamic (tl V7149))))) ((and (cons? V7149) (and (cons? (hd V7149)) (and (= shen.build-lambda-table (hd (hd V7149))) (and (cons? (tl (hd V7149))) (and (cons? (hd (tl (hd V7149)))) (and (= external (hd (hd (tl (hd V7149))))) (and (cons? (tl (hd (tl (hd V7149))))) (and (= shen (hd (tl (hd (tl (hd V7149)))))) (and (= () (tl (tl (hd (tl (hd V7149)))))) (= () (tl (tl (hd V7149))))))))))))) (let W7150 X (append (shen.x.expand-dynamic.expand-lambda-entries (cons shen.tuple (cons 1 (cons shen.pvar (cons 1 (cons shen.dictionary (cons 1 (cons shen.print-prolog-vector (cons 1 (cons shen.print-freshterm (cons 1 (cons shen.printF (cons 1 (value shen.x.expand-dynamic.*arities*)))))))))))))) (shen.x.expand-dynamic.expand-dynamic (tl V7149))))) ((cons? V7149) (cons (hd V7149) (shen.x.expand-dynamic.expand-dynamic (tl V7149)))) (true (shen.f-error shen.x.expand-dynamic.expand-dynamic))))
+
+(defun shen.x.expand-dynamic.functions-with-lambdas (V7151) (cond ((= () V7151) ()) ((and (cons? V7151) (cons? (tl V7151))) (cons (hd V7151) (shen.x.expand-dynamic.functions-with-lambdas (tl (tl V7151))))) (true (shen.f-error shen.x.expand-dynamic.functions-with-lambdas))))
+
+(defun shen.x.expand-dynamic.expand-declare (V7152) (cond ((and (cons? V7152) (and (= declare (hd V7152)) (and (cons? (tl V7152)) (and (cons? (tl (tl V7152))) (= () (tl (tl (tl V7152)))))))) (let W7153 (eval-kl (hd (tl (tl V7152)))) (let W7154 (shen.prolog-abstraction W7153) (let W7155 (cons set (cons shen.*sigf* (cons (cons shen.assoc-> (cons (hd (tl V7152)) (cons W7154 (cons (cons value (cons shen.*sigf* ())) ())))) ()))) W7155)))) (true (shen.f-error shen.x.expand-dynamic.expand-declare))))
+
+(defun shen.x.expand-dynamic.expand-lambda-entries (V7156) (cond ((= () V7156) ()) ((and (cons? V7156) (cons? (tl V7156))) (append (shen.x.expand-dynamic.expand-lambda-form-entry (hd V7156) (hd (tl V7156))) (shen.x.expand-dynamic.expand-lambda-entries (tl (tl V7156))))) (true (simple-error (cn "expand-lambda-entries: got unexpected " (shen.app V7156 "" shen.a))))))
+
+(defun shen.x.expand-dynamic.expand-lambda-form-entry (V7165 V7166) (cond ((= package V7165) ()) ((= receive V7165) ()) ((= list V7165) ()) ((= foreign V7165) ()) (true (if (= V7166 -1) () (if (= V7166 0) () (cons (cons shen.set-lambda-form-entry (cons (cons cons (cons V7165 (cons (shen.lambda-function (cons V7165 ()) V7166) ()))) ())) ()))))))
+
+(defun shen.x.expand-dynamic.split-defuns-h (V7167 V7168) (cond ((and (cons? V7167) (and (cons? (hd V7167)) (and (= defun (hd (hd V7167))) (tuple? V7168)))) (shen.x.expand-dynamic.split-defuns-h (tl V7167) (@p (cons (hd V7167) (fst V7168)) (snd V7168)))) ((and (cons? V7167) (tuple? V7168)) (shen.x.expand-dynamic.split-defuns-h (tl V7167) (@p (fst V7168) (cons (hd V7167) (snd V7168))))) ((and (= () V7167) (tuple? V7168)) (@p (reverse (fst V7168)) (reverse (snd V7168)))) (true (shen.f-error shen.x.expand-dynamic.split-defuns-h))))
+
+(defun shen.x.expand-dynamic.split-defuns (V7169) (shen.x.expand-dynamic.split-defuns-h V7169 (@p () ())))
+
+(defun shen.x.expand-dynamic.wrap-in-defun (V7170 V7171 V7172) (cons defun (cons V7170 (cons V7171 (cons (shen.x.expand-dynamic.to-single-expression V7170 V7172) ())))))
+
+(defun shen.x.expand-dynamic.to-single-expression (V7177 V7178) (cond ((and (cons? V7178) (= () (tl V7178))) (hd V7178)) ((cons? V7178) (cons do (cons (hd V7178) (cons (shen.x.expand-dynamic.to-single-expression V7177 (tl V7178)) ())))) (true (simple-error (cn "to-single-expression: got empty list of expressions: " (shen.app V7177 "" shen.a))))))
+

@@ -138,6 +138,7 @@ Once [[Assignments][the assigning mechanism]] is in place the spec requires some
   (shen/set '*release* emacs-version)
   (shen/set '*port* 1.7)
   (shen/set '*os* (symbol-name system-type))
+  (shen/set '*version* "S39.0")
 #+END_SRC
 ** Boolean Operations
 Unlike Elisp in KLambda booleans are ~false~ and ~true~, distinct symbols which
@@ -994,7 +995,7 @@ only deal with errors if they occur.
 
 In the case of a [[(higher-order function)]] if normal application fails because the
 function cannot be found try again with the ~shen/~ prefix. If the function has
-known ~arity~, build  [[(curried lambda)][curried]] version and apply [[(incremental application)][incrementally]] and barring that just
+known ~arity~, build [[(curried lambda)][curried]] version and apply [[(incremental application)][incrementally]] and barring that just
 feed the function arguments one-by-one and hope for the best.
 
 If it is [[(a list)]] (which presumably evaluates to a function) since there is no
@@ -1035,7 +1036,9 @@ instead of:
   (defun shen/internal/apply-higher-order-function (f args)
     (condition-case apply-ex (apply f args)
       ('void-function
-       (shen/internal/apply-higher-order-function (shen/internal/prefix-symbol f) args))
+       (if (shen/internal/symbol-prefixed-p f)
+           (signal 'void-function)
+         (shen/internal/apply-higher-order-function (shen/internal/prefix-symbol f) args)))
       ('wrong-number-of-arguments
        (condition-case ex
            (let ((arity (shen/internal/check-partial-application f (length args))))
@@ -1780,17 +1783,13 @@ incoming code with overrides before parsing the AST:
 When saving the seed KLambda code to a file, first patch, then optimize and then append
 to the end of the buffer.
 #+BEGIN_SRC elisp :tangle shen-primitives.el
-  (defun shen/kl-to-buffer (X B)
-    (with-current-buffer B
-      (save-excursion
-        (goto-char (point-max))
-        (insert (pp-to-string
-                 (shen/internal/nil-to-null
-                  (shen/internal/add-1+
-                   (shen/internal/consolidate-tl
-                    (shen/internal/consolidate-@s
-                     (shen/internal/consolidate-cons
-                      (shen/patch-klambda X)))))))))))
+  (defun shen/klambda-to-elisp-object (X)
+    (shen/internal/nil-to-null
+     (shen/internal/add-1+
+      (shen/internal/consolidate-tl
+       (shen/internal/consolidate-@s
+        (shen/internal/consolidate-cons
+         (shen/patch-klambda X)))))))
 #+END_SRC
 
 * Providing The Primitives
@@ -1851,9 +1850,9 @@ When changing directories in the REPL, for convenience, also change Emacs' worki
 
 #+BEGIN_SRC elisp :tangle shen-repl.el
   (require 'comint)
-  (require 'shen-primitives)
-  (require 'shen-elisp)
-  (require 'shen-overlays)
+  ;; (require 'shen-primitives)
+  ;; (require 'shen-elisp)
+  ;; (require 'shen-overlays)
 #+END_SRC
 ** Credits
 The credits that appear at the top of each REPL session.
@@ -1971,13 +1970,14 @@ copies ~elisp-completion-at-point~.
     (interactive)
     (progn
       (comint-send-input)
-      (condition-case ex
-          (progn
+      (progn
             (shen/shen.initialise_environment)
             (shen/repl-eval (string-to-list shen/repl-input)))
-        ('error
-         (comint-output-filter (shen/repl-process) (format "%s\n%s" ex  (shen/make-prompt)))
-         (signal (car ex) (cdr ex))))
+      ;; (condition-case ex
+
+      ;;   ('error
+      ;;    (comint-output-filter (shen/repl-process) (format "%s\n%s" ex  (shen/make-prompt)))
+      ;;    (signal (car ex) (cdr ex))))
       (with-current-buffer *shen-repl*
         (goto-char (point-max)))))
 #+END_SRC
@@ -2032,9 +2032,17 @@ It periodically writes to the REPL.
           (progn
             (shen/set '*stoutput* (shen/repl-standard-output-impl active-process))
             (set-buffer (get-buffer *shen-repl*))
-            (let* ((Lineread
-                    (shen/compile #'shen/shen.<st_input> input-string
-                                  (lambda (Err) (signal (car Err) (cdr Err)))))
+            (let* ( (Package (shen/value 'shen.*package*))
+                    (Lineread (shen/shen.package-user-input Package ;; (lineread)
+                                                            input-string))
+
+
+
+
+                    ;; (Lineread
+                    ;; (shen/compile #'shen/shen.<st_input> input-string
+                    ;;               (lambda (Err) (signal (car Err) (cdr Err)))))
+
                    (It (shen/shen.record-it input-string))
                    (History (shen/value 'shen.*history*))
                    (NewLineread (shen/shen.retrieve-from-history-if-needed
@@ -2139,9 +2147,10 @@ package.
   (setq *klambda-directory* (file-name-as-directory (concat (file-name-directory load-file-name) *klambda-directory-name*)))
   (setq *klambda-files*
         (mapcar (lambda (klFile) (concat *klambda-directory* klFile))
-                '("toplevel.kl" "core.kl" "sys.kl" "dict.kl" "sequent.kl"
-                  "yacc.kl" "reader.kl" "prolog.kl" "track.kl" "load.kl"
-                  "writer.kl" "macros.kl" "declarations.kl" "t-star.kl" "types.kl")))
+                '( "yacc.kl" "core.kl" "load.kl"
+                   "prolog.kl" "reader.kl" "sequent.kl" "sys.kl" "t-star.kl"
+                   "toplevel.kl" "track.kl" "types.kl" "writer.kl" ;; "backend.kl"
+                   "declarations.kl")))
 #+END_SRC
 
 In order to read in the KLambda s-expressions using the Elisp reader we need to
@@ -2318,12 +2327,18 @@ Now we can finally collect, and parse all the s-expressions in the
 KLambda files and then pass the result to ~shen/eval-kl~ to transform
 KLambda code into Elisp.
 #+BEGIN_SRC elisp :tangle install.el
-  (setq *temp-shen-buffer*
-        (find-file-noselect
-         (concat (file-name-as-directory default-directory)
-                 (file-relative-name "shen-elisp.el"))))
-  (defun eval-klambda-files (klambda-files)
-    (with-current-buffer *temp-shen-buffer*
+  (defun find-shen-file (file)
+    (concat (file-name-as-directory default-directory)
+            (file-relative-name file)))
+
+  (defun insert-shen-file (file)
+    (goto-char (point-max))
+    (insert-file (find-shen-file file)))
+
+  (defun build-shen-elisp-file ()
+    (with-temp-file
+      (concat (file-name-as-directory default-directory)
+              (file-relative-name "shen-elisp.el"))
       (progn
         (erase-buffer)
         (insert "\
@@ -2354,30 +2369,62 @@ KLambda code into Elisp.
   (require 'shen-primitives)
   (setq max-lisp-eval-depth 60000)
   (setq max-specpdl-size 13000)\n\n")
+        (insert-shen-file "shen-primitives.el")
+        (insert-shen-file "shen-klambda.el")
+        (insert-shen-file "shen-overlays.el")
+        (insert-shen-file "shen-repl.el")
         (goto-char (point-max))
-        (dolist (klambda-file klambda-files nil)
-          (eval-klambda-file klambda-file))
-        (goto-char (point-max))
-        (insert (format "%s\n" "(provide 'shen-elisp)"))
-        (save-buffer))))
-  (defun eval-klambda-file (klambda-file)
+        (insert (format "%s\n" "(provide 'shen-elisp)")))))
+
+  (defun build-elisp-klambda-file ()
+    (with-temp-file
+       (find-shen-file "shen-klambda.el")
+       ;; (message "klambda files are %s" *klambda-files*)
+       (dolist (klambda-file *klambda-files* nil)
+          ;;(message "klambda file is %s" klambda-file)
+          (insert-klambda-file klambda-file))))
+
+  (defun insert-klambda-file (klambda-file)
     (dolist (klambda-sexp-string (shen/get-klambda-sexp-strings klambda-file) nil)
-      (eval-klambda-sexp-string klambda-sexp-string)))
-  (defun eval-klambda-sexp-string (klambda-sexp-string)
+      (save-excursion
+        (goto-char (point-max))
+        (insert
+         (klambda-sexp-string klambda-sexp-string)))))
+
+  (defun klambda-sexp-string (klambda-sexp-string)
     (let ((ast (shen/put-reserved-elisp-chars-back
                 (read
                  (shen/remove-reserved-elisp-characters
                   klambda-sexp-string)))))
-      (shen/kl-to-buffer ast *temp-shen-buffer*)))
+      (pp-to-string (shen/klambda-to-elisp-object ast))))
 #+END_SRC
+* Infrastructure
+
+#+BEGIN_SRC elisp :tangle bin/shen-build.el
+(progn
+  (setq-default indent-tabs-mode nil)
+  (setq-default tab-width 2)
+  (message "default-directory: %s" default-directory)
+  (add-to-list 'load-path default-directory)
+  (require 'org)
+  (find-file "./shen-elisp.org")
+  (org-babel-tangle)
+  (load-file "install.el")
+  (build-elisp-klambda-file)
+ (build-shen-elisp-file)
+  )
+
+(provide 'build)
+#+END_SRC
+
 * The Runner
-#+BEGIN_SRC elisp :tangle install.el
+#+BEGIN_SRC elisp :tangle devel.el
   (defun compile-and-load (F)
     (byte-compile-file
      (concat (file-name-as-directory default-directory)
              (file-relative-name F))
      't))
-  (defun load-klambda () (eval-klambda-files *klambda-files*))
+  (defun load-klambda () (insert-klambda-files *klambda-files*))
   (defun load-only ()
     (progn
       (compile-and-load "shen-primitives.el")
@@ -2386,7 +2433,7 @@ KLambda code into Elisp.
     (progn
       (compile-and-load "shen-primitives.el")
       (compile-and-load "install.el")
-      (eval-klambda-files *klambda-files*)
+      (insert-klambda-files *klambda-files*)
       (compile-and-load "shen-elisp.el")
       (compile-and-load "shen-overlays.el")
       (compile-and-load "shen-repl.el")

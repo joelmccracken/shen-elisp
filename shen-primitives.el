@@ -75,6 +75,7 @@
 (shen/set '*release* emacs-version)
 (shen/set '*port* 1.7)
 (shen/set '*os* (symbol-name system-type))
+(shen/set '*version* "S39.0")
 ;; KLambda Constants:1 ends here
 
 ;; [[file:shen-elisp.org::*Boolean Operations][Boolean Operations:1]]
@@ -709,7 +710,9 @@
 (defun shen/internal/apply-higher-order-function (f args)
   (condition-case apply-ex (apply f args)
     ('void-function
-     (shen/internal/apply-higher-order-function (shen/internal/prefix-symbol f) args))
+     (if (shen/internal/symbol-prefixed-p f)
+         (signal 'void-function)
+       (shen/internal/apply-higher-order-function (shen/internal/prefix-symbol f) args)))
     ('wrong-number-of-arguments
      (condition-case ex
          (let ((arity (shen/internal/check-partial-application f (length args))))
@@ -1329,17 +1332,13 @@
 ;; Evaluating Bootstrapped KLambda:1 ends here
 
 ;; [[file:shen-elisp.org::*Evaluating Bootstrapped KLambda][Evaluating Bootstrapped KLambda:2]]
-(defun shen/kl-to-buffer (X B)
-  (with-current-buffer B
-    (save-excursion
-      (goto-char (point-max))
-      (insert (pp-to-string
-               (shen/internal/nil-to-null
-                (shen/internal/add-1+
-                 (shen/internal/consolidate-tl
-                  (shen/internal/consolidate-@s
-                   (shen/internal/consolidate-cons
-                    (shen/patch-klambda X)))))))))))
+(defun shen/klambda-to-elisp-object (X)
+  (shen/internal/nil-to-null
+   (shen/internal/add-1+
+    (shen/internal/consolidate-tl
+     (shen/internal/consolidate-@s
+      (shen/internal/consolidate-cons
+       (shen/patch-klambda X)))))))
 ;; Evaluating Bootstrapped KLambda:2 ends here
 
 ;; [[file:shen-elisp.org::*Providing The Primitives][Providing The Primitives:1]]

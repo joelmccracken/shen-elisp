@@ -4,9 +4,10 @@
 (setq *klambda-directory* (file-name-as-directory (concat (file-name-directory load-file-name) *klambda-directory-name*)))
 (setq *klambda-files*
       (mapcar (lambda (klFile) (concat *klambda-directory* klFile))
-              '("toplevel.kl" "core.kl" "sys.kl" "dict.kl" "sequent.kl"
-                "yacc.kl" "reader.kl" "prolog.kl" "track.kl" "load.kl"
-                "writer.kl" "macros.kl" "declarations.kl" "t-star.kl" "types.kl")))
+              '( "yacc.kl" "core.kl" "load.kl"
+                 "prolog.kl" "reader.kl" "sequent.kl" "sys.kl" "t-star.kl"
+                 "toplevel.kl" "track.kl" "types.kl" "writer.kl" ;; "backend.kl"
+                 "declarations.kl")))
 ;; Collecting KLambda files:1 ends here
 
 ;; [[file:shen-elisp.org::*Modifying The Elisp Reader For KLambda][Modifying The Elisp Reader For KLambda:1]]
@@ -154,12 +155,18 @@
 ;; Modifying The Elisp Reader For KLambda:6 ends here
 
 ;; [[file:shen-elisp.org::*Iterating over KLambda Files][Iterating over KLambda Files:1]]
-(setq *temp-shen-buffer*
-      (find-file-noselect
-       (concat (file-name-as-directory default-directory)
-               (file-relative-name "shen-elisp.el"))))
-(defun eval-klambda-files (klambda-files)
-  (with-current-buffer *temp-shen-buffer*
+(defun find-shen-file (file)
+  (concat (file-name-as-directory default-directory)
+          (file-relative-name file)))
+
+(defun insert-shen-file (file)
+  (goto-char (point-max))
+  (insert-file (find-shen-file file)))
+
+(defun build-shen-elisp-file ()
+  (with-temp-file
+    (concat (file-name-as-directory default-directory)
+            (file-relative-name "shen-elisp.el"))
     (progn
       (erase-buffer)
       (insert "\
@@ -190,42 +197,32 @@
 (require 'shen-primitives)
 (setq max-lisp-eval-depth 60000)
 (setq max-specpdl-size 13000)\n\n")
+      (insert-shen-file "shen-primitives.el")
+      (insert-shen-file "shen-klambda.el")
+      (insert-shen-file "shen-overlays.el")
+      (insert-shen-file "shen-repl.el")
       (goto-char (point-max))
-      (dolist (klambda-file klambda-files nil)
-        (eval-klambda-file klambda-file))
-      (goto-char (point-max))
-      (insert (format "%s\n" "(provide 'shen-elisp)"))
-      (save-buffer))))
-(defun eval-klambda-file (klambda-file)
+      (insert (format "%s\n" "(provide 'shen-elisp)")))))
+
+(defun build-elisp-klambda-file ()
+  (with-temp-file
+     (find-shen-file "shen-klambda.el")
+     ;; (message "klambda files are %s" *klambda-files*)
+     (dolist (klambda-file *klambda-files* nil)
+        ;;(message "klambda file is %s" klambda-file)
+        (insert-klambda-file klambda-file))))
+
+(defun insert-klambda-file (klambda-file)
   (dolist (klambda-sexp-string (shen/get-klambda-sexp-strings klambda-file) nil)
-    (eval-klambda-sexp-string klambda-sexp-string)))
-(defun eval-klambda-sexp-string (klambda-sexp-string)
+    (save-excursion
+      (goto-char (point-max))
+      (insert
+       (klambda-sexp-string klambda-sexp-string)))))
+
+(defun klambda-sexp-string (klambda-sexp-string)
   (let ((ast (shen/put-reserved-elisp-chars-back
               (read
                (shen/remove-reserved-elisp-characters
                 klambda-sexp-string)))))
-    (shen/kl-to-buffer ast *temp-shen-buffer*)))
+    (pp-to-string (shen/klambda-to-elisp-object ast))))
 ;; Iterating over KLambda Files:1 ends here
-
-;; [[file:shen-elisp.org::*The Runner][The Runner:1]]
-(defun compile-and-load (F)
-  (byte-compile-file
-   (concat (file-name-as-directory default-directory)
-           (file-relative-name F))
-   't))
-(defun load-klambda () (eval-klambda-files *klambda-files*))
-(defun load-only ()
-  (progn
-    (compile-and-load "shen-primitives.el")
-    (compile-and-load "install.el")))
-(defun runner ()
-  (progn
-    (compile-and-load "shen-primitives.el")
-    (compile-and-load "install.el")
-    (eval-klambda-files *klambda-files*)
-    (compile-and-load "shen-elisp.el")
-    (compile-and-load "shen-overlays.el")
-    (compile-and-load "shen-repl.el")
-    (add-to-list 'load-path default-directory)
-    (shen/repl)))
-;; The Runner:1 ends here
