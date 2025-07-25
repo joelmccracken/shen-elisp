@@ -21,10 +21,10 @@
 ;; [[file:shen-elisp.org::*Prompt][Prompt:1]]
 (defconst shen/repl-prompt-regex
   (rx line-start
-      (char ?( )
+      (char ?\( )
             (1+ digit)
             (or (char ?-) (char ?+))
-            (char ?))
+            (char ?\))
       (char ? )))
 ;; Prompt:1 ends here
 

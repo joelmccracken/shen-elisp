@@ -308,7 +308,7 @@ up in Elisp.
 #+BEGIN_SRC elisp :tangle shen-primitives.el
   (defmacro shen/freeze (X)
     `(function (lambda nil ,X)))
-  (defsubst shen/type (X MyType) (declare (ignore MyType)) X)
+  (defsubst shen/type (X MyType) X)
 #+END_SRC
 
 ** Lists
@@ -1875,10 +1875,10 @@ First we tell the REPL how to recognize prompts:
 #+BEGIN_SRC elisp :tangle shen-repl.el
   (defconst shen/repl-prompt-regex
     (rx line-start
-        (char ?( )
+        (char ?\( )
               (1+ digit)
               (or (char ?-) (char ?+))
-              (char ?))
+              (char ?\))
         (char ? )))
 #+END_SRC
 

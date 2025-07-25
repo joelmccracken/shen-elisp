@@ -179,7 +179,7 @@
 ;; [[file:shen-elisp.org::*Other Generic Functions][Other Generic Functions:1]]
 (defmacro shen/freeze (X)
   `(function (lambda nil ,X)))
-(defsubst shen/type (X MyType) (declare (ignore MyType)) X)
+(defsubst shen/type (X MyType) X)
 ;; Other Generic Functions:1 ends here
 
 ;; [[file:shen-elisp.org::*Lists][Lists:1]]
